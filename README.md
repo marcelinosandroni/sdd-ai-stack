@@ -72,11 +72,13 @@ Se você precisa usar esse core dentro de outro projeto e manter atualizado, esc
 ### Opção 1: Git Submodules (Recomendado e Seguro)
 Ideal se você quer controle absoluto de *quando* atualizar o código no repo destino.
 
+**1. Adicionar o submódulo (rode no repo destino):**
 ```bash
-# Para adicionar este repo dentro de outro (rode no repo destino):
-git submodule add [https://github.com/marcelinosandroni/](https://github.com/marcelinosandroni/)[NOME-DO-REPO].git pasta-destino
+git submodule add [https://github.com/marcelinosandroni/sdd-ai-stack.git](https://github.com/marcelinosandroni/sdd-ai-stack.git) sdd-core
+```
 
-# Para puxar as atualizações mais recentes depois:
+**2. Puxar as atualizações mais recentes depois:**
+```bash
 git submodule update --remote --merge
 ```
 
