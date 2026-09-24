@@ -29,12 +29,7 @@ A arquitetura é estrita e desenhada para hiperfoco e isolamento de contexto. Le
 
 ## 🚀 Como Rodar Local
 
-```bash
-# 1. Instale as dependências de todos os workspaces
-npm install
-
-# 2. Suba o Frontend e Backend simultaneamente
-npm run dev
+Detalhar conforme stack
 
 ## 👨‍💻 Autor
 [Marcelino Sandroni](https://github.com/marcelinosandroni)
