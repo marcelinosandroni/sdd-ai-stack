@@ -6,6 +6,86 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
+## [0.1.20] — 2026-09-29
+
+> One tag publishes to **npm and GitHub Packages**, in parallel.
+
+### 📦 Dual registry
+
+`release.yml` gains a second publish job. Both `needs: verify`, so they run in
+parallel from the same commit and read the same `version`. A failure on one registry does
+not cancel the other: npm can be down while GitHub Packages succeeds, and vice versa.
+`concurrency: release-registry` still serialises *runs* so two publishes of the same
+version never race.
+
+| Registry | Name | Auth | Permission |
+| --- | --- | --- | --- |
+| npmjs.com | `create-sdd-ai-stack` | `NPM_TOKEN` or OIDC | `contents: read`, `id-token: write` |
+| GitHub Packages | `@marcelinosandroni/create-sdd-ai-stack` | `secrets.GITHUB_TOKEN` (built in) | `contents: read`, `packages: write` |
+
+### 🧭 Why two names for one package
+
+**GitHub Packages only accepts scoped packages.** An unscoped name is rejected with a
+`404` and there is no flag to work around it — the scope has to be in the name, matching
+the account that owns the repo.
+
+So the GitHub job rewrites `name` **only for its own publish**, in a disposable checkout.
+The committed `package.json` stays unscoped, because an npm scope publishes **private**
+by default. The job also asserts `repository.url` points at `marcelinosandroni`, which is
+what GitHub Packages uses to link the package to the repo.
+
+### 🪤 Two npm-only settings had to be removed, not out-flagged
+
+Both come from the precedence this project already got bitten by: **npm reads
+`publishConfig` above CLI flags.**
+
+- `--access public` is rejected by GitHub Packages for a private package.
+- `--provenance` is npm-only, and a leftover `publishConfig.provenance` could not be
+  overridden with `--no-provenance` either.
+
+So the job **deletes `publishConfig` entirely** and publishes with `--provenance=false`
+rather than trying to out-flag npm.
+
+### 📄 `.npmrc`
+
+```ini
+@marcelinosandroni:registry=https://npm.pkg.github.com
+```
+
+Scope mapping only: it routes `@marcelinosandroni/*` to GitHub Packages and leaves the
+unscoped npm publish on npmjs. The file still must **not** declare `_authToken` — that
+line shadows the user's `~/.npmrc` and silently zeroes auth.
+
+### ⚠️ One manual step after the first publish
+
+GitHub Packages creates npm packages **private**. Until the visibility is flipped,
+installing `@marcelinosandroni/create-sdd-ai-stack` requires authentication, which
+defeats the point of a second registry:
+
+<https://github.com/users/marcelinosandroni/packages> → the package → **Change
+visibility → Public**.
+
+### 🧪 Tests
+
+30 → **34**. Four new guards, plus two that were silently broken and are now honest:
+
+- releases go to both registries, and the GitHub job declares `packages: write`
+- the GitHub job rewrites the name to a scope and deletes `publishConfig`
+- the GitHub job sends no npm-only flags and uses `GITHUB_TOKEN`
+- the `.npmrc` scope matches the repository owner, and the npm name stays unscoped
+
+Two pre-existing tests still searched the workflow for step names in **Portuguese**
+(`- name: Publica`, `- name: Autentica`) after those steps were renamed to English.
+`indexOf` returned `-1`, `slice(-1)` returned the last character, and both tests had
+been passing **vacuously** — asserting against a newline. They now search the real
+English names and slice only the npm job, so the GitHub job's flags cannot satisfy an
+npm assertion by accident.
+
+> A test that cannot fail is worse than no test: it looks like coverage while checking
+> nothing. These two had been green through three releases.
+
+---
+
 ## [0.1.19] — 2026-09-29
 
 > Every stack covered, one shared spine, and every doc compressed on purpose.

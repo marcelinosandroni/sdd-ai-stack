@@ -1,14 +1,21 @@
-# 🚀 RELEASE — publishing to npm
+# 🚀 RELEASE — publishing to npm and GitHub Packages
 
-> **One path:** you version locally, GitHub Actions publishes.
-> There is no manual `npm publish` in this project — on purpose, so there is never two
-> ways to do it.
+> **One tag, two registries.** A push of a `v*` tag publishes to **npm** *and*
+> **GitHub Packages**, in parallel, from the same commit.
+>
+> **One path:** you version locally, GitHub Actions publishes. There is no manual
+> `npm publish` in this project — on purpose, so there is never two ways to do it.
 
 ```text
-npm run version:minor   →  0.1.17 → 0.2.0 (commits + creates tag v0.2.0)
+npm run version:minor   →  0.1.19 → 0.2.0 (commits + creates tag v0.2.0)
 git push origin main
-git push origin --tags  →  fires the Release workflow  →  publishes
+git push origin --tags  →  fires Release  →  npm + GitHub Packages
 ```
+
+| Registry | Package name | Auth | Public? |
+| --- | --- | --- | --- |
+| [npmjs.com](https://www.npmjs.com/package/create-sdd-ai-stack) | `create-sdd-ai-stack` | `NPM_TOKEN` or OIDC | public from the first publish |
+| [GitHub Packages](https://github.com/users/marcelinosandroni/packages) | `@marcelinosandroni/create-sdd-ai-stack` | `GITHUB_TOKEN` (built in) | **private by default — one-time flip, see §1.4** |
 
 ---
 
@@ -29,7 +36,90 @@ with real usage. Reading the versions:
 
 ---
 
-## 1. Authentication — read this before creating any token
+## 1. Why two names for one package
+
+**GitHub Packages only accepts scoped packages.** The name must be
+`@NAMESPACE/PACKAGE-NAME`, where the namespace is the account that owns the repo.
+An unscoped `create-sdd-ai-stack` is rejected with a `404`, and there is no flag to
+work around it — the scope has to be in the name.
+
+So the two registries get two names, and the release workflow rewrites the name
+**only for the GitHub step**, in a disposable checkout. Our committed `package.json`
+stays unscoped, because an npm scope would make npm publish it **private by default**.
+
+### 1.1 What the GitHub job does differently
+
+| | npm job | GitHub Packages job |
+| --- | --- | --- |
+| `name` in `package.json` | `create-sdd-ai-stack` | rewritten to `@marcelinosandroni/create-sdd-ai-stack` |
+| `publishConfig` | `{ access: "public" }` | **deleted** |
+| flags | `--access public --provenance` | `--provenance=false` |
+| registry | registry.npmjs.org | npm.pkg.github.com |
+| token | `NPM_TOKEN` or OIDC | `secrets.GITHUB_TOKEN` |
+| permissions | `contents: read`, `id-token: write` | `contents: read`, `packages: write` |
+
+Two flags are the trap, and both come from the precedence we already hit with
+`publishConfig`:
+
+- **`--access public` is rejected** by GitHub Packages for a private package.
+- **`--provenance` is npm-only.** npm reads `publishConfig` **above** CLI flags, so a
+  leftover `publishConfig.provenance` could not be overridden with `--no-provenance`
+  either. The job therefore **deletes `publishConfig` entirely** rather than trying to
+  out-flag it.
+
+A test enforces all of this, including that `repository.url` points at
+`marcelinosandroni` — GitHub Packages uses it to link the package to the repo, and a
+mismatch between the scope and the repo owner is rejected.
+
+### 1.2 Both jobs, same version
+
+Both `publish` and `publish-github` `needs: verify`, so they run in parallel from the
+same commit and read the same `package.json` version. A failure on one registry does
+**not** cancel the other: npm can be down while GitHub Packages succeeds.
+
+`concurrency: release-registry` still serialises *runs* — two publishes of the same
+version must never race.
+
+### 1.3 Scope mapping in `.npmrc`
+
+```ini
+@marcelinosandroni:registry=https://npm.pkg.github.com
+```
+
+This only routes `@marcelinosandroni/*` to GitHub Packages. The unscoped
+`create-sdd-ai-stack` still goes to npmjs. It exists so `npm install
+@marcelinosandroni/create-sdd-ai-stack` resolves for anyone cloning the repo.
+
+> ⚠️ The `.npmrc` still must **not** declare `_authToken`. That line shadows the user's
+> `~/.npmrc` and silently zeroes auth — see §7 below.
+
+### 1.4 One-time: make the GitHub package public
+
+GitHub Packages creates npm packages **private**. A private GitHub package needs
+authentication to install, which defeats the purpose of a second registry.
+
+After the first successful publish:
+
+1. <https://github.com/users/marcelinosandroni/packages>
+2. Open `@marcelinosandroni/create-sdd-ai-stack`
+3. **Package settings → Change visibility → Public**
+4. Confirm the package is linked to `sdd-ai-stack` and inherits its access
+
+Only after that does anyone else need auth to install it.
+
+### 1.5 Secrets
+
+| Secret | Registry | How to set |
+| --- | --- | --- |
+| `NPM_TOKEN` | npm | `gh secret set NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack` |
+| `GITHUB_TOKEN` | GitHub Packages | **built in.** Nothing to create. Needs `permissions: packages: write`, which the workflow declares |
+
+> On the npm side, the `NPM_TOKEN` secret is **optional**: on path A (OIDC) it must
+> *not* exist, and on path B it must. See §2.
+
+---
+
+## 2. npm authentication — read this before creating any token
 
 > 🚨 **With 2FA on the npm account, an ordinary token will NOT publish.**
 > CI cannot type the authenticator code, so the publish fails with:
@@ -48,7 +138,7 @@ with real usage. Reading the versions:
 | **B. Token with "Bypass 2FA"** | ~2 min | ⚠️ Works today, **deprecated Jan 2027** |
 | **C. Stage-only token** | ~10 min | 🛡️ Safest, requires approving each release |
 
-### 1.0 The misleading `404 Not Found` on a first publish
+### 2.0 The misleading `404 Not Found` on a first publish
 
 > ```
 > npm error code E404
@@ -86,7 +176,7 @@ The fix is **not to declare `_authToken` in the project `.npmrc`** — only `reg
 Auth comes from `~/.npmrc` (local) or the `NODE_AUTH_TOKEN` environment variable (CI).
 A test locks this in: `publish: the project .npmrc must not declare _authToken`.
 
-### 1.1 🏆 Path A — local bootstrap + Trusted Publishing (OIDC)
+### 2.1 🏆 Path A — local bootstrap + Trusted Publishing (OIDC)
 
 OIDC is the durable answer: short-lived, GitHub-signed credentials, **no token at
 all**. It has one limitation: **OIDC cannot publish a package's first version** — the
@@ -145,7 +235,7 @@ It publishes on its own, with provenance, **with no token at all**. You can even
 off "Require two-factor authentication" for the package afterwards — OIDC does not
 depend on it.
 
-### 1.2 ⚠️ Path B — token with "Bypass 2FA" (a bridge, not a destination)
+### 2.2 ⚠️ Path B — token with "Bypass 2FA" (a bridge, not a destination)
 
 If you want CI working **today** without touching your machine:
 
@@ -166,7 +256,7 @@ gh secret set NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
 > bug ([npm/cli#9268](https://github.com/npm/cli/issues/9268)) where "Bypass 2FA" is
 > ignored by npm 11.x. Treat it as a deadline, not a solution.
 
-### 1.3 🛡️ Path C — stage-only (safest, most friction)
+### 2.3 🛡️ Path C — stage-only (safest, most friction)
 
 A **Read and write (stage only)** token: CI uploads the version but it **does not go
 live**. A maintainer has to approve it with 2FA:
@@ -184,7 +274,7 @@ one manual approval per release.
 
 ---
 
-## 2. How the workflow picks the mode
+## 3. How the workflow picks the mode
 
 It doesn't need to: **npm picks by itself.**
 
@@ -215,7 +305,7 @@ On path A (OIDC) the list must be **empty** — that is what makes npm use OIDC.
 
 ---
 
-## 3. Testing without publishing (do this first)
+## 4. Testing without publishing (do this first)
 
 Once the workflow is on `main`, validate without burning a version:
 
@@ -229,7 +319,7 @@ This runs the tests, checks the links, verifies the tarball contents, and runs
 
 ---
 
-## 4. Publishing for real
+## 5. Publishing for real
 
 ```bash
 # 1. main is up to date and CI is green
@@ -254,7 +344,7 @@ If all goes well: <https://www.npmjs.com/package/create-sdd-ai-stack>
 
 ---
 
-## 5. What the workflow checks before publishing
+## 6. What the workflow checks before publishing
 
 | Guard | Why |
 | --- | --- |
@@ -268,7 +358,7 @@ If all goes well: <https://www.npmjs.com/package/create-sdd-ai-stack>
 
 ---
 
-## 6. Common problems
+## 7. Common problems
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
@@ -283,6 +373,10 @@ If all goes well: <https://www.npmjs.com/package/create-sdd-ai-stack>
 | `cannot publish over previously published version` | that version exists | bump the version (`npm run version:patch`) |
 | `tag 'v0.1.17' does not match package.json '0.1.18'` | forgot to commit the bump | `git add package.json && git commit -m "chore: v0.1.18"` |
 | `missing from the tarball: X` | `files` in `package.json` is incomplete | add the path to `files` |
+| `404` on GitHub Packages PUT | the name is unscoped. GitHub Packages **only** accepts `@owner/name` | check the "Scope the name" step ran; §1 |
+| `403` on GitHub Packages | `GITHUB_TOKEN` lacks `packages: write` | the job declares it; if you forked, re-run in the origin repo |
+| npm published but GitHub failed | the two jobs are independent by design | `gh run rerun <id> --failed` — the version is unchanged, so it re-publishes cleanly |
+| GitHub package installs need a token | GitHub Packages defaults to **private** | one-time visibility flip, §1.4 |
 
 > **Known npm bug:** a granular token with "Bypass 2FA" being ignored by npm 11.x
 > ([npm/cli#9268](https://github.com/npm/cli/issues/9268)). If the bypass "doesn't work",
@@ -290,7 +384,7 @@ If all goes well: <https://www.npmjs.com/package/create-sdd-ai-stack>
 
 ---
 
-## 7. Publishing locally (escape hatch, not the default path)
+## 8. Publishing locally (escape hatch, not the default path)
 
 ```powershell
 # the bootstrap path (with 2FA on)
@@ -315,7 +409,7 @@ npm run check:pack   # shows exactly what will be uploaded
 
 ---
 
-## 8. Checklist before you press the button
+## 9. Checklist before you press the button
 
 - [ ] `npm test` green
 - [ ] `main` synced with `origin`
@@ -323,6 +417,7 @@ npm run check:pack   # shows exactly what will be uploaded
 - [ ] `npm run check:pack` shows the expected files
 - [ ] `version:patch|minor|major` chosen deliberately
 - [ ] `git push origin main` and `git push origin --tags` done
+- [ ] first publish only: flipped the GitHub package to public (§1.4)
 
 > **Publishing is irreversible.** A published version cannot be removed (only
 > unpublished), and npm never reuses a number. Don't delete the tag either.

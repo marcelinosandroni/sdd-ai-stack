@@ -114,19 +114,26 @@ test("publish: provenance NÃO pode estar no publishConfig", () => {
   assert.equal(pkg.publishConfig?.access, "public");
 });
 
-test("publish: the Publica step passes --provenance explicitly", () => {
+test("publish: the npm Publish step passes --provenance explicitly", () => {
   const yml = fs.readFileSync(".github/workflows/release.yml", "utf8");
-  const publishStep = yml.slice(yml.indexOf("- name: Publica"));
+  const publishStep = yml.slice(
+    yml.indexOf("- name: Publish"),
+    yml.indexOf("- name: Simulate", yml.indexOf("- name: Publish")),
+  );
   assert.match(publishStep, /npm publish .*--provenance/);
+  assert.match(publishStep, /--access public/);
 });
 
-test("publish: the Publica step does NOT define NODE_AUTH_TOKEN (or OIDC never engages)", () => {
+test("publish: the npm Publish step does NOT define NODE_AUTH_TOKEN (or OIDC never engages)", () => {
   const yml = fs.readFileSync(".github/workflows/release.yml", "utf8");
-  const publishStep = yml.slice(yml.indexOf("- name: Publica"));
+  const publishStep = yml.slice(
+    yml.indexOf("- name: Publish"),
+    yml.indexOf("- name: Simulate", yml.indexOf("- name: Publish")),
+  );
   assert.doesNotMatch(
     publishStep,
     /NODE_AUTH_TOKEN/,
-    "NODE_AUTH_TOKEN no passo Publica faz o npm ignorar o OIDC e tentar token",
+    "NODE_AUTH_TOKEN in the Publish step makes npm ignore OIDC and try a token",
   );
 });
 
@@ -151,12 +158,59 @@ test("publish: the project .npmrc must not declare _authToken", () => {
 });
 
 test("publish: the Authenticate step injects the token via GITHUB_ENV, not into a file", () => {
-  const yml = fs.readFileSync(".github/workflows/release.yml", "utf8");
-  const authStep = yml.slice(yml.indexOf("- name: Autentica"), yml.indexOf("- name: Publica"));
-  assert.match(authStep, /NODE_AUTH_TOKEN=\$\{NPM_TOKEN\}.*GITHUB_ENV/);
-  assert.doesNotMatch(
-    authStep,
-    /\.npmrc/,
-    "writing a token into the runner .npmrc is not enough: the project .npmrc wins",
-  );
-});
+    const yml = fs.readFileSync(".github/workflows/release.yml", "utf8");
+    const authStep = yml.slice(yml.indexOf("- name: Authenticate"), yml.indexOf("- name: Publish"));
+    assert.match(authStep, /NODE_AUTH_TOKEN=\$\{NPM_TOKEN\}.*GITHUB_ENV/);
+    assert.doesNotMatch(
+      authStep,
+      /\.npmrc/,
+      "writing a token into the runner .npmrc is not enough: the project .npmrc wins",
+    );
+  });
+
+/* ── Dual registry (npm + GitHub Packages) ───────────────── */
+
+test("publish: releases go to npm AND GitHub Packages", () => {
+    const yml = fs.readFileSync(".github/workflows/release.yml", "utf8");
+    assert.match(yml, /^ {2}publish-github:/m, "no publish-github job");
+    assert.match(yml, /^ {2}publish:/m, "no publish (npm) job");
+    const gh = yml.slice(yml.indexOf("  publish-github:"));
+    assert.match(gh, /needs: verify/, "both registries must get the same version");
+    assert.match(gh, /packages: write/, "GitHub Packages needs packages: write");
+    assert.match(gh, /npm\.pkg\.github\.com/);
+    assert.match(gh, /scope: '@marcelinosandroni'/);
+  });
+
+test("publish: the GitHub job rewrites the name to a scope (GitHub only accepts scoped)", () => {
+    const yml = fs.readFileSync(".github/workflows/release.yml", "utf8");
+    const at = yml.indexOf("Scope the name and drop");
+    const step = yml.slice(at, yml.indexOf("- name: Publish", at));
+    assert.match(step, /p\.name = '@' \+ owner \+ '\/' \+ p\.name/);
+    // publishConfig must be removed: access/provenance are npm-only, and npm reads
+    // publishConfig ABOVE CLI flags, so a leftover field cannot be overridden
+    assert.match(step, /delete p\.publishConfig/);
+    assert.match(step, /repository\.url/);
+  });
+
+test("publish: the GitHub job does not send npm-only flags", () => {
+    const yml = fs.readFileSync(".github/workflows/release.yml", "utf8");
+    const gh = yml.slice(yml.indexOf("  publish-github:"));
+    assert.doesNotMatch(gh, /--access public/, "GitHub Packages rejects --access public");
+    assert.doesNotMatch(gh, /--provenance\s/, "GitHub Packages has no provenance");
+    assert.match(gh, /--provenance=false/);
+    assert.match(gh, /secrets\.GITHUB_TOKEN/);
+  });
+
+test("publish: the GitHub scope maps to the repository owner", () => {
+    const npmrc = fs.readFileSync(".npmrc", "utf8");
+    assert.match(npmrc, /^@marcelinosandroni:registry=https:\/\/npm\.pkg\.github\.com$/m);
+
+    const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+    assert.match(
+      pkg.repository.url,
+      /github\.com\/marcelinosandroni\//,
+      "GitHub Packages needs repository.url to point at the owner that owns the scope",
+    );
+    // the npm name stays unscoped: scoping it would make npm publish it private
+    assert.ok(!pkg.name.startsWith("@"), `npm name must stay unscoped, got ${pkg.name}`);
+  });
