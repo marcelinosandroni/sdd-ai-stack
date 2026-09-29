@@ -117,7 +117,7 @@ test("installShortcuts: stub mode creates every shortcut with the pointer", () =
     const p = path.join(root, rel);
     assert.ok(fs.existsSync(p), `missing shortcut ${rel}`);
     const text = fs.readFileSync(p, "utf8");
-    assert.match(text, /SDD\/AGENTS\.md/, `atalho ${rel} não aponta para SDD/AGENTS.md`);
+    assert.match(text, /SDD\/AGENTS\.md/, `shortcut ${rel} does not point at SDD/AGENTS.md`);
   }
 });
 
@@ -125,6 +125,9 @@ test("installShortcuts: symlink mode creates a shortcut that resolves to the rig
   const root = tmp();
   installRules(root, { log: silent });
   const results = installShortcuts(root, { log: silent, mode: "symlink" });
+  // compare against the real file instead of a literal: the rules get translated and
+  // a hard-coded heading would break the suite for the wrong reason (it did, once)
+  const rules = fs.readFileSync(path.join(root, "SDD", "AGENTS.md"), "utf8");
 
   for (const rel of ["AGENTS.md", "CLAUDE.md"]) {
     const p = path.join(root, rel);
@@ -134,11 +137,15 @@ test("installShortcuts: symlink mode creates a shortcut that resolves to the rig
     const kind = results.find((r) => r.rel === rel).kind;
 
     // Guard for the relative-path bug: if it became a symlink it MUST read the rules.
-    // existsSync() segue symlink, então um link quebrado nem chegaria até aqui.
+    // existsSync() follows symlinks, so a broken link would not even get here.
     if (kind === "symlink") {
-      assert.match(text, /LEIS ABSOLUTAS DO AGENTE IA/, `symlink ${rel} does not resolve to SDD/AGENTS.md`);
+      assert.equal(
+        text,
+        rules,
+        `symlink ${rel} does not resolve to SDD/AGENTS.md — wrong relative path?`,
+      );
     } else {
-      // fallback (Windows sem dev mode): stub com ponteiro explícito
+      // fallback (Windows without dev mode): a stub with an explicit pointer
       assert.match(text, /SDD\/AGENTS\.md/, `stub ${rel} does not point at SDD/AGENTS.md`);
     }
   }
