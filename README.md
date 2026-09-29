@@ -175,26 +175,28 @@ git push origin main
 git push origin --tags            # ← dispara a publicação
 ```
 
-A primeira vez precisa de duas coisas:
+A primeira vez precisa resolver a autenticação. Com **2FA ligado na conta npm**, um token
+comum não publica (`EOTP` — o CI não tem como digitar o OTP). Duas saídas:
 
 ```bash
-# 1. o token, gravado como secret do repositório
-gh secret set NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
+# A. Recomendado: publica a 1ª versão da sua máquina, ativa OIDC e apaga o token
+npm publish --access public --otp=123456
+# depois: npmjs.com → create-sdd-ai-stack → Settings → Trusted publishing
+#   owner: marcelinosandroni · repo: sdd-ai-stack · workflow: release.yml · allow: npm publish
+gh secret delete NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
 
-# 2. testar sem queimar versão
-gh workflow run release.yml -f version=9.9.9 -f dry_run=true
+# B. Ponte: token granular com "Bypass 2FA" marcado (deprecado pelo npm em jan/2027)
+gh secret set NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
 ```
 
-O secret é `NPM_TOKEN` (token granular do npm, escopo **Read and write** apenas em
-`create-sdd-ai-stack`). O `.npmrc` da raiz só referencia `${NODE_AUTH_TOKEN}` — nenhum
-token está gravado em arquivo.
+O workflow escolhe o modo sozinho: **com** `NPM_TOKEN` usa token, **sem** ele usa OIDC.
+Nada de token fica gravado em arquivo.
 
 **Guards antes de publicar:** `npm test` (22 testes) · links da doc · tag `vX.Y.Z` bate com
-o `package.json` · 10 arquivos essenciais presentes no tarball · `concurrency` · `--provenance`
-(pacote assinado pelo GitHub).
+o `package.json` · 10 arquivos essenciais presentes no tarball · `npm ≥ 11.5.1` · `concurrency` · provenance.
 
-📖 Passo a passo completo, troubleshooting e a alternativa sem token
-(**Trusted Publishing / OIDC**) em [`docs/RELEASE.md`](./docs/RELEASE.md).
+📖 Passo a passo completo (os 3 caminhos de auth, troubleshooting e o caminho stage-only)
+em [`docs/RELEASE.md`](./docs/RELEASE.md).
 
 ---
 

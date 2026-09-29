@@ -27,63 +27,135 @@ no uso real. Leitura das versões:
 
 ---
 
-## 1. Criar o token (uma vez)
+## 1. Autenticação — leia isto antes de criar qualquer token
 
-No npm: <https://www.npmjs.com/settings/access-tokens>
+> 🚨 **Com 2FA ligado na conta npm, um token comum NÃO publica.**
+> O CI não tem como digitar o código do autenticador, então o publish falha com:
+>
+> ```
+> npm error code EOTP
+> npm error This operation requires a one-time password from your authenticator.
+> ```
+>
+> Isso **não é bug do workflow** — é o npm exigindo presença humana. Existem três
+> saídas, e só uma é boa.
 
-Escolha **granular** (o mais seguro):
+| Caminho | Esforço | Situação |
+| --- | --- | --- |
+| **A. Bootstrap local + OIDC** | ~5 min, uma vez | ✅ **Recomendado.** Sem token para sempre |
+| **B. Token com "Bypass 2FA"** | ~2 min | ⚠️ Funciona hoje, **deprecado em jan/2027** |
+| **C. Token stage-only** | ~10 min | 🛡️ Mais seguro, exige aprovar cada release |
 
-| Campo | Valor |
-| --- | --- |
-| Token name | `sdd-ai-stack-release` |
-| Expiration | máximo que o npm permitir (90 dias) — **renove antes** |
-| Package type | **Granular access** |
-| Package name | `create-sdd-ai-stack` |
-| Permissions | **Read and write** |
-| Organizations | deixe vazio (o pacote é pessoal) |
+### 🏆 Caminho A — bootstrap local + Trusted Publishing (OIDC)
 
-Copie o token gerado (`npm_...`). Ele só aparece uma vez.
+O OIDC é a solução definitiva: credencial de vida curta, assinada pelo GitHub,
+**sem token nenhum**. Mas tem uma limitação: **OIDC não publica a primeira versão** de um
+pacote — o pacote precisa existir no npm antes de você configurar o publisher.
 
-> ⚠️ **Nunca** cole o token num arquivo, no `.npmrc` commitado, ou num commit.
-> Se vazar: revogue em <https://www.npmjs.com/settings/access-tokens> imediatamente.
+Por isso o fluxo é "publica uma vez local, depois nunca mais":
 
-### Alternativa sem token: Trusted Publishing (OIDC)
+**Passo 1 — publique a primeira versão da sua máquina** (você tem o autenticador):
 
-O npm suporta publicar direto do GitHub Actions **sem nenhum secret**.
-Em <https://www.npmjs.com/package/create-sdd-ai-stack/settings/trusted-publishers>, adicione:
+```bash
+npm login
+npm publish --access public --otp=123456    # ← o código do seu app autenticador
+```
+
+**Passo 2 — configure o publisher confiável** em
+<https://www.npmjs.com/package/create-sdd-ai-stack/settings/trusted-publishers>:
 
 | Campo | Valor |
 | --- | --- |
 | Provider | GitHub Actions |
-| Organization | `marcelinosandroni` |
+| Organization or user | `marcelinosandroni` |
 | Repository | `sdd-ai-stack` |
-| Workflow filename | `release.yml` |
+| Workflow filename | `release.yml` (só o nome, com `.yml`) |
+| Allowed actions | `npm publish` |
 
-Se fizer isso, apague o secret `NPM_TOKEN` — o workflow funciona igual (o `NODE_AUTH_TOKEN`
-vai vazio e o npm usa a identidade OIDC do runner).
+> ⚠️ O npm **não valida** essa configuração ao salvar. Errou o nome do workflow ou do
+> repo, o erro só aparece na hora de publicar. Tudo é **case-sensitive**.
 
----
-
-## 2. Gravar o secret no repositório
-
-O nome do secret é **`NPM_TOKEN`** (é o que o workflow lê).
+**Passo 3 — apague o secret** (deixe o OIDC Assumir):
 
 ```bash
-# passo 1: abra o navegador já logado no GitHub e gere/copie o token
-# passo 2: cole e execute — o token NÃO fica no histórico do shell
+gh secret delete NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
+```
+
+Pronto. Da próxima vez em diante:
+
+```bash
+npm run version:patch && git push origin main && git push origin --tags
+```
+
+Publica sozinho, com provenance, **sem token nenhum**. Pode até desligar
+"Require two-factor authentication" do pacote depois — o OIDC não depende dele.
+
+### ⚠️ Caminho B — token com "Bypass 2FA" (temporário)
+
+Se quiser o CI funcionando **hoje** sem mexer na máquina:
+
+Em <https://www.npmjs.com/settings/access-tokens>, crie um token granular com:
+
+| Campo | Valor |
+| --- | --- |
+| Permissions | **Read and write** |
+| Bypass 2FA | ✅ **marcado** |
+| Package | `create-sdd-ai-stack` |
+
+```bash
 gh secret set NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
 ```
 
-> O comando acima pede o token de forma oculta. Se preferir colar direto:
-> <https://github.com/marcelinosandroni/sdd-ai-stack/settings/secrets/actions/new>
-> (Secret name: `NPM_TOKEN`)
+> **Só como ponte.** O npm avisa: *"a publicação direta com token granular será removida
+> em janeiro de 2027"*. Além disso, há bug aberto ([npm/cli#9268](https://github.com/npm/cli/issues/9268))
+> onde "Bypass 2FA" é ignorado pelo npm 11.x. Trate como prazo, não como solução.
 
-### Verificar que está lá
+### 🛡️ Caminho C — stage-only (mais seguro, mais atrito)
+
+Token **Read and write (stage only)**: o CI sobe a versão, mas ela **não vai ao ar**.
+Um maintainer precisa aprovar com 2FA:
+
+```bash
+npm stage publish          # no CI, com o token stage-only
+npm stage list             # ver o que está pendente
+npm stage approve --otp=123456
+```
+
+Combine com `Require two-factor authentication and disallow tokens` no
+[package settings](https://www.npmjs.com/package/create-sdd-ai-stack/settings): token
+vazado não consegue publicar nada sozinho. É a postura máxima de segurança — ao preço
+de uma aprovação manual por release.
+
+---
+
+## 2. Como o workflow decide o modo
+
+Ele não precisa saber: **o npm escolhe sozinho**.
+
+| `NPM_TOKEN` no repo | O que o workflow faz | Como o npm publica |
+| --- | --- | --- |
+| **definido** | escreve a linha de token no `~/.npmrc` | modo token |
+| **ausente** | não escreve **nada** no `.npmrc` | OIDC |
+
+> ⚠️ **O passo `Publica` não define `NODE_AUTH_TOKEN` de propósito.** O npm só engata o
+> OIDC quando o auth está **ausente**. Se `NODE_AUTH_TOKEN` estiver no ambiente, ele
+> ignora o OIDC e tenta token — e volta a falhar.
+
+> ⚠️ **Requisito de versão:** OIDC precisa de **npm ≥ 11.5.1** e **Node ≥ 22.14.0**.
+> O Node 22 do runner do GitHub vem com npm 10.x, então o workflow roda
+> `npm install -g npm@latest` antes de publicar. Sem isso o OIDC nunca engata.
+
+> ⚠️ **Nunca** cole o token num arquivo, no `.npmrc` commitado, ou num commit.
+> Se vazar: revogue em <https://www.npmjs.com/settings/access-tokens> imediatamente.
+
+Verificar que está lá:
 
 ```bash
 gh secret list --repo marcelinosandroni/sdd-ai-stack
 # deve listar: NPM_TOKEN   Updated: <data>
 ```
+
+No caminho A (OIDC), a lista deve estar **vazia** — e é isso que faz o npm usar OIDC.
 
 ---
 
@@ -135,7 +207,8 @@ Se tudo der certo: <https://www.npmjs.com/package/create-sdd-ai-stack>
 | tag `vX.Y.Z` == `version` do `package.json` | evita publicar 0.1.18 quando a tag é 0.1.17 |
 | 10 arquivos essenciais presentes no tarball | pega `files` mal configurado no `package.json` |
 | `concurrency: release-npm` | dois publishes simultâneos não correm em paralelo |
-| `--provenance` | o pacote é assinado pelo GitHub — prova de que saiu deste repo |
+| `npm >= 11.5.1` no job de publish | sem isso o OIDC não engata (Node 22 do runner traz npm 10.x) |
+| `publishConfig.provenance` | o pacote é assinado pelo GitHub — prova de que saiu deste repo |
 
 ---
 
@@ -143,14 +216,19 @@ Se tudo der certo: <https://www.npmjs.com/package/create-sdd-ai-stack>
 
 | Sintoma | Causa | Solução |
 | --- | --- | --- |
-| `secret NPM_TOKEN não encontrado` | secret ausente no repositório | `gh secret set NPM_TOKEN` |
-| `ENEEDAUTH / need auth` | token expirado ou revogado | regere no npm e grave de novo |
-| `401 Unauthorized` | secret inválido | confira a data de expiração no npm |
+| `EOTP` / "requires a one-time password" | **2FA ligado** e o token não tem "Bypass 2FA" | seção 1 — caminho A (OIDC) ou B (bypass) |
+| `ENEEDAUTH` / "need auth" com OIDC configurado | `NODE_AUTH_TOKEN` presente no ambiente derruba o OIDC, **ou** o workflow não é o `release.yml`, **ou** o repo/owner está errado | confira os 3 campos no npmjs.com; eles são case-sensitive |
+| `ENOENT` / OIDC não engata | npm < 11.5.1 ou Node < 22.14.0 | o workflow já sobe o npm; se persistir, atualize o `node-version` |
 | `E403 Forbidden` | token sem permissão de escrita no pacote | regere com Read and write em `create-sdd-ai-stack` |
+| `E_STAGE_REQUIRED` | token é stage-only e você chamou `npm publish` | use `npm stage publish` e aprove com `npm stage approve --otp` |
+| `401 Unauthorized` | token expirado ou revogado | regere no npm e grave de novo |
 | `cannot publish over previously published version` | já existe essa versão | bump a versão (`npm run version:patch`) |
 | `tag 'v0.1.17' não bate com package.json '0.1.18'` | esqueceu de commitar o bump | `git add package.json && git commit -m "chore: v0.1.18"` |
-| `EPUBLISHCONFLICT` com provenance | token não tem permissão de provenance | use Trusted Publishing (seção 1, alternativa) |
 | `faltando no pacote: X` | `files` do `package.json` incompleto | adicione o caminho em `files` |
+
+> **Bug conhecido do npm:** token granular com "Bypass 2FA" sendo ignorado pelo npm 11.x
+> ([npm/cli#9268](https://github.com/npm/cli/issues/9268)). Se o bypass "não funcionar",
+> o caminho A (OIDC) é a saída — ele não depende de token nenhum.
 
 ---
 

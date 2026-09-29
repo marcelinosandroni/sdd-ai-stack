@@ -101,6 +101,11 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
+      # Trusted Publishing (OIDC) exige npm >= 11.5.1. O Node 22 do runner vem
+      # com o npm 10.x, então sem isto o OIDC nunca engata e o publish falha.
+      - name: Sobe o npm para a versão com suporte a OIDC
+        run: npm install -g npm@latest
+
       # o job anterior alterou package.json num checkout descartável;
       # aqui (checkout limpo) precisamos reaplicar a versão do dispatch
       - name: Aplica a versão do dispatch
@@ -122,29 +127,33 @@ jobs:
           fi
           echo "publicando create-sdd-ai-stack@$ACTUAL"
 
-      # o secret do repositório se chama NPM_TOKEN (é o nome combinado pra este projeto).
-      # Sem este guard, o npm falha com "ENEEDAUTH / need auth", que não diz
-      # NADA sobre a causa real (secret ausente) — já custou um debug.
+      # ── Autenticação: dois modos, o npm escolhe ──
+      #
+      # 1. TEMPO: o secret NPM_TOKEN. Escreve a linha de token no ~/.npmrc,
+      #    que sobrepõe o placeholder do setup-node. Token de conta SEM
+      #    "Bypass 2FA" não publica com 2FA ligado (erro EOTP).
+      #
+      # 2. SEM TOKEN: Trusted Publishing (OIDC). Não escrevemos NADA no .npmrc
+      #    e NÃO definimos NODE_AUTH_TOKEN — o npm só engata o OIDC quando o
+      #    auth está ausente. Se escrevesse uma linha vazia, ele cairia no modo
+      #    token e falharia com ENEEDAUTH.
       - name: Autentica
         run: |
           if [ -z "${NPM_TOKEN}" ]; then
-            echo "::error::secret NPM_TOKEN não encontrado neste repositório."
-            echo "::error::crie em Settings → Secrets → Actions, com escopo Read and write no pacote create-sdd-ai-stack"
-            echo "::error::ou use Trusted Publishing (OIDC) e apague o secret — ver docs/RELEASE.md"
-            exit 1
+            echo "::notice::NPM_TOKEN ausente — publicando via Trusted Publishing (OIDC)."
+            echo "::notice::configure em npmjs.com → create-sdd-ai-stack → Settings → Trusted publishing"
+            echo "::notice::(owner: marcelinosandroni · repo: sdd-ai-stack · workflow: release.yml)"
+            exit 0
           fi
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # ⚠️ NÃO defina NODE_AUTH_TOKEN aqui. Com ele presente, o npm ignora o OIDC.
       - name: Publica
         if: ${{ !inputs.dry_run }}
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
 
       - name: Simula (dry run)
         if: ${{ inputs.dry_run }}
         run: npm publish --dry-run --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
