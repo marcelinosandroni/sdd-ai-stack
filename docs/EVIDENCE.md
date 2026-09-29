@@ -39,6 +39,12 @@ inner loop.
 | `supply-chain` | a known high/critical vulnerability in the generated app |
 | `actions` | an action stuck on the deprecated Node 20 runtime |
 
+> The `quality` job pins **Node 24**, not 22. `node --test
+> --experimental-test-coverage` only aggregates coverage across the test
+> runner's child processes from Node 24 on; on 22 the summary comes out empty,
+> and an empty summary reads as zero coverage. `check-coverage` refuses to run
+> below 24, so this cannot regress silently.
+
 ## What the release guard prevents
 
 `release.yml` runs three gates nobody can skip:

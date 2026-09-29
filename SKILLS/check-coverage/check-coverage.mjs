@@ -1,14 +1,28 @@
 #!/usr/bin/env node
 /**
- * Fails when line or branch coverage drops below the floor.
+ * Fails when line, branch or function coverage drops below the floor.
  *
- * The numbers are in the file, not in someone's memory, so a careless commit
+ * The numbers live in this file, not in someone's memory, so a careless commit
  * cannot silently reduce them. Raise them when the tests get better; lower them
  * only with a reason written next to the change.
+ *
+ * REQUIRES NODE >= 24. On Node 22 the test runner spawns each test file in its
+ * own process and emits an EMPTY coverage summary — the gate would read "no
+ * data" instead of "no coverage". CI therefore pins node 24 for this job.
  */
 import { spawnSync } from "node:child_process";
 
 const FLOOR = { line: 90, branch: 70, func: 80 };
+
+const [major] = process.versions.node.split(".").map(Number);
+if (major < 24) {
+  console.error(
+    `::error::check-coverage needs Node >= 24 (running ${process.versions.node}). ` +
+      "Node 22 emits an empty coverage summary because the test runner isolates " +
+      "each file in a child process.",
+  );
+  process.exit(1);
+}
 
 const result = spawnSync(
   process.execPath,
