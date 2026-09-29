@@ -44,6 +44,32 @@ proteção de `.env`.
 
 - 20 → **22 testes** (symlink resolvendo conteúdo certo + `.gitignore` presente no app gerado)
 
+### 🐛 `publishConfig.provenance` quebrava o publish local
+
+Com 2FA ligado, o bootstrap local do pacote falhou:
+
+```
+npm error code EUSAGE
+npm error Automatic provenance generation not supported for provider: null
+```
+
+A causa era o **nosso** `package.json`: `publishConfig.provenance: true`.
+
+O npm lê `publishConfig` **com prioridade sobre flag de CLI e sobre variável de
+ambiente** — então `--provenance=false` e `NPM_CONFIG_PROVENANCE=false` **não resolvem**.
+O `publishConfig` vence os dois, e o provenance passou a ser exigido também no publish
+local, onde não existe provedor OIDC.
+
+Correção: `provenance` saiu do `publishConfig` (ficou só `access: public`) e passou a ser
+controlado **por invocação** — o workflow de release passa `--provenance` explicitamente,
+o publish local não passa nada.
+
+Três testes de regressão agora travam esse comportamento (o terceiro foi verificado
+reintroduzindo o bug de propósito):
+- `provenance` não pode estar no `publishConfig`
+- o passo `Publica` passa `--provenance`
+- o passo `Publica` não define `NODE_AUTH_TOKEN` (senão o OIDC não engata)
+
 ### 🔐 Autenticação: 2FA no npm quebrou o publish por token
 
 Com 2FA ligado na conta, `npm publish` por token passa a exigir **OTP do autenticador**,

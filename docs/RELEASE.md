@@ -57,9 +57,26 @@ Por isso o fluxo é "publica uma vez local, depois nunca mais":
 **Passo 1 — publique a primeira versão da sua máquina** (você tem o autenticador):
 
 ```bash
-npm login
-npm publish --access public --otp=123456    # ← o código do seu app autenticador
+npm publish --access public --provenance=false --otp=123456
+#                                                    ↑ código do seu app autenticador
 ```
+
+> 🚨 **Não coloque `provenance` no `publishConfig` do `package.json`.**
+> O npm lê `publishConfig` **com prioridade sobre flag de CLI e sobre variável de
+> ambiente**. Com `provenance: true` lá, *qualquer* publish fora de um CI com OIDC
+> falha com:
+>
+> ```
+> npm error code EUSAGE
+> npm error Automatic provenance generation not supported for provider: null
+> ```
+>
+> Não adianta passar `--provenance=false` nem `NPM_CONFIG_PROVENANCE=false`: o
+> `publishConfig` vence os dois. O provenance é controlado **por invocação** — o
+> workflow de release passa `--provenance` explicitamente, o publish local não passa.
+>
+> O `--provenance=false` acima é por clarity e por segurança de quem roda o comando
+> num repo onde alguém reinseriu a flag — mas o que resolve é o `package.json` estar limpo.
 
 **Passo 2 — configure o publisher confiável** em
 <https://www.npmjs.com/package/create-sdd-ai-stack/settings/trusted-publishers>:
@@ -216,6 +233,7 @@ Se tudo der certo: <https://www.npmjs.com/package/create-sdd-ai-stack>
 
 | Sintoma | Causa | Solução |
 | --- | --- | --- |
+| `EUSAGE` / "Automatic provenance generation not supported for provider: null" | `publishConfig.provenance: true` e o publish não saiu de um CI com OIDC | tire `provenance` do `publishConfig`; no local use `--provenance=false`, no CI `--provenance` |
 | `EOTP` / "requires a one-time password" | **2FA ligado** e o token não tem "Bypass 2FA" | seção 1 — caminho A (OIDC) ou B (bypass) |
 | `ENEEDAUTH` / "need auth" com OIDC configurado | `NODE_AUTH_TOKEN` presente no ambiente derruba o OIDC, **ou** o workflow não é o `release.yml`, **ou** o repo/owner está errado | confira os 3 campos no npmjs.com; eles são case-sensitive |
 | `ENOENT` / OIDC não engata | npm < 11.5.1 ou Node < 22.14.0 | o workflow já sobe o npm; se persistir, atualize o `node-version` |
@@ -237,10 +255,19 @@ Se tudo der certo: <https://www.npmjs.com/package/create-sdd-ai-stack>
 Se precisar publicar da sua máquina:
 
 ```powershell
-# PowerShell
-$env:NODE_AUTH_TOKEN = "<seu token>"
-npm publish --access public
+# PowerShell — o caminho de bootstrap (com 2FA ligado)
+npm publish --access public --provenance=false --otp=123456
 ```
+
+Sem 2FA, ou com token de bypass:
+
+```powershell
+$env:NODE_AUTH_TOKEN = "<seu token>"
+npm publish --access public --provenance=false
+```
+
+> `--provenance=false` é obrigatório em publish local. O provenance só pode ser gerado
+> dentro de um CI com OIDC (GitHub Actions, GitLab CI, CircleCI).
 
 > O `.npmrc` da raiz usa `${NODE_AUTH_TOKEN}` justamente para que o token
 > **nunca** fique gravado em arquivo.
