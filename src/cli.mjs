@@ -1,35 +1,35 @@
 import { DEFAULT_SUBMODULE_URL, DEFAULT_TEMPLATE, TEMPLATES } from "../lib/constants.mjs";
 
 export const HELP = `
-create-sdd-ai-stack — projeto pronto para agentes de IA (Spec-Driven Development)
+create-sdd-ai-stack — a project ready for AI agents (Spec-Driven Development)
 
-USO
-  npx create-sdd-ai-stack <nome-do-app> [opções]
+USAGE
+  npx create-sdd-ai-stack <project-name> [options]
 
-EXEMPLO
-  npx create-sdd-ai-stack meu-dashboard
-  npx create-sdd-ai-stack meu-dashboard --no-install
-  npx create-sdd-ai-stack meu-dashboard --submodule
-  npx create-sdd-ai-stack meu-dashboard --rules-only
+EXAMPLES
+  npx create-sdd-ai-stack my-dashboard
+  npx create-sdd-ai-stack my-dashboard --no-install
+  npx create-sdd-ai-stack my-dashboard --submodule
+  npx create-sdd-ai-stack my-dashboard --rules-only
 
-OPÇÕES
-  --template <${TEMPLATES.join("|")}|none>   Template de projeto (padrão: ${DEFAULT_TEMPLATE})
-  --rules-only            Instala só as regras (sem app), em ./SDD
-  --submodule [url]       Instala ./SDD como git submodule (padrão: repo oficial)
-  --no-install            Não roda npm install
-  --install               Roda npm install (padrão: não roda)
-  --git / --no-git        git init + primeiro commit (padrão: não roda)
+OPTIONS
+  --template <${TEMPLATES.join("|")}|none>   Project template (default: ${DEFAULT_TEMPLATE})
+  --rules-only            Install only the rules (no app), into ./SDD
+  --submodule [url]       Install ./SDD as a git submodule (default: the official repo)
+  --no-install            Do not run npm install
+  --install               Run npm install (default: does not run)
+  --git / --no-git        git init + first commit (default: does not run)
   --shortcuts <auto|stub|symlink>
-                          Como criar os atalhos da raiz (padrão: auto)
-  -y, --yes               Não pede confirmação
-  -h, --help              Esta ajuda
-  -v, --version           Versão
+                          How to create the root shortcuts (default: auto)
+  -y, --yes               No confirmation prompt
+  -h, --help              This help
+  -v, --version           Version
 
-O QUE É CRIADO
+WHAT GETS CREATED
   <app>/
-  ├── src/ …            template Next.js 16 (App Router, Tailwind v4, Biome, Vitest)
-  ├── SDD/              as regras: AGENTS.md, NEXT.md, DESIGN.md, stacks/, specs/…
-  ├── AGENTS.md         atalho → ./SDD/AGENTS.md
+  ├── src/ …            Next.js 16 template (App Router, Tailwind v4, Biome, Vitest)
+  ├── SDD/              the rules: AGENTS.md, stacks/next.md, DESIGN.md, stacks/, specs/…
+  ├── AGENTS.md         shortcut → ./SDD/AGENTS.md
   ├── CLAUDE.md, GEMINI.md, .cursorrules, .github/copilot-instructions.md …
   └── package.json
 
@@ -94,9 +94,9 @@ export function parseArgs(argv) {
       }
       case "--template": {
         const value = next();
-        if (!value) throw new Error("--template exige um valor");
+        if (!value) throw new Error("--template requires a value");
         if (value !== "none" && !TEMPLATES.includes(value)) {
-          throw new Error(`Template inválido: "${value}". Use: ${TEMPLATES.join(", ")} ou none.`);
+          throw new Error(`Invalid template: "${value}". Use: ${TEMPLATES.join(", ")} or none.`);
         }
         opts.template = value;
         break;
@@ -104,13 +104,13 @@ export function parseArgs(argv) {
       case "--shortcuts": {
         const value = next();
         if (!["auto", "stub", "symlink"].includes(value)) {
-          throw new Error(`--shortcuts inválido: "${value}". Use: auto, stub, symlink.`);
+          throw new Error(`--shortcuts invalid: "${value}". Use: auto, stub, symlink.`);
         }
         opts.shortcutMode = value;
         break;
       }
       default:
-        if (arg.startsWith("-")) throw new Error(`Opção desconhecida: ${arg}`);
+        if (arg.startsWith("-")) throw new Error(`Unknown option: ${arg}`);
         if (!opts.name) opts.name = arg;
     }
   }

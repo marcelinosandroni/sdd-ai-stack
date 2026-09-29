@@ -1,46 +1,52 @@
-# 🚀 [NOME DO SEU APP AQUI]
+# 🚀 [YOUR APP NAME]
 
-> ⚠️ **FOCA AQUI:** Substitua esse bloco pela descrição real da aplicação. O que ela faz? Qual problema resolve? Quem é o usuário final? Direto ao ponto, sem enrolação.
+> ⚠️ **FOCUS HERE:** replace this block with the real description of the application.
+> What does it do? What problem does it solve? Who is the end user? Straight to the
+> point, no waffle.
 
-## 🏗️ Stack e Arquitetura
+## 🏗️ Stack and Architecture
 
-Este projeto segue **Spec-Driven Development** com **Next.js 16** e **Vertical Slices**.
+This project follows **Spec-Driven Development** with **Next.js 16** and **vertical
+slices**.
 
-**Leia antes de tocar em uma linha de código:**
+**Read this before touching a line of code:**
 
-| Documento | Escopo |
+| Document | Scope |
 | --- | --- |
-| [🤖 AGENTS.md](./AGENTS.md) | **Leis do agente + fluxo de entrega (LEIA PRIMEIRO)** |
-| [🎯 specs/PLAN.md](./specs/PLAN.md) | A task que está sendo feita AGORA |
-| [🧠 APP-STACK.md](./APP-STACK.md) | Qual stack este app usa (ponteiro) |
-| [⚛️ NEXT.md](./NEXT.md) | Regras do Next.js 16 — **stack padrão** |
-| [🟢 NODE.md](./NODE.md) | Regras do Node.js puro (workers, cron, filas) |
-| [⚛️ REACT.md](./REACT.md) | Regras do React |
-| [🎨 DESIGN.md](./DESIGN.md) | Design system (tokens, tipografia, componentes) |
-| [🏗️ ARCHITECTURE.md](./ARCHITECTURE.md) | Arquitetura global (vertical slices) |
-| [🧱 stacks/](./stacks/README.md) | TypeScript, Tailwind, shadcn, testes, DB, IA, Git, CI |
+| [🤖 AGENTS.md](./AGENTS.md) | **Agent laws + delivery flow (READ THIS FIRST)** |
+| [🎯 specs/PLAN.md](./specs/PLAN.md) | The task being worked on RIGHT NOW |
+| [🧠 APP-STACK.md](./APP-STACK.md) | Which stack this app uses (pointer) |
+| [⚛️ stacks/next.md](./stacks/next.md) | Next.js 16 rules — **the default stack** |
+| [🟢 stacks/node.md](./stacks/node.md) | Plain Node.js (workers, cron, queues) |
+| [⚛️ stacks/react.md](./stacks/react.md) | React rules |
+| [🗣 stacks/language.md](./stacks/language.md) | Output language — **English by default** |
+| [🎨 DESIGN.md](./DESIGN.md) | Design system (tokens, typography, components) |
+| [🏗️ ARCHITECTURE.md](./ARCHITECTURE.md) | Global architecture (vertical slices) |
+| [🧱 stacks/](./stacks/README.md) | TypeScript, Tailwind, shadcn, tests, DB, AI, Git, CI |
 
-## 🛠️ Stack Principal
+## 🛠️ Main Stack
 
 - **App (fullstack):** Next.js 16 (App Router, Server Actions, Route Handlers)
-- **UI:** React 19.2 (Server Components por padrão) + Tailwind v4 + shadcn/ui
-- **Dados:** Prisma + [PostgreSQL / MySQL / SQLite]
-- **Validação:** Zod
-- **Testes:** Vitest (unit/integr) + Playwright (E2E)
-- **Backend extra (se houver):** Node.js puro para worker/cron/fila
+- **UI:** React 19.2 (Server Components by default) + Tailwind v4 + shadcn/ui
+- **Data:** Prisma + [PostgreSQL / MySQL / SQLite]
+- **Validation:** Zod
+- **Tests:** Vitest (unit/integration) + Playwright (E2E)
+- **Extra backend (if any):** plain Node.js for workers/cron/queues
 - **Deploy:** [Vercel / Node VPS / Railway]
 
 ---
 
-## 📝 Detalhes Específicos do App
+## 📝 App-Specific Details
 
-*(Escreva AQUI as regras de negócio únicas, integrações e fluxos que só este app tem. **Não deixe em branco**.)*
+*(Write HERE the business rules, integrations, and flows unique to this app. **Do not
+leave it blank.**)*
 
-- **Integrações de Terceiros:** [Ex: OpenAI, Stripe, WhatsApp API]
-- **Features Principais:**
-  - [Ex: Geração de vídeo por IA]
-  - [Ex: Dashboard de métricas executivas]
-- **Regras Críticas de Negócio:**
-  - [Ex: O usuário só pode gerar 5 vídeos por dia na conta free]
-- **Entidades de Domínio:** [Liste as entidades principais e suas invariantes]
-- **Regras de Autorização:** [Ex: Admin vê tudo; membro só o próprio workspace]
+- **Third-party integrations:** [e.g. OpenAI, Stripe, WhatsApp API]
+- **Main features:**
+  - [e.g. AI video generation]
+  - [e.g. Executive metrics dashboard]
+- **Critical business rules:**
+  - [e.g. A free user can generate at most 5 videos per day]
+- **Domain entities:** [list the main entities and their invariants]
+- **Authorisation rules:** [e.g. an admin sees everything; a member only their own
+  workspace]

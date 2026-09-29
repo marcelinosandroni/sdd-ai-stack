@@ -8,7 +8,7 @@ import path from "node:path";
 
 const raw = process.argv[2];
 if (!raw) {
-  console.error("Uso: node create-feature.mjs <nome-do-slice>");
+  console.error("Usage: node create-feature.mjs <slice-name>");
   process.exit(1);
 }
 
@@ -80,7 +80,7 @@ export function create${Pascal}UseCases(repo: I${Pascal}Repository) {
 
 write("queries.ts", `import "server-only";
 // TODO: leituras do domínio. Marque com 'use cache' quando fizer sentido.
-// Ver SDD/NEXT.md §4 e §6.
+// See SDD/stacks/next.md §4 and §6.
 
 export async function list${Pascal}() {
   // TODO
@@ -122,7 +122,7 @@ export async function create${Pascal}Action(
 }
 `);
 
-console.log(`✓ Slice criado em ${path.relative(process.cwd(), dir)}`);
+console.log(`✓ Slice created at ${path.relative(process.cwd(), dir)}`);
 console.log("  1. Implemente o repositório em infrastructure/");
 console.log("  2. Escreva o teste em tests/unit/");
-console.log("  3. Registre a task em SDD/specs/PLAN.md");
+console.log("  3. Register the task in SDD/specs/PLAN.md");

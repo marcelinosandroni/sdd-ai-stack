@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 # SKILL: create-feature
-# Cria um novo vertical slice em src/features/<nome>/ com a estrutura padrão.
+# Creates a new vertical slice in src/features/<name>/ with the standard structure.
 set -euo pipefail
 
 NAME="${1:-}"
 if [ -z "$NAME" ]; then
-  echo "Uso: create-feature.sh <nome-do-slice>"
+  echo "Usage: create-feature.sh <slice-name>"
   exit 1
 fi
 
 DIR="src/features/${NAME}"
 
 if [ -e "$DIR" ]; then
-  echo "✖ Já existe: $DIR"
+  echo "✖ Already exists: $DIR"
   exit 1
 fi
 
@@ -63,7 +63,7 @@ EOF
 cat > "$DIR/queries.ts" <<EOF
 import "server-only";
 // TODO: leituras do domínio. Marque com 'use cache' quando fizer sentido.
-// Ver SDD/NEXT.md §4 e §6.
+// See SDD/stacks/next.md §4 and §6.
 
 export async function list${NAME^}() {
   // TODO

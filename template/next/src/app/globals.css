@@ -159,7 +159,7 @@
     color: var(--color-text-primary);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
-    /* Tier 0: micro-dot grid estrutural */
+    /* Tier 0: structural micro-dot grid */
     background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size: 24px 24px;
   }
@@ -195,7 +195,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 @layer components {
-  /* Botões */
+  /* Buttons */
   .btn-primary {
     display: inline-flex;
     align-items: center;
@@ -303,7 +303,7 @@
     opacity: 1;
   }
 
-  /* Chips / badges de taxonomia */
+  /* Chips / taxonomy badges */
   .chip {
     display: inline-flex;
     align-items: center;
@@ -330,7 +330,7 @@
     color: var(--color-primary);
   }
 
-  /* Campos */
+  /* Fields */
   .field-label {
     display: block;
     margin-bottom: 0.375rem;
@@ -365,7 +365,7 @@
     border-color: var(--color-error);
   }
 
-  /* Label mono / section eyebrow */
+  /* Mono label / section eyebrow */
   .label-mono {
     font-family: var(--font-mono);
     font-size: 11px;
@@ -376,7 +376,7 @@
     color: var(--color-text-muted);
   }
 
-  /* Status dot pulsante */
+  /* Pulsing status dot */
   .status-dot {
     display: inline-block;
     width: 6px;
@@ -387,7 +387,7 @@
     animation: status-pulse 2s infinite;
   }
 
-  /* Container de largura máxima */
+  /* Max-width container */
   .container-grid {
     margin-inline: auto;
     width: 100%;

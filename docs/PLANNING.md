@@ -1,49 +1,49 @@
 # PLANNING
 
-> Espaço para **planejamento e refinamento** antes de virar task em [`../specs/PLAN.md`](../specs/PLAN.md).
-> Aqui a gente pensa. No PLAN a gente faz.
+> Space for **planning and refinement** before something becomes a task in
+> [`../specs/PLAN.md`](../specs/PLAN.md). Here we think. In the PLAN we do.
 
-## 🎯 Como este fluxo funciona
+## 🎯 How this flow works
 
 ```text
-IDEIA
+IDEA
   ↓
-BACKLOG.md          captura cru, sem compromisso
+BACKLOG.md          captures it raw, no commitment
   ↓
-REFINAMENTO         aqui em PLANNING.md: problema, escopo, decisões, riscos
+REFINEMENT         here in PLANNING.md: problem, scope, decisions, risks
   ↓
-PLAN.md             vira task, com micro-passos
+PLAN.md             becomes a task, with micro-steps
   ↓
-tasks/TASK-N.M.md   vira checklist executável
+tasks/TASK-N.M.md   becomes an executable checklist
 ```
 
-## 📄 Template de refinamento
+## 📄 Refinement template
 
-Crie `docs/planning/AAAA-MM-DD-<slug>.md` com:
+Create `docs/planning/AAAA-MM-DD-<slug>.md` with:
 
 ```markdown
-# Refinamento: [Nome]
+# Refinement: [Name]
 
-## 🧠 Problema
-Quem sofre com o quê, hoje. Sem solução — só o problema.
+## 🧠 Problem
+Who suffers from what, today. No solution — just the problem.
 
-## 🎯 Objetivo
-Uma frase. Como saberemos que deu certo (métrica).
+## 🎯 Objective
+One sentence. How we will know it worked (a metric).
 
-## 🗺️ Escopo
-- [ ] Inclui:
-- [ ] Não inclui: (o mais importante de preencher)
+## 🗺️ Scope
+- [ ] Includes:
+- [ ] Excludes: (the most valuable box to fill)
 
-## 🧩 Entidades e invariantes
-[domínio: o que existe e o que nunca pode quebrar]
+## 🧩 Entities and invariants
+[the domain: what exists and what must never break]
 
-## 🏗️ Decisões de arquitetura
-| Decisão | Alternativa | Por quê |
+## 🏗️ Architecture decisions
+| Decision | Alternative | Why |
 | --- | --- | --- |
-| [ex] Server Action | Route Handler | sem URL pública, sem boilerplate |
+| [e.g.] Server Action | Route Handler | no public URL, no boilerplate |
 
-## ⚠️ Riscos
-| Risco | Mitigação |
+## ⚠️ Risks
+| Risk | Mitigation |
 | --- | --- |
 
 ## 🪓 Task breakdown
@@ -51,18 +51,18 @@ Uma frase. Como saberemos que deu certo (métrica).
 2. TASK-1.2 — …
 
 ## ✅ Definition of Done
-- [ ] critérios mensuráveis
+- [ ] measurable criteria
 ```
 
-## 🎨 Artefatos visuais
+## 🎨 Visual artifacts
 
-Qualquer coisa que vira imagem (wireframe, fluxo, diagrama de arquitetura) vai em
-`docs/planning/assets/` e é referenciada pelo markdown. Sem commit de binário no
-`specs/` — os specs são texto, para o git diff fazer sentido.
+Anything that becomes an image (wireframe, flow, architecture diagram) goes in
+`docs/planning/assets/` and is referenced from the markdown. No binaries committed in
+`specs/` — the specs are text, so `git diff` stays meaningful.
 
-## 📌 Regras
+## 📌 Rules
 
-1. **Refinamento não vira código.** Se tem `diff` no arquivo, virou task.
-2. **Escopo negativo é obrigatório.** "O que NÃO vai entrar" evita 50% das retrabalhadas.
-3. **Toda decisão de arquitetura vira linha no `ARCHITECTURE.md`** quando estabilizar.
-4. **Se a task virar > 1h, quebramos antes de começar** (regra do `AGENTS.md`).
+1. **Refinement never becomes code.** If it has a `diff` in the file, it became a task.
+2. **Negative scope is mandatory.** "What will NOT go in" prevents half the rework.
+3. **Every architecture decision becomes a line in `ARCHITECTURE.md`** once it stabilises.
+4. **If a task grows past 1 hour, we split it before starting** (the `AGENTS.md` rule).

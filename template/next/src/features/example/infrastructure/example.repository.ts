@@ -3,8 +3,8 @@ import { randomUUID } from "node:crypto";
 import type { Example, IExampleRepository } from "../domain/IExampleRepository";
 
 /**
- * Adaptador em memória — SUBSTITUA pelo Prisma/Seu DB.
- * Ver SDD/stacks/database.md. A interface do domínio NÃO muda.
+ * In-memory adapter — REPLACE with Prisma / your DB.
+ * See SDD/stacks/database.md. The domain interface does NOT change.
  */
 export class InMemoryExampleRepository implements IExampleRepository {
   private readonly store = new Map<string, Example>();

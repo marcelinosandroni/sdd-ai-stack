@@ -1,24 +1,25 @@
 # 📥 BACKLOG
 
-> Ideias soltas, débito técnico e explorações. **Nada aqui é promessa.**
-> Quando virar trabalho de verdade, promova para `specs/PLAN.md` como task.
+> Loose ideas, tech debt, and explorations. **Nothing here is a promise.**
+> When it becomes real work, promote it to a task in `specs/PLAN.md`.
 
-## 💡 Ideias
+## 💡 Ideas
 
-- [ ] Definir regras de refinamento/produto em `docs/PLANNING.md` (artefatos visuais de planejamento)
-- [ ] Gerar PR template que force o preenchimento da evidência de teste
-- [ ] Script de release que abre PR automático do changelog
-- [ ] Storybook para os componentes de `src/shared/ui`
-- [ ] Integração com GitHub Actions para o Next.js DevTools MCP
+- [ ] Define the refinement/product artifact rules in `docs/PLANNING.md` (visually
+      rendered planning artifacts)
+- [ ] A PR template that forces the test-evidence section
+- [ ] A release script that opens an automatic changelog PR
+- [ ] A Storybook for the components in `src/shared/ui`
+- [ ] GitHub Actions integration with the Next.js DevTools MCP
 
-## 🧾 Débito técnico
+## 🧾 Tech debt
 
-_(adicionado quando algo fica pra depois — com o motivo)_
+_(added when something is pushed to "later" — with the reason)_
 
-- [ ] Nenhum registrado ainda
+- [ ] None recorded yet
 
-## 🗑️ Descartado
+## 🗑️ Rejected
 
-_(ideias que testamos e não valem o custo — registre o porquê pra não repetir)_
+_(ideas we tested and that aren't worth the cost — record why, so we don't repeat)_
 
-- _(vazio)_
+- _(empty)_

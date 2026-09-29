@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * SDD SKILL: instala o core de regras (SDD/) em um projeto EXISTENTE
+ * SDD SKILL: installs the rules core (SDD/) into an EXISTING project
  * como git submodule, e cria os atalhos na raiz apontando para ./SDD/AGENTS.md
  *
  * Uso:
- *   node SDD/SKILLS/install-submodule/install-submodule.mjs [caminho-do-projeto]
+ *   node SDD/SKILLS/install-submodule/install-submodule.mjs [project-path]
  *   node SDD/SKILLS/install-submodule/install-submodule.mjs            # usa cwd
  *   node SDD/SKILLS/install-submodule/install-submodule.mjs . --copy   # copia em vez de submodule
  */
@@ -17,7 +17,7 @@ const SDD_DIR = "SDD";
 
 const RULE_FILES = [
   "AGENTS.md", "APP.md", "APP-STACK.md", "ARCHITECTURE.md",
-  "DESIGN.md", "NEXT.md", "NODE.md", "REACT.md",
+  "DESIGN.md", "stacks/next.md", "stacks/node.md", "stacks/react.md",
 ];
 const RULE_DIRS = ["stacks", "specs", "docs", "SKILLS"];
 const SHORTCUTS = [
@@ -25,14 +25,14 @@ const SHORTCUTS = [
   ".windsurfrules", ".github/copilot-instructions.md", ".clinerules",
 ];
 
-const STUB = `# 🤖 AGENTS.md (ponteiro)
+const STUB = `# 🤖 AGENTS.md (pointer)
 
-> A fonte da verdade vive em **[SDD/AGENTS.md](./SDD/AGENTS.md)**.
+> The source of truth lives in **[SDD/AGENTS.md](./SDD/AGENTS.md)**.
 
 \`\`\`bash
-cat SDD/AGENTS.md          # leis + fluxo (LEIA PRIMEIRO)
-cat SDD/specs/PLAN.md      # a task AGORA
-cat SDD/NEXT.md            # regras da stack
+cat SDD/AGENTS.md          # laws + flow (READ FIRST)
+cat SDD/specs/PLAN.md      # the task RIGHT NOW
+cat SDD/stacks/next.md            # the stack rules
 \`\`\`
 
 > **Não edite \`SDD/\`** sem pedir ao humano.
@@ -88,32 +88,32 @@ const args = process.argv.slice(2);
 const useCopy = args.includes("--copy");
 const target = path.resolve(process.cwd(), args.find((a) => !a.startsWith("-")) ?? ".");
 
-log(`\n🤖 Instalando o core SDD em: ${target}\n`);
+log(`\n🤖 Installing the SDD core in: ${target}\n`);
 
-if (!fs.existsSync(target)) { console.error("✖ Pasta não existe."); process.exit(1); }
+if (!fs.existsSync(target)) { console.error("✖ Folder does not exist."); process.exit(1); }
 
 if (useCopy) {
-  log("📋 Modo: cópia local");
+  log("📋 Mode: local copy");
   installRulesLocally(target);
   installShortcuts(target);
 } else {
-  if (!has("git")) { console.error("✖ git não encontrado. Use --copy."); process.exit(1); }
+  if (!has("git")) { console.error("✖ git not found. Use --copy."); process.exit(1); }
   if (fs.existsSync(path.join(target, ".git")) === false) {
-    log("! Projeto não é um repositório git. Rode 'git init' antes ou use --copy.");
+    log("! The project is not a git repository. Run 'git init' first, or use --copy.");
     process.exit(1);
   }
-  log(`🔗 Modo: git submodule → ${REPO_URL}`);
+  log(`🔗 Mode: git submodule → ${REPO_URL}`);
   sh("git", ["submodule", "add", REPO_URL, SDD_DIR], target);
   installShortcuts(target);
 }
 
 log(`
-✅ Pronto.
+✅ Done.
 
-Leia agora:
+Read now:
   cat ${SDD_DIR}/AGENTS.md
   cat ${SDD_DIR}/specs/PLAN.md
 
-Atualizar regras depois:
+Update the rules later:
   git submodule update --remote --merge ${SDD_DIR}
 `);

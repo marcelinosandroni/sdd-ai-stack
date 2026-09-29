@@ -1,76 +1,77 @@
 # 📦 PRODUCT
 
-> **O que este template entrega, para quem, e o que ele NÃO entrega.**
-> Preencha a seção "Contexto do projeto consumidor" ao usar num projeto real.
+> **What this template delivers, to whom, and what it deliberately does NOT deliver.**
+> Fill in the "Consuming project context" section when you use it for real.
 
 ---
 
-## 🎯 O problema
+## 🎯 The problem
 
-Agentes de IA (Claude Code, Cursor, Copilot…) falham em projetos sem regra explícita por
-três motivos previsíveis:
+AI agents (Claude Code, Cursor, Copilot…) fail on projects without explicit rules for
+three predictable reasons:
 
-1. **Contexto demais** — leem 40 arquivos e não concluem nada.
-2. **Sem critério de parada** — voltam a inventar arquitetura e não param.
-3. **Sem memória de processo** — não sabem que estão no meio de uma task.
+1. **Too much context** — they read 40 files and conclude nothing.
+2. **No stopping criterion** — they invent architecture and never stop.
+3. **No process memory** — they don't know they are halfway through a task.
 
-Isto é **Spec-Driven Development aplicado a agentes**: a especificação vira o sistema
-nervoso, e o agente só precisa saber *onde olhar agora*.
+This is **Spec-Driven Development applied to agents**: the specification becomes the
+nervous system, and the agent only needs to know *where to look right now*.
 
-## 💡 A solução
+## 💡 The solution
 
-Um pacote com três partes:
+A package with three parts:
 
-| Parte | Problema que resolve |
+| Part | Problem it solves |
 | --- | --- |
-| **Roteador de regras** | O agente lê `AGENTS.md` → `PLAN.md` → o doc da stack. Contexto mínimo. |
-| **Template de projeto** | Não precisa inventar estrutura. Já vem com Next.js 16 + design system. |
-| **CLI + submodule** | Instalação em 1 comando, atualizável por git. |
+| **Rule router** | The agent reads `AGENTS.md` → `PLAN.md` → the stack doc. Minimum context. |
+| **Project template** | No need to invent a structure. Next.js 16 + design system, ready. |
+| **CLI + submodule** | Installation in one command, updatable through git. |
 
-## 👤 Quem é
+## 👤 Who it's for
 
--_times pequenos/médios com IA como pair programmer
-- Devs que perdem contexto no meio de refatorações longas
-- Times que querem padronizar a entrega entre humanos e agentes
+- Small and mid-size teams using AI as a pair programmer
+- Devs who lose the thread halfway through a long refactor
+- Teams that want to standardise delivery across humans *and* agents
 
-## 🧭 Princípios do design
+## 🧭 Design principles
 
-| Princípio | Consequência prática |
+| Principle | Practical consequence |
 | --- | --- |
-| **Roteador em tudo** | Todo doc tem "se você está fazendo X, leia §Y" no topo |
-| **Uma task por vez** | `PLAN.md` permite exatamente uma task `[-]` |
-| **Prova de vida** | Não marca `[x]` sem output verde do terminal colado |
-| **Vertical slices** | Um requisito = uma pasta |
-| **Tokens em um lugar só** | Design muda no `@theme`, nunca no componente |
-| **Doc perto do que edita** | `error.tsx` sem `"use client"` = build quebrado. proximity paga. |
+| **Router in everything** | Every doc opens with "if you're doing X, read §Y" |
+| **One task at a time** | `PLAN.md` allows exactly one task `[-]` |
+| **Proof of life** | No task is marked `[x]` without pasted green terminal output |
+| **Vertical slices** | One requirement = one folder |
+| **Tokens in one place** | The design changes in `@theme`, never in a component |
+| **English by default** | Cheaper in tokens, portable, and compatible with every tool |
+| **Docs near what they edit** | `error.tsx` without `"use client"` is a broken build. Proximity pays. |
 
-## 🚫 O que NÃO entregamos
+## 🚫 What we deliberately do NOT deliver
 
-- Conta de IA, prompts de modelo, gateway de LLM
-- Autenticação pronta (o ponto de extensão é `src/shared/server/auth.ts`)
-- Banco de dados configurado (o slice de exemplo usa repositório em memória)
-- Monorepo com vários pacotes
-- CI/CD pronto (as regras estão em `stacks/ci.md`)
+- An AI account, model prompts, or an LLM gateway
+- Ready-made authentication (the extension point is `src/shared/server/auth.ts`)
+- A configured database (the example slice uses an in-memory repository)
+- A multi-package monorepo
+- Turnkey CI/CD (the rules live in `stacks/ci.md`)
 
-> O que não entregamos é **deliberado**: o template que resolve um problema por vez
-> é mais útil que o que resolve tudo mal.
+> What we don't deliver is **deliberate**: a template that solves one problem well is
+> more useful than one that solves everything badly.
 
-## 🧪 Como sabemos que funciona
+## 🧪 How we know it works
 
-O template em `template/next/` passa em `typecheck`, `lint`, `test`, `test:e2e` e `build`.
-A própria CLI tem 17 testes. Bugs reais já foram encontrados por essa validação
-(veja [`CHANGELOG.md`](./CHANGELOG.md) § 🐛).
+The template in `template/next/` passes `typecheck`, `lint`, `test`, `test:e2e` and
+`build`. The CLI itself has 27 tests. Real bugs have already been found by that
+validation — see [`CHANGELOG.md`](./CHANGELOG.md) § 🐛.
 
 ---
 
-## 📝 Contexto do projeto consumidor
+## 📝 Consuming project context
 
-> Preencha ao instalar este template num projeto real.
+> Fill this in when you install this template for real.
 
-**Nome:** [SEU APP]
-**O que faz:** [1 linha]
-**Usuário final:** [quem usa]
-**Stack ativa:** Next.js 16 · [outras]
-**Integrações:** [Stripe, OpenAI, …]
-**Regras críticas de negócio:**
-- [ex: usuário free gera no máximo 5 vídeos/dia]
+**Name:** [YOUR APP]
+**What it does:** [1 line]
+**End user:** [who uses it]
+**Active stack:** Next.js 16 · [others]
+**Integrations:** [Stripe, OpenAI, …]
+**Critical business rules:**
+- [e.g. a free user generates at most 5 videos/day]

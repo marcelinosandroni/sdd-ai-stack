@@ -1,46 +1,48 @@
-# ✅ TASK [NOME DA TASK]
+# ✅ TASK [TASK NAME]
 
-> 🛑 **REGRA FIXA (Agente IA, LEIA ISSO):**
-> 1. O dev (Marcelino) tem TDAH, cegueira temporal e zero paciência pra lixo.
-> 2. Se a task inteira levar mais de 1 hora, QUEBRE EM DUAS TASKS AGORA.
-> 3. Entregue o código de um passo, espere ele testar, e SÓ DEPOIS vá para o próximo.
-> 4. O nome do arquivo da TASK deve ser sempre `TASK-PHASE-TASK` (ex: `TASK-1.1.md`).
-> 5. Manter sempre na pasta `tasks/` e subpasta da fase (`tasks/phase-1/`).
-> 6. **PROIBIDO EDITAR ACIMA DO TRAÇO.** Você SÓ tem permissão para preencher os dados ABAIXO da linha `---`.
+> 🛑 **FIXED RULE (AI agent, READ THIS):**
+> 1. The dev (Marcelino) has ADHD, time blindness, and zero patience for junk.
+> 2. If the whole task takes more than 1 hour, **SPLIT IT INTO TWO TASKS NOW.**
+> 3. Deliver one step of code, wait for it to be tested, and **only then** move to the
+>    next one.
+> 4. The task filename is always `TASK-PHASE-TASK` (e.g. `TASK-1.1.md`).
+> 5. Always keep it in `tasks/` and in the phase subfolder (`tasks/phase-1/`).
+> 6. **EDITING ABOVE THE LINE IS FORBIDDEN.** You are only allowed to fill in the data
+>    BELOW the `---` line.
 
 ---
 
-## 🎯 Objetivo da Task
+## 🎯 Task objective
 
-[1 linha. O que você quer fazer. Ex: "Criar o botão de gerar vídeo IA na feature video".]
+[1 line. What you want to do. E.g. "Create the AI video generation button in the video feature".]
 
-## 📂 Onde mexer
+## 📂 Where to touch
 
-- [ ] `src/features/[x]/application/` — regra de negócio
-- [ ] `src/features/[x]/infrastructure/` — repo/adaptador
-- [ ] `src/features/[x]/actions.ts` — entrada de escrita
-- [ ] `src/features/[x]/ui/` — componente
-- [ ] `src/app/...` — rota (só roteia)
-- [ ] `tests/` — testes
+- [ ] `src/features/[x]/application/` — business rule
+- [ ] `src/features/[x]/infrastructure/` — repository/adapter
+- [ ] `src/features/[x]/actions.ts` — write entrypoint
+- [ ] `src/features/[x]/ui/` — component
+- [ ] `src/app/...` — route (routing only)
+- [ ] `tests/` — tests
 
-## 🛠️ Micro-Passos (Checklist Dopamina)
+## 🛠️ Micro-steps (dopamine checklist)
 
-*(Passos RIDICULAMENTE pequenos. Máximo 5 por task.)*
+*(RIDICULOUSLY small steps. Max 5 per task.)*
 
-- [ ] Passo 1: [Ex: Criar a interface `IVideo.ts` em `domain/`]
-- [ ] Passo 2: [Ex: Criar o layout burro do botão]
-- [ ] Passo 3: [Ex: Ligar o botão no hook de DI]
-- [ ] Passo 4: [Ex: Teste unit do use case]
-- [ ] Passo 5: [Ex: E2E do fluxo]
+- [ ] Step 1: [e.g. Create the `IVideo.ts` interface in `domain/`]
+- [ ] Step 2: [e.g. Build the dumb button layout]
+- [ ] Step 3: [e.g. Wire the button to the action]
+- [ ] Step 4: [e.g. Unit test for the use case]
+- [ ] Step 5: [e.g. E2E for the flow]
 
-## 🏁 Definition of Done (Critério de Sucesso)
+## 🏁 Definition of Done (success criteria)
 
 - [ ] `npm run typecheck` → exit 0
-- [ ] `npm run lint` → 0 erros, 0 warnings
-- [ ] `npm run test` → todo verde
-- [ ] `npm run test:e2e` → todo verde
+- [ ] `npm run lint` → 0 errors, 0 warnings
+- [ ] `npm run test` → all green
+- [ ] `npm run test:e2e` → all green
 - [ ] `npm run build` → ✓ Compiled successfully
-- [ ] Zero `any` no código novo
-- [ ] Cores/estilos usando tokens do `DESIGN.md` (se tocou em UI)
-- [ ] Evidência verde colada na resposta
-- [ ] `specs/PLAN.md` atualizado para `[x]`
+- [ ] Zero `any` in the new code
+- [ ] Colours/styles use the [DESIGN.md](../../DESIGN.md) tokens (if you touched UI)
+- [ ] Green evidence pasted into the reply
+- [ ] `specs/PLAN.md` updated to `[x]`

@@ -1,42 +1,42 @@
 # 🧩 SKILL: install-submodule
 
-> Instala o core de regras (`SDD/`) em um projeto **existente**, cria os atalhos da raiz
-> e deixa o agente pronto para trabalhar.
+> Installs the rules core (`SDD/`) into an **existing** project, creates the root
+> shortcuts, and leaves the agent ready to work.
 
-## 🎯 Quando usar
+## 🎯 When to use it
 
-- Projeto já existe e você **não** quer o template Next.js.
-- Só quer as regras + atalhos, mantendo o código atual intocado.
+- The project already exists and you **don't** want the Next.js template.
+- You only want the rules + shortcuts, leaving the current code untouched.
 
-## ▶️ Uso
+## ▶️ Usage
 
 ```bash
-# Dentro do projeto alvo (ou passe o caminho como 1º argumento)
+# from inside the target project (or pass the path as the first argument)
 node SDD/SKILLS/install-submodule/install-submodule.mjs
 
-# Instala em outro diretório
-node SDD/SKILLS/install-submodule/install-submodule.mjs ../meu-projeto
+# install into another directory
+node SDD/SKILLS/install-submodule/install-submodule.mjs ../my-project
 
-# Sem git: cópia local
+# without git: a local copy
 node SDD/SKILLS/install-submodule/install-submodule.mjs . --copy
 ```
 
-## 📦 O que faz
+## 📦 What it does
 
-1. `git submodule add <repo> SDD` (ou cópia com `--copy`)
-2. Cria atalhos na raiz: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`,
+1. `git submodule add <repo> SDD` (or a copy with `--copy`)
+2. Creates root shortcuts: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`,
    `.windsurfrules`, `.github/copilot-instructions.md`, `.clinerules`
-   - tenta **symlink**; se o SO bloquear, grava um **stub** com o mesmo conteúdo da regra
-3. Preserva arquivos que já existam (não sobrescreve)
+   - tries a **symlink**; if the OS blocks it, writes a **stub** with the same rule text
+3. Preserves any file that already exists (never overwrites)
 
-## 🔄 Atualizar depois
+## 🔄 Updating later
 
 ```bash
 git submodule update --remote --merge SDD
-git add SDD && git commit -m "chore(sdd): atualiza core"
+git add SDD && git commit -m "chore(sdd): update core"
 ```
 
-## ⚠️ Pré-requisitos
+## ⚠️ Requirements
 
-- Projeto precisa ser um repositório git (para o modo submodule).
-- `git` no PATH.
+- The project must be a git repository (for submodule mode).
+- `git` on the PATH.

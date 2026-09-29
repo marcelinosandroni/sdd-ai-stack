@@ -1,15 +1,17 @@
 # ⚙️ CI / CD
 
-## 🚨 Regras não-negociáveis
+## 🚨 Non-negotiable rules
 
-1. **Pipeline mínimo obrigatório em todo repo:** `lint` → `typecheck` → `test` → `build`. Nessa ordem.
-2. **CI é o portão.** Se passou local mas falha no CI, o CI está certo.
-3. **Node e pnpm/npm fixados por versão** (Node 20.9+ para Next 16). Sem `latest` em CI.
-4. **Deploy só da `main`.** Feature branch nunca faz deploy de produção.
-5. **Segredo só via secrets do repositório.** Nunca no código do workflow.
-6. **Ambiente de preview por PR** é obrigatório (qualidade de review).
+1. **Minimum pipeline in every repo:** `lint` → `typecheck` → `test` → `build`, in
+   that order.
+2. **CI is the gate.** If it passed locally but fails in CI, CI is right.
+3. **Node and the package manager are pinned** (Node 20.9+ for Next 16). No `latest` in
+   CI.
+4. **Deploy only from `main`.** A feature branch never deploys to production.
+5. **Secrets only via repository secrets.** Never in the workflow file.
+6. **A preview environment per PR is mandatory** (review quality).
 
-## 🔧 Pipeline padrão (GitHub Actions)
+## 🔧 Standard pipeline (GitHub Actions)
 
 ```yaml
 # .github/workflows/ci.yml
@@ -24,36 +26,42 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
-      - run: npm ci
+        with: { node-version: 22 }
+      - run: npm install
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:unit -- --run
       - run: npm run build
 ```
 
-## 📦 Deploy (Vercel / Node)
+> ⚠️ `cache: npm` in `setup-node` **requires a committed lockfile**. This repo is a
+> zero-dependency CLI, so it has none — leave the cache off. See
+> [../docs/RELEASE.md](../docs/RELEASE.md).
 
-- **Vercel:** conecte o repo. Preview por PR é automático. `SDD/` é ignorado no build.
-- **Node (workers/CLI):** build no CI, artefato, deploy no `main` com approval manual.
+## 📦 DEPLOY (Vercel / Node)
 
-## 🔒 Segurança no pipeline
+- **Vercel:** connect the repo. PR previews are automatic. `SDD/` is ignored in the
+  build.
+- **Node (workers/CLI):** build in CI, artefact, deploy from `main` with manual
+  approval.
 
-- `npm audit --production` como gate de aviso (não bloqueia minor).
-- Dependabot ativo.
-- Nunca logar `.env`/tokens no output do job.
+## 🔒 PIPELINE SECURITY
 
-## 🏷️ Release
+- `npm audit --production` as a warning gate (it must not block on minors).
+- Dependabot enabled.
+- Never print `.env`/tokens in job output.
 
-1. Fechou fase → tag SemVer (`vX.Y.Z`).
-2. CI roda em tag → build de release.
-3. Changelog atualizado ([../docs/CHANGELOG.md](../docs/CHANGELOG.md)).
+## 🏷️ RELEASE
 
-## 🚫 Anti-padrões
+1. Phase closed → SemVer tag (`vX.Y.Z`).
+2. CI runs on the tag → release build.
+3. Changelog updated ([../docs/CHANGELOG.md](../docs/CHANGELOG.md)).
+
+## 🚫 Anti-patterns
 
 | ❌ | ✅ |
 | --- | --- |
-| `continue-on-error: true` em tudo | Deixar o gate barrar de verdade |
-| `npm install` (sem lock) em CI | `npm ci` |
-| Deploy manual sem aprovação | Preview + approval em main |
-| Rodar build sem typecheck | build sempre depois de typecheck |
+| `continue-on-error: true` on everything | let the gate actually block |
+| `npm install` (no lock) in CI | `npm ci` when a lock exists |
+| Manual deploy with no approval | preview + approval on main |
+| Building without typechecking | build always after typecheck |

@@ -1,33 +1,39 @@
-# 🧱 STACKS — REGRAS POR LINGUAGEM E FERRAMENTA
+# 🧱 STACKS — RULES BY LANGUAGE AND TOOL
 
-> **Leia o índice, depois abra só o arquivo do que você está tocando.**
-> Stack padrão do projeto: **[Next.js](../NEXT.md)**. React e Node são complementos.
+> **Read the index, then open only the file for what you are touching.**
+> Default stack: **[Next.js](./next.md)**. React and Node are complements.
 
-## 📇 Índice
+## 📇 Index
 
-| Arquivo | Quando abrir |
+| File | When to open it |
 | --- | --- |
-| [typescript.md](./typescript.md) | Tipos, interfaces, genéricos, strict mode |
-| [tailwind.md](./tailwind.md) | Estilo, tokens, classes utilitárias |
-| [shadcn.md](./shadcn.md) | Componentes de UI, primitives, variações |
-| [testing.md](./testing.md) | Unit, integração, E2E, cobertura |
-| [database.md](./database.md) | Prisma, migrations, queries, transações |
-| [ai.md](./ai.md) | Integrações com LLM/IA, streaming, tokens |
+| [next.md](./next.md) | Next.js 16 — **the default stack** (App Router, RSC, Cache Components) |
+| [node.md](./node.md) | Plain Node.js — workers, cron, queues, batch scripts |
+| [react.md](./react.md) | React — hooks, state, composition (server-first) |
+| [typescript.md](./typescript.md) | Types, interfaces, generics, strict mode |
+| [tailwind.md](./tailwind.md) | Styling, tokens, utility classes |
+| [shadcn.md](./shadcn.md) | UI components, primitives, variants |
+| [testing.md](./testing.md) | Unit, integration, E2E, coverage |
+| [database.md](./database.md) | Prisma, migrations, queries, transactions |
+| [ai.md](./ai.md) | LLM/AI integrations, streaming, tokens |
+| [language.md](./language.md) | 🗣 Output language — **English by default** |
+| [agent-tooling.md](./agent-tooling.md) | 🤖 Companion tools that cut tokens, with trade-offs |
 | [git.md](./git.md) | Commits, branches, PRs, releases |
 | [ci.md](./ci.md) | GitHub Actions, lint, typecheck, deploy |
 
-## 🎯 Módulos de regra fora desta pasta
+## 🎯 Modules of rule outside this folder
 
-| Arquivo | Escopo |
+| File | Scope |
 | --- | --- |
-| [../NEXT.md](../NEXT.md) | Next.js 16 (App Router, RSC, Cache Components) — **PADRÃO** |
-| [../NODE.md](../NODE.md) | Node.js puro (workers, cron, filas, scripts) |
-| [../REACT.md](../REACT.md) | React (hooks, estado, composição) |
-| [../DESIGN.md](../DESIGN.md) | Design system completo (tokens, tipografia, componentes) |
-| [../ARCHITECTURE.md](../ARCHITECTURE.md) | Arquitetura global e vertical slices |
+| [../AGENTS.md](../AGENTS.md) | Agent laws + delivery flow — **read this first** |
+| [../APP.md](../APP.md) | What this app is |
+| [../APP-STACK.md](../APP-STACK.md) | Which stack this app uses (pointer) |
+| [../ARCHITECTURE.md](../ARCHITECTURE.md) | Global architecture and vertical slices |
+| [../DESIGN.md](../DESIGN.md) | Design system (tokens, typography, components) |
+| [../specs/PLAN.md](../specs/PLAN.md) | The task in flight right now |
 
-## 🚫 Regra de ouro
+## 🚫 Golden rule
 
-> **Antes de instalar qualquer lib, prove que o nativo resolve.**
-> `fetch` > axios. `<dialog>` > lib de modal. CSS > tailwind plugin.
-> Se a lib entrar, ela entra com uma nota em `docs/CHANGELOG.md` explicando o porquê.
+> **Before installing any library, prove the native thing is not enough.**
+> `fetch` beats axios. `<dialog>` beats a modal library. CSS beats a Tailwind plugin.
+> If a library goes in, it goes in with a note in `docs/CHANGELOG.md` explaining why.

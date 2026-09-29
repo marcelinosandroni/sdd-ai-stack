@@ -1,332 +1,328 @@
-# 🚀 RELEASE — publicar no npm
+# 🚀 RELEASE — publishing to npm
 
-> **Fluxo único:** você versiona e cria a tag localmente; o **GitHub Actions publica**.
-> Não existe `npm publish` manual neste projeto — é proposital, para não ter dois caminhos.
+> **One path:** you version locally, GitHub Actions publishes.
+> There is no manual `npm publish` in this project — on purpose, so there is never two
+> ways to do it.
 
 ```text
-npm run version:minor   →  0.1.17 → 0.2.0 (commita + cria tag v0.2.0)
-git push origin main --tags  →  dispara o workflow Release  →  publica no npm
+npm run version:minor   →  0.1.17 → 0.2.0 (commits + creates tag v0.2.0)
+git push origin main
+git push origin --tags  →  fires the Release workflow  →  publishes
 ```
 
 ---
 
-## 0. Como versionar (estamos em `0.x`)
+## 0. How to version (we are on `0.x`)
 
-O projeto está em **`0.1.x`** de propósito: as regras e o template ainda vão mudar com base
-no uso real. Leitura das versões:
+The project is on **`0.1.x`** on purpose: the rules and the template will still change
+with real usage. Reading the versions:
 
-| Mudança | Bump | Exemplo | Version bump |
+| Change | Bump | Example | Command |
 | --- | --- | --- | --- |
-| Correção de bug, ajuste de doc, nova regra pontual | **patch** | `0.1.17 → 0.1.18` | `npm run version:patch` |
-| Regra nova, feature nova no template, Breaking em config | **minor** | `0.1.17 → 0.2.0` | `npm run version:minor` |
-| Reescritura de regra estrutural (ex.: Next 16 → 17) | **major** | `0.1.17 → 1.0.0` | `npm run version:major` |
+| Bug fix, doc fix, one new rule | **patch** | `0.1.17 → 0.1.18` | `npm run version:patch` |
+| New rule, new template feature, breaking config change | **minor** | `0.1.17 → 0.2.0` | `npm run version:minor` |
+| Structural rewrite of the rules (e.g. Next 16 → 17) | **major** | `0.1.17 → 1.0.0` | `npm run version:major` |
 
-> Enquanto em `0.x`, **o minor é o breaking change**. Mudar a estrutura das regras ou
-> do template sobe o minor, não o patch. O `major` fica reservado para quando a interface
-> estabilizar e a gente for para `1.0.0`.
+> While on `0.x`, **the minor is the breaking change.** Changing the shape of the rules
+> or the template bumps the minor, not the patch. `major` stays reserved for when the
+> interface stabilises and we move to `1.0.0`.
 
 ---
 
-## 1. Autenticação — leia isto antes de criar qualquer token
+## 1. Authentication — read this before creating any token
 
-> 🚨 **Com 2FA ligado na conta npm, um token comum NÃO publica.**
-> O CI não tem como digitar o código do autenticador, então o publish falha com:
+> 🚨 **With 2FA on the npm account, an ordinary token will NOT publish.**
+> CI cannot type the authenticator code, so the publish fails with:
 >
 > ```
 > npm error code EOTP
 > npm error This operation requires a one-time password from your authenticator.
 > ```
 >
-> Isso **não é bug do workflow** — é o npm exigindo presença humana. Existem três
-> saídas, e só uma é boa.
+> This is **not a workflow bug** — npm is demanding human presence. There are three
+> exits, and only one is good.
 
-| Caminho | Esforço | Situação |
+| Path | Effort | Status |
 | --- | --- | --- |
-| **A. Bootstrap local + OIDC** | ~5 min, uma vez | ✅ **Recomendado.** Sem token para sempre |
-| **B. Token com "Bypass 2FA"** | ~2 min | ⚠️ Funciona hoje, **deprecado em jan/2027** |
-| **C. Token stage-only** | ~10 min | 🛡️ Mais seguro, exige aprovar cada release |
+| **A. Local bootstrap + OIDC** | ~5 min, once | ✅ **Recommended.** No token, ever again |
+| **B. Token with "Bypass 2FA"** | ~2 min | ⚠️ Works today, **deprecated Jan 2027** |
+| **C. Stage-only token** | ~10 min | 🛡️ Safest, requires approving each release |
 
-### 1.1 O `404 Not Found` na primeira publicação é enganoso
+### 1.0 The misleading `404 Not Found` on a first publish
 
 > ```
 > npm error code E404
 > npm error 404 Not Found - PUT https://registry.npmjs.org/create-sdd-ai-stack - Not found
 > ```
 
-**Não é preciso "criar" o pacote antes.** O `npm publish` cria o pacote sozinho na
-primeira publicação. O 404 nesse PUT significa que **o registry não reconheceu você
-como autorizado** — e o npm não quer confirmar se o nome existe para quem não tem
-acesso.
+**You do not need to "create" the package first.** `npm publish` creates it by itself on
+the first publish. This 404 on PUT means **the registry did not recognise you as
+authorised** — npm will not confirm whether a name exists to someone without access.
 
-A causa mais comum (e a que aconteceu aqui) é o **`.npmrc` do projeto** declarar um
-`_authToken` que sobrescreve o seu:
+The usual cause (and the one that happened here) is the **project `.npmrc`** declaring
+an `_authToken` that shadows yours:
 
 ```text
-projeto  >  ~/.npmrc (usuário)  >  npm global
+project  >  ~/.npmrc (user)  >  npm global
 ```
 
-Com `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` no `.npmrc` do projeto e a
-variável vazia, o token efetivo fica **vazio** e o sintoma é dourado:
+With `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` in the project `.npmrc` and
+the variable empty, the effective token is **empty** — and the symptom looks nothing
+like "auth is broken":
 
-| Comando | Com token válido | Com token zerado |
+| Command | Valid token | Zeroed token |
 | --- | --- | --- |
-| `npm whoami` | `seu-usuario` | `401 Unauthorized` |
-| `npm publish` (1ª vez) | cria o pacote | `404 Not Found` no PUT |
+| `npm whoami` | `your-username` | `401 Unauthorized` |
+| `npm publish` (first time) | creates the package | `404 Not Found` (PUT) |
 
-**Diagnóstico em 5 segundos:**
+**Five-second diagnosis:**
 
 ```bash
-npm whoami                      # tem que imprimir seu usuário, não 401
-npm config get "//registry.npmjs.org/:_authToken"   # tem que ter tamanho > 1
+npm whoami                                            # must print your username, not 401
+npm config get "//registry.npmjs.org/:_authToken"    # must have length > 1
 ```
 
-A correção é **não declarar `_authToken` no `.npmrc` do projeto** — só `registry=`.
-A auth vem do `~/.npmrc` (local) ou da variável `NODE_AUTH_TOKEN` (CI). Há um teste
-que trava isso: `publish: o .npmrc do projeto NÃO pode declarar _authToken`.
+The fix is **not to declare `_authToken` in the project `.npmrc`** — only `registry=`.
+Auth comes from `~/.npmrc` (local) or the `NODE_AUTH_TOKEN` environment variable (CI).
+A test locks this in: `publish: the project .npmrc must not declare _authToken`.
 
-### 🏆 Caminho A — bootstrap local + Trusted Publishing (OIDC)
+### 1.1 🏆 Path A — local bootstrap + Trusted Publishing (OIDC)
 
-O OIDC é a solução definitiva: credencial de vida curta, assinada pelo GitHub,
-**sem token nenhum**. Mas tem uma limitação: **OIDC não publica a primeira versão** de um
-pacote — o pacote precisa existir no npm antes de você configurar o publisher.
+OIDC is the durable answer: short-lived, GitHub-signed credentials, **no token at
+all**. It has one limitation: **OIDC cannot publish a package's first version** — the
+package must already exist on npm before you can configure the publisher.
 
-Por isso o fluxo é "publica uma vez local, depois nunca mais":
+Hence "publish once locally, then never again":
 
-**Passo 1 — publique a primeira versão da sua máquina** (você tem o autenticador):
+**Step 1 — publish the first version from your machine** (you have the authenticator):
 
 ```bash
 npm publish --access public --provenance=false --otp=123456
-#                                                    ↑ código do seu app autenticador
+#                                                    ↑ code from your authenticator app
 ```
 
-> 🚨 **Não coloque `provenance` no `publishConfig` do `package.json`.**
-> O npm lê `publishConfig` **com prioridade sobre flag de CLI e sobre variável de
-> ambiente**. Com `provenance: true` lá, *qualquer* publish fora de um CI com OIDC
-> falha com:
+> 🚨 **Never put `provenance` in the `package.json` `publishConfig`.**
+> npm reads `publishConfig` **with higher precedence than CLI flags and than environment
+> variables**. With `provenance: true` there, *any* publish outside a CI with OIDC fails:
 >
 > ```
 > npm error code EUSAGE
 > npm error Automatic provenance generation not supported for provider: null
 > ```
 >
-> Não adianta passar `--provenance=false` nem `NPM_CONFIG_PROVENANCE=false`: o
-> `publishConfig` vence os dois. O provenance é controlado **por invocação** — o
-> workflow de release passa `--provenance` explicitamente, o publish local não passa.
->
-> O `--provenance=false` acima é por clarity e por segurança de quem roda o comando
-> num repo onde alguém reinseriu a flag — mas o que resolve é o `package.json` estar limpo.
+> Passing `--provenance=false` and `NPM_CONFIG_PROVENANCE=false` do **not** help: the
+> `publishConfig` beats both. Provenance is controlled **per invocation** — the release
+> workflow passes `--provenance` explicitly, the local publish does not.
 
-**Passo 2 — configure o publisher confiável** em
+**Step 2 — configure the trusted publisher** at
 <https://www.npmjs.com/package/create-sdd-ai-stack/settings/trusted-publishers>:
 
-| Campo | Valor |
+| Field | Value |
 | --- | --- |
 | Provider | GitHub Actions |
 | Organization or user | `marcelinosandroni` |
 | Repository | `sdd-ai-stack` |
-| Workflow filename | `release.yml` (só o nome, com `.yml`) |
+| Workflow filename | `release.yml` (the name only, with `.yml`) |
 | Allowed actions | `npm publish` |
 
-> ⚠️ O npm **não valida** essa configuração ao salvar. Errou o nome do workflow ou do
-> repo, o erro só aparece na hora de publicar. Tudo é **case-sensitive**.
+> ⚠️ npm **does not validate** this configuration when you save it. Get the workflow or
+> the owner wrong and the error only appears at publish time. Everything is
+> **case-sensitive**.
 
-**Passo 3 — apague o secret** (deixe o OIDC Assumir):
+**Step 3 — delete the secret** (let OIDC take over):
 
 ```bash
 gh secret delete NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
 ```
 
-Pronto. Da próxima vez em diante:
+From then on:
 
 ```bash
 npm run version:patch && git push origin main && git push origin --tags
 ```
 
-Publica sozinho, com provenance, **sem token nenhum**. Pode até desligar
-"Require two-factor authentication" do pacote depois — o OIDC não depende dele.
+It publishes on its own, with provenance, **with no token at all**. You can even turn
+off "Require two-factor authentication" for the package afterwards — OIDC does not
+depend on it.
 
-### ⚠️ Caminho B — token com "Bypass 2FA" (temporário)
+### 1.2 ⚠️ Path B — token with "Bypass 2FA" (a bridge, not a destination)
 
-Se quiser o CI funcionando **hoje** sem mexer na máquina:
+If you want CI working **today** without touching your machine:
 
-Em <https://www.npmjs.com/settings/access-tokens>, crie um token granular com:
+At <https://www.npmjs.com/settings/access-tokens>, create a granular token with:
 
-| Campo | Valor |
+| Field | Value |
 | --- | --- |
 | Permissions | **Read and write** |
-| Bypass 2FA | ✅ **marcado** |
+| Bypass 2FA | ✅ **checked** |
 | Package | `create-sdd-ai-stack` |
 
 ```bash
 gh secret set NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
 ```
 
-> **Só como ponte.** O npm avisa: *"a publicação direta com token granular será removida
-> em janeiro de 2027"*. Além disso, há bug aberto ([npm/cli#9268](https://github.com/npm/cli/issues/9268))
-> onde "Bypass 2FA" é ignorado pelo npm 11.x. Trate como prazo, não como solução.
+> **Bridge only.** npm warns: *"the ability to publish new package versions directly
+> with a granular access token will be removed in January 2027"*. And there is an open
+> bug ([npm/cli#9268](https://github.com/npm/cli/issues/9268)) where "Bypass 2FA" is
+> ignored by npm 11.x. Treat it as a deadline, not a solution.
 
-### 🛡️ Caminho C — stage-only (mais seguro, mais atrito)
+### 1.3 🛡️ Path C — stage-only (safest, most friction)
 
-Token **Read and write (stage only)**: o CI sobe a versão, mas ela **não vai ao ar**.
-Um maintainer precisa aprovar com 2FA:
+A **Read and write (stage only)** token: CI uploads the version but it **does not go
+live**. A maintainer has to approve it with 2FA:
 
 ```bash
-npm stage publish          # no CI, com o token stage-only
-npm stage list             # ver o que está pendente
+npm stage publish          # in CI, with the stage-only token
+npm stage list             # see what is pending
 npm stage approve --otp=123456
 ```
 
-Combine com `Require two-factor authentication and disallow tokens` no
-[package settings](https://www.npmjs.com/package/create-sdd-ai-stack/settings): token
-vazado não consegue publicar nada sozinho. É a postura máxima de segurança — ao preço
-de uma aprovação manual por release.
+Combine it with `Require two-factor authentication and disallow tokens` in
+[package settings](https://www.npmjs.com/package/create-sdd-ai-stack/settings): a leaked
+token then cannot publish anything on its own. Maximum security posture, at the price of
+one manual approval per release.
 
 ---
 
-## 2. Como o workflow decide o modo
+## 2. How the workflow picks the mode
 
-Ele não precisa saber: **o npm escolhe sozinho**.
+It doesn't need to: **npm picks by itself.**
 
-| `NPM_TOKEN` no repo | O que o workflow faz | Como o npm publica |
+| `NPM_TOKEN` in the repo | What the workflow does | How npm publishes |
 | --- | --- | --- |
-| **definido** | escreve a linha de token no `~/.npmrc` | modo token |
-| **ausente** | não escreve **nada** no `.npmrc` | OIDC |
+| **defined** | injects `NODE_AUTH_TOKEN` into the env | token mode |
+| **absent** | writes **nothing** | **OIDC** |
 
-> ⚠️ **O passo `Publica` não define `NODE_AUTH_TOKEN` de propósito.** O npm só engata o
-> OIDC quando o auth está **ausente**. Se `NODE_AUTH_TOKEN` estiver no ambiente, ele
-> ignora o OIDC e tenta token — e volta a falhar.
+> ⚠️ **The `Publica` step deliberately does not define `NODE_AUTH_TOKEN`.** npm only
+> engages OIDC when auth is **absent**. With the variable in the environment it ignores
+> OIDC and tries a token — and fails again.
 
-> ⚠️ **Requisito de versão:** OIDC precisa de **npm ≥ 11.5.1** e **Node ≥ 22.14.0**.
-> O Node 22 do runner do GitHub vem com npm 10.x, então o workflow roda
-> `npm install -g npm@latest` antes de publicar. Sem isso o OIDC nunca engata.
+> ⚠️ **Version requirement:** OIDC needs **npm ≥ 11.5.1** and **Node ≥ 22.14.0**. The
+> GitHub runner's Node 22 ships npm 10.x, so the workflow runs
+> `npm install -g npm@latest` before publishing. Without it OIDC never engages.
 
-> ⚠️ **Nunca** cole o token num arquivo, no `.npmrc` commitado, ou num commit.
-> Se vazar: revogue em <https://www.npmjs.com/settings/access-tokens> imediatamente.
+> ⚠️ **Never** paste a token into a file, into the committed `.npmrc`, or into a commit.
+> If it leaks: revoke at <https://www.npmjs.com/settings/access-tokens> immediately.
 
-Verificar que está lá:
+Verifying it is there:
 
 ```bash
 gh secret list --repo marcelinosandroni/sdd-ai-stack
-# deve listar: NPM_TOKEN   Updated: <data>
+# should list: NPM_TOKEN   Updated: <date>
 ```
 
-No caminho A (OIDC), a lista deve estar **vazia** — e é isso que faz o npm usar OIDC.
+On path A (OIDC) the list must be **empty** — that is what makes npm use OIDC.
 
 ---
 
-## 3. Testar sem publicar (recomendado na primeira vez)
+## 3. Testing without publishing (do this first)
 
-Depois que o workflow estiver na `main`, valide sem queimar versão:
+Once the workflow is on `main`, validate without burning a version:
 
 ```bash
 gh workflow run release.yml -f version=9.9.9 -f dry_run=true
 gh run watch
 ```
 
-Isso roda testes, checa links, confere o conteúdo do tarball, e faz
-`npm publish --dry-run`. **Nada é publicado.**
+This runs the tests, checks the links, verifies the tarball contents, and runs
+`npm publish --dry-run`. **Nothing is published.**
 
 ---
 
-## 4. Publicar de verdade
+## 4. Publishing for real
 
 ```bash
-# 1. main atualizada e CI verde
+# 1. main is up to date and CI is green
 git checkout main && git pull
 
-# 2. bump de versão (commita o package.json e cria a tag)
-npm run version:patch    # ou version:minor / version:major
+# 2. bump the version (commits package.json and creates the tag)
+npm run version:patch    # or version:minor / version:major
 
-# 3. manda código e tag
+# 3. push code and tag
 git push origin main
 git push origin --tags
 ```
 
-O workflow dispara com o push da tag. Acompanhe:
+The workflow fires on the tag push. Watch it:
 
 ```bash
 gh run list
 gh run watch
 ```
 
-Se tudo der certo: <https://www.npmjs.com/package/create-sdd-ai-stack>
+If all goes well: <https://www.npmjs.com/package/create-sdd-ai-stack>
 
 ---
 
-## 5. O que o workflow checa antes de publicar
+## 5. What the workflow checks before publishing
 
-| Guarda | Motivo |
+| Guard | Why |
 | --- | --- |
-| `npm test` (22 testes) | nunca publica com teste vermelho |
-| `node SKILLS/check-docs/check-docs.mjs` | nenhuma regra apontando pra arquivo morto |
-| tag `vX.Y.Z` == `version` do `package.json` | evita publicar 0.1.18 quando a tag é 0.1.17 |
-| 10 arquivos essenciais presentes no tarball | pega `files` mal configurado no `package.json` |
-| `concurrency: release-npm` | dois publishes simultâneos não correm em paralelo |
-| `npm >= 11.5.1` no job de publish | sem isso o OIDC não engata (Node 22 do runner traz npm 10.x) |
-| `publishConfig.provenance` | o pacote é assinado pelo GitHub — prova de que saiu deste repo |
+| `npm test` (27 tests) | never publish on a red test |
+| `node SKILLS/check-docs/check-docs.mjs` | no rule pointing at a dead file |
+| tag `vX.Y.Z` == `version` in `package.json` | avoids publishing 0.1.18 when the tag is 0.1.17 |
+| 10 essential files present in the tarball | catches a misconfigured `files` array |
+| `npm ≥ 11.5.1` in the publish job | otherwise OIDC never engages (Node 22 ships npm 10.x) |
+| `concurrency: release-npm` | two publishes never run in parallel |
+| `publishConfig.provenance` | the package is GitHub-signed — proof it came from this repo |
 
 ---
 
-## 6. Problemas comuns
+## 6. Common problems
 
-| Sintoma | Causa | Solução |
+| Symptom | Cause | Fix |
 | --- | --- | --- |
-| `E404` / "PUT ... Not Found" **na primeira publicação** | **não é o pacote ausente** — é o `.npmrc` do projeto sombreando o seu token, deixando a auth vazia | veja §1.1 |
-| `EUSAGE` / "Automatic provenance generation not supported for provider: null" | `publishConfig.provenance: true` e o publish não saiu de um CI com OIDC | tire `provenance` do `publishConfig`; no local use `--provenance=false`, no CI `--provenance` |
-| `EOTP` / "requires a one-time password" | **2FA ligado** e o token não tem "Bypass 2FA" | seção 1 — caminho A (OIDC) ou B (bypass) |
-| `ENEEDAUTH` / "need auth" com OIDC configurado | `NODE_AUTH_TOKEN` presente no ambiente derruba o OIDC, **ou** o workflow não é o `release.yml`, **ou** o repo/owner está errado | confira os 3 campos no npmjs.com; eles são case-sensitive |
-| `ENOENT` / OIDC não engata | npm < 11.5.1 ou Node < 22.14.0 | o workflow já sobe o npm; se persistir, atualize o `node-version` |
-| `E403 Forbidden` | token sem permissão de escrita no pacote | regere com Read and write em `create-sdd-ai-stack` |
-| `E_STAGE_REQUIRED` | token é stage-only e você chamou `npm publish` | use `npm stage publish` e aprove com `npm stage approve --otp` |
-| `401 Unauthorized` | token expirado ou revogado | regere no npm e grave de novo |
-| `cannot publish over previously published version` | já existe essa versão | bump a versão (`npm run version:patch`) |
-| `tag 'v0.1.17' não bate com package.json '0.1.18'` | esqueceu de commitar o bump | `git add package.json && git commit -m "chore: v0.1.18"` |
-| `faltando no pacote: X` | `files` do `package.json` incompleto | adicione o caminho em `files` |
+| `EOTP` / "requires a one-time password" | **2FA on** and the token lacks "Bypass 2FA" | §1 — path A (OIDC) or B (bypass) |
+| `E404` / "PUT ... Not Found" **on a first publish** | **not a missing package** — the project `.npmrc` shadowed your token and zeroed auth | §1.0 |
+| `EUSAGE` / "Automatic provenance generation not supported for provider: null" | `publishConfig.provenance: true` outside a CI with OIDC | remove `provenance` from `publishConfig`; local uses `--provenance=false`, CI uses `--provenance` |
+| `ENEEDAUTH` / "need auth" with OIDC configured | `NODE_AUTH_TOKEN` present in the env kills OIDC, **or** the workflow isn't `release.yml`, **or** the repo/owner is wrong | check the 3 fields on npmjs.com; they are case-sensitive |
+| `ENOENT` / OIDC doesn't engage | npm < 11.5.1 or Node < 22.14.0 | the workflow already upgrades npm; if it persists, raise `node-version` |
+| `E403 Forbidden` | token lacks write access to the package | recreate with Read and write on `create-sdd-ai-stack` |
+| `E_STAGE_REQUIRED` | stage-only token and you called `npm publish` | use `npm stage publish` and approve with `npm stage approve --otp` |
+| `401 Unauthorized` | token expired or revoked | recreate at npm and save it again |
+| `cannot publish over previously published version` | that version exists | bump the version (`npm run version:patch`) |
+| `tag 'v0.1.17' does not match package.json '0.1.18'` | forgot to commit the bump | `git add package.json && git commit -m "chore: v0.1.18"` |
+| `missing from the tarball: X` | `files` in `package.json` is incomplete | add the path to `files` |
 
-> **Bug conhecido do npm:** token granular com "Bypass 2FA" sendo ignorado pelo npm 11.x
-> ([npm/cli#9268](https://github.com/npm/cli/issues/9268)). Se o bypass "não funcionar",
-> o caminho A (OIDC) é a saída — ele não depende de token nenhum.
+> **Known npm bug:** a granular token with "Bypass 2FA" being ignored by npm 11.x
+> ([npm/cli#9268](https://github.com/npm/cli/issues/9268)). If the bypass "doesn't work",
+> path A (OIDC) is the way out — it depends on no token at all.
 
 ---
 
-## 7. Publicar localmente (escape, não é o caminho padrão)
-
-Se precisar publicar da sua máquina:
+## 7. Publishing locally (escape hatch, not the default path)
 
 ```powershell
-# PowerShell — o caminho de bootstrap (com 2FA ligado)
+# the bootstrap path (with 2FA on)
 npm publish --access public --provenance=false --otp=123456
 ```
 
-Sem 2FA, ou com token de bypass:
+Without 2FA, or with a bypass token:
 
 ```powershell
-$env:NODE_AUTH_TOKEN = "<seu token>"
+$env:NODE_AUTH_TOKEN = "<your token>"
 npm publish --access public --provenance=false
 ```
 
-> `--provenance=false` é obrigatório em publish local. O provenance só pode ser gerado
-> dentro de um CI com OIDC (GitHub Actions, GitLab CI, CircleCI).
+> `--provenance=false` is mandatory for a local publish. Provenance can only be
+> generated inside a CI with OIDC (GitHub Actions, GitLab CI, CircleCI).
 
-> O `.npmrc` da raiz usa `${NODE_AUTH_TOKEN}` justamente para que o token
-> **nunca** fique gravado em arquivo.
-
-E confira antes:
+Check before you go:
 
 ```bash
-npm run check:pack   # mostra exatamente o que vai subir
+npm run check:pack   # shows exactly what will be uploaded
 ```
 
 ---
 
-## 8. Checklist antes de apertar o botão
+## 8. Checklist before you press the button
 
-- [ ] `npm test` verde
-- [ ] `main` sincronizada com `origin`
-- [ ] `NPM_TOKEN` existe e não expirou
-- [ ] `npm run check:pack` mostra os arquivos esperados
-- [ ] `version:patch|minor|major` escolhido conscientemente
-- [ ] `git push origin main` e `git push origin --tags` feitos
+- [ ] `npm test` green
+- [ ] `main` synced with `origin`
+- [ ] `NPM_TOKEN` exists and has not expired (or you're on path A and it must NOT exist)
+- [ ] `npm run check:pack` shows the expected files
+- [ ] `version:patch|minor|major` chosen deliberately
+- [ ] `git push origin main` and `git push origin --tags` done
 
-> **Publicar é irreversível.** Versão publicada não pode ser removida (só despublicada,
-> e o npm nunca reutiliza o número). A tag também não deve ser deletada.
+> **Publishing is irreversible.** A published version cannot be removed (only
+> unpublished), and npm never reuses a number. Don't delete the tag either.

@@ -6,204 +6,144 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
-## [0.1.17] — 2026-09-29
+## [0.1.18] — 2026-09-29
 
-> **Primeira versão publicada.** O projeto segue em `0.x` de propósito: a API de
-> regras e o template ainda vão mudar com base no uso real. `0.y.z` comunica
-> isso sem versionar breaking changes a cada duas semanas.
+> Move every stack document into `stacks/`, make English the default output language,
+> and document the agent tooling worth adopting.
 
-### 🔒 Publicação no npm
+### 📁 Every stack file now lives in `stacks/`
 
-- `.github/workflows/release.yml` — publica no push de tag `v*` (automático), com
-  `workflow_dispatch` para disparo manual e `dry_run` para validar sem queimar versão
-- Secret do repositório: **`NPM_TOKEN`** (mapeado para `NODE_AUTH_TOKEN` pelo npm)
-- `.npmrc` commitado apenas com `${NODE_AUTH_TOKEN}` — **nenhum token em arquivo**
-- `publishConfig`: `access: public` + `provenance` (pacote assinado via GitHub OIDC)
-- Guards antes do publish: `npm test` · links da doc · tag `vX.Y.Z` == `version` ·
-  10 arquivos essenciais no tarball · `concurrency: release-npm`
-- `exports` no `package.json` (consumo programático: `import { scaffold } from "create-sdd-ai-stack"`)
-- `docs/RELEASE.md` — passo a passo, troubleshooting e a alternativa sem token (Trusted Publishing/OIDC)
-- Scripts: `version:patch|minor|major`, `check:docs`, `check:pack`
-  (o `npm publish` manual saiu de propósito: **um caminho só**, o do CI)
+`NEXT.md`, `REACT.md` and `NODE.md` moved from the root into `stacks/`, next to the
+stack docs that were already there. Before, a reader had to know which was which before
+opening anything.
 
-### 🐛 `.gitignore` do template não chegava no pacote
-
-O npm **nunca** empacota arquivo chamado `.gitignore` (é um dos default-ignore dele).
-O app gerado saía **sem `.gitignore`** — ou seja, `.env.local`, `.next/` e
-`node_modules/` podiam ser commitados por acidente.
-
-A negação `!template/**/.gitignore` no campo `files` **não resolve** (npm exclui por
-padrão, antes de aplicar o allowlist). Solução: o template guarda como `gitignore`
-(sem ponto, que o npm empacota normalmente) e `installTemplate` renomeia para
-`.gitignore` ao copiar — fonte única, sem duplicar conteúdo.
-
-`restoreGitignore()` lança erro se o arquivo faltar, então o app **nunca** sai sem
-proteção de `.env`.
-
-### 📈 Cobertura de teste
-
-- 20 → **27 testes** (symlink resolvendo o conteúdo certo · `.gitignore` no app gerado ·
-  provenance fora do `publishConfig` · `--provenance` explícito no CI ·
-  `NODE_AUTH_TOKEN` ausente do passo Publica · `_authToken` fora do `.npmrc` do projeto ·
-  token injetado via `GITHUB_ENV`)
-
-### 🐛 `.npmrc` do projeto zerava a autenticação (404 na primeira publicação)
-
-```
-npm error code E404
-npm error 404 Not Found - PUT https://registry.npmjs.org/create-sdd-ai-stack - Not found
+```text
+before:  NEXT.md  REACT.md  NODE.md  +  stacks/{typescript,tailwind,shadcn,…}.md
+after:   stacks/{next,react,node,typescript,tailwind,shadcn,…}.md
 ```
 
-**Não era o pacote ausente** — o `npm publish` cria o pacote sozinho na primeira vez.
-O 404 no PUT significa que o registry não reconheceu o usuário como autorizado.
+All links updated across 15 files: `AGENTS.md`, `APP.md`, `APP-STACK.md`,
+`ARCHITECTURE.md`, `README.md`, the template README, the CLI help text, the scaffold
+stub, all three SKILLS, the release workflow, `package.json`, and the tests.
 
-Causa: o `.npmrc` do projeto declarava
-`//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`. O npm lê os arquivos nesta
-ordem — **projeto > usuário > global** — então esse placeholder **sombreava** o token
-real do `~/.npmrc`. Com a variável vazia, o token efetivo ficava vazio:
+`lib/constants.mjs` no longer lists them in `RULE_FILES` — they ship with the `stacks/`
+directory, so there is exactly one place that decides what lands in `SDD/`.
 
-| Comando | Antes | Depois |
-| --- | --- | --- |
-| `npm whoami` | `401 Unauthorized` | `marcelinosandroni` |
-| `npm publish` (1ª vez) | `404 Not Found` (PUT) | cria o pacote |
+### 🗣 English by default
 
-O mesmo defeito atingia o caminho por token **no CI**, porque o `.npmrc` do repositório
-também é copiado para o runner e tem prioridade sobre o `~/.npmrc` gerado pelo
-`setup-node`.
+New rule: [`stacks/language.md`](../stacks/language.md). Commits, PR titles, docs, code
+comments, identifiers, specs and the changelog are English **unless the user explicitly
+asks otherwise**. The one exception, stated explicitly: **you still talk to the user in
+their language.** A Brazilian dev wants Portuguese chat and an English codebase.
 
-Correções:
-- `.npmrc` do projeto ficou só com `registry=` (o comentário no arquivo explica por quê)
-- CI passou a injetar `NODE_AUTH_TOKEN` via `$GITHUB_ENV` em vez de escrever token em
-  arquivo — assim o OIDC continua engatando quando não há secret
-- três testes de regressão, todos verificados reintroduzindo o bug de propósito
+It carries the reasoning rather than just the command: English is ~15–25% cheaper in
+tokens, it matches the tokenizer and every tool's vocabulary, and a rule file in English
+works for any team. It also defines what does *not* count as an explicit request — the
+user writing to you in Portuguese is not a request to change the repo.
 
-### 🐛 `publishConfig.provenance` quebrava o publish local
+All documentation, code comments and commit guidance in this repo are now English.
 
-Com 2FA ligado, o bootstrap local do pacote falhou:
+### 🤖 Agent tooling, with trade-offs
 
-```
-npm error code EUSAGE
-npm error Automatic provenance generation not supported for provider: null
-```
+New: [`stacks/agent-tooling.md`](../stacks/agent-tooling.md). Each entry was checked
+against that project's own README rather than repeated from hearsay:
 
-A causa era o **nosso** `package.json`: `publishConfig.provenance: true`.
+- **[caveman](https://github.com/JuliusBrussee/caveman)** — 65% average output-token
+  reduction as a skill, ~33% input-token reduction as a local proxy, plus
+  `caveman-compress`, which shrinks `AGENTS.md` itself. Included: their own caveat that
+  it only affects output, costs ~1–1.5k input tokens per turn, and can go net-negative on
+  already-terse workloads.
+- **[superpowers](https://github.com/obra/superpowers)** — a skills framework and a
+  methodology. Compared skill by skill against what this core already covers, so you can
+  see what is complementary and what would be redundant.
+- **[spec-kit](https://github.com/github/spec-kit)** — GitHub's heavier SDD toolkit, with
+  a decision table for choosing between it and this core (including "do not run both
+  routers at once").
+- **[BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD)** — agile AI-driven
+  development with multi-agent roles.
+- **Work-pattern skills** (`investigate-first`, `lean-build`, `surgical-patch`, …) — the
+  cheapest token saving available, because they prevent work rather than compress it.
 
-O npm lê `publishConfig` **com prioridade sobre flag de CLI e sobre variável de
-ambiente** — então `--provenance=false` e `NPM_CONFIG_PROVENANCE=false` **não resolvem**.
-O `publishConfig` vence os dois, e o provenance passou a ser exigido também no publish
-local, onde não existe provedor OIDC.
+Plus a checklist for evaluating a tool you found yourself: does it have a reproducible
+benchmark, does it admit when it loses, is it reversible, and does it create a second
+"what to do next" authority?
 
-Correção: `provenance` saiu do `publishConfig` (ficou só `access: public`) e passou a ser
-controlado **por invocação** — o workflow de release passa `--provenance` explicitamente,
-o publish local não passa nada.
+### 🐛 Caught by our own tests during the move
 
-Três testes de regressão agora travam esse comportamento (o terceiro foi verificado
-reintroduzindo o bug de propósito):
-- `provenance` não pode estar no `publishConfig`
-- o passo `Publica` passa `--provenance`
-- o passo `Publica` não define `NODE_AUTH_TOKEN` (senão o OIDC não engata)
+Moving the files rewrote links in 15 files, and two were wrong — `check-docs` caught both:
 
-### 🔐 Autenticação: 2FA no npm quebrou o publish por token
+- `stacks/next.md` kept root-relative links (`./DESIGN.md`, `./stacks/testing.md`) after
+  the move: a silently-dead link of exactly the kind that survives review
+- `tests/scaffold.test.mjs` still asserted the old `SDD/NEXT.md` layout
 
-Com 2FA ligado na conta, `npm publish` por token passa a exigir **OTP do autenticador**,
-que o CI não tem como digitar:
+A third corruption was **not** caught by any test and would have shipped: the PowerShell
+`Set-Content -Encoding utf8` used for the bulk rewrite **writes a BOM**, which put
+`\ufeff` before the `{` of `package.json`. Found by inspection, fixed, and all 15 touched
+files were re-normalised to UTF-8 without BOM.
 
-```
-npm error code EOTP
-npm error This operation requires a one-time password from your authenticator.
-```
+> A bulk text rewrite on Windows is a code change, and it gets the same verification as
+> any other. That is now written down in
+> [`phase-1-english.md`](../specs/history/phases/phase-1-english.md).
 
-Três saídas, e o workflow agora suporta as duas principais:
+---
 
-- **Bootstrap local + Trusted Publishing (OIDC)** — publica a primeira versão da máquina
-  com `--otp`, configura o publisher no npmjs.com, **apaga o token**. Da frente em diante
-  o CI publica sem credencial nenhuma. É o caminho recomendado.
-- **Token com "Bypass 2FA"** — funciona hoje, mas o npm avisa que publicação direta com
-  token granular **será removida em janeiro de 2027**, e há bug aberto onde o bypass é
-  ignorado pelo npm 11.x ([npm/cli#9268](https://github.com/npm/cli/issues/9268)).
-- **Token stage-only** — o CI sobe a versão, um maintainer aprova com 2FA.
+## [0.1.17] — 2026-09-29 (FIRST RELEASE CANDIDATE — NEVER PUBLISHED)
 
-Mudanças no workflow:
+> This version was the first complete rewrite, but the npm publish never succeeded
+> (EOTP with 2FA on, then ENEEDAUTH, then a misleading 404). Everything it introduced
+> shipped in **0.1.18** instead. Kept here for the record.
 
-- `npm install -g npm@latest` no job de publish — **OIDC exige npm ≥ 11.5.1** e o Node 22
-  do runner do GitHub vem com npm 10.x. Sem isso o OIDC nunca engata.
-- `NODE_AUTH_TOKEN` **removido** do passo `Publica`. O npm só usa OIDC quando o auth está
-  **ausente**; com a variável no ambiente, ele ignora o OIDC e volta a falhar por token.
-- Step `Autentica` virou condicional: com `NPM_TOKEN` escreve o token; sem ele, **não
-  escreve nada** no `.npmrc` e deixa o npm escolher o OIDC sozinho.
+### 🎯 Goal
 
-### 🎯 Objetivo
-Reestruturar o core de regras para **Next.js 16 como stack padrão** (antes: React/Vite + Node),
-tornar o repositório instalável como **git submodule em `SDD/`**, e transformar em **pacote npm
-CLI** (`npx create-sdd-ai-stack`) com um template Next.js funcional embutido.
+Restructure the rules core to **Next.js 16 as the default stack** (before: React/Vite +
+Node), make the repository installable as a **git submodule into `SDD/`**, and turn it
+into an **npm CLI package** (`npx create-sdd-ai-stack`) with a working Next.js template
+inside.
 
-### ✨ Adicionado
+### ✨ Added
 
-**Regras**
-- `NEXT.md` — 11 seções de regras do Next.js 16 (Server-First, Data Layer, Server Actions,
-  Cache Components, Segurança, Route Handlers, Forms, Metadata, Performance, armadilhas)
-- `APP-STACK.md` — ponteiro de stack do app (qual doc de regra ler)
-- `stacks/` — pasta nova com regras por linguagem/ferramenta:
-  `typescript.md`, `tailwind.md`, `shadcn.md`, `testing.md`, `database.md`, `ai.md`, `git.md`, `ci.md`
-- `specs/history/phases/phase-0-bootstrap.md` — histórico da fase
+- **`stacks/next.md`** — 11 sections of Next.js 16 rules (Server-First, Data Layer, Server
+  Actions, Cache Components, Security, Route Handlers, Forms, Metadata, Performance,
+  traps)
+- **`APP-STACK.md`** — the pointer to which rules document the app uses
+- **`stacks/`** — rules by language and tool: `typescript`, `tailwind`, `shadcn`,
+  `testing`, `database`, `ai`, `git`, `ci`
+- **`template/next/`** — a complete, validated Next.js 16 project
+- **CLI** `create-sdd-ai-stack` + the npm package with `bin/`
+- **SKILLS** `create-feature` and `install-submodule`
+- **Tests for the library itself** — the scaffold, the shortcuts, and the doc integrity
+- **CI** (`.github/workflows/ci.yml`) that regenerates the app from the template on
+  every push
 
-**Template**
-- `template/next/` — projeto Next.js 16 completo e validado:
-  App Router com route groups, `cacheComponents`, React Compiler, Turbopack,
-  Tailwind v4 com tokens, Biome, Vitest, Playwright, vertical slice de exemplo,
-  `proxy.ts` com hardening de headers, `shared/server` com `server-only`
-- `src/app/globals.css` — design system completo como `@theme` do Tailwind v4
-- Testes: 1 unit (3 casos) + 4 E2E prontos
+### 🔄 Changed
 
-**CLI / npm**
-- `create-sdd-ai-stack` — pacote npm com bin (`bin/create-sdd-ai-stack.mjs`)
-- Opções: `--template`, `--rules-only`, `--submodule [url]`, `--install/--no-install`,
-  `--git/--no-git`, `--shortcuts auto|stub|symlink`, `-y`, `--help`, `--version`
-- Atalhos criados na raiz: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`,
-  `.windsurfrules`, `.github/copilot-instructions.md`, `.clinerules`
-- `npm run release` / `release:minor` / `release:major` (testa → versiona com tag → publica)
+- `AGENTS.md` — Next-first
+- `DESIGN.md` — replaced by the **Executive Engineering** design system
+- `ARCHITECTURE.md` — from a client/server monorepo to Next-first vertical slices
+- `NODE.md` / `REACT.md` — from "the stack" to **complements**
+- `specs/PLAN.md`, `TASK_TEMPLATE.md`, `README.md` — rewritten around the real gates
 
-**SKILLS**
-- `SKILLS/create-feature/` — cria vertical slice com a estrutura padrão
-- `SKILLS/install-submodule/` — instala as regras em projeto existente
+### 🔐 npm publishing, and the four bugs that stood in the way
 
-**Testes da própria lib**
-- `tests/scaffold.test.mjs` — 17 testes cobrindo `parseArgs`, `installRules`,
-  `installShortcuts` e `scaffold`
+1. **`cache: npm` in the workflow** with no committed lockfile.
+2. **The shortcut symlinks were born broken** — `path.relative()` received a relative
+   path, which resolves against `process.cwd()`. Passed 100% on Windows because
+   `symlinkSync` returns EPERM there and fell back to the stub. Only CI on Linux
+   exposed it.
+3. **`publishConfig.provenance: true`** broke the local publish with
+   `EUSAGE / provider: null`. npm reads `publishConfig` **above** CLI flags and env, so
+   `--provenance=false` and `NPM_CONFIG_PROVENANCE=false` do **not** help.
+4. **`_authToken` in the project `.npmrc`** shadowed the user's `~/.npmrc` and zeroed
+   auth: `npm whoami` returned `401`, and the first publish returned `404 Not Found` —
+   an error that looks exactly like "the package doesn't exist". Proven by deleting one
+   line and watching `npm whoami` start working.
 
-### 🔄 Alterado
+Then **2FA**: with it on, npm demands a one-time password for `npm publish`, and CI has
+no way to type one. Three exits, documented in [`RELEASE.md`](./RELEASE.md): a local
+bootstrap plus Trusted Publishing (OIDC), a "Bypass 2FA" token (deprecated by npm in
+Jan 2027), or stage-only tokens.
 
-- `AGENTS.md` — Next-first; documenta que vive em `SDD/` quando instalado
-- `DESIGN.md` — substituído pelo design system **Executive Engineering**
-  (tokens, tipografia tripla, grid 12 col/1320px, elevação em tiers, componentes)
-- `ARCHITECTURE.md` — de "monorepo client/server" para Next-first com vertical slices
-- `NODE.md` — de "backend padrão" para **complemento** (worker/cron/fila) com critério de uso
-- `REACT.md` — de "frontend padrão" para **complemento** (Server-First)
-- `APP.md` — ponteiro para `NEXT.md` e `stacks/`
-- `specs/PLAN.md` — regra de "exatamente uma task `[-]`" + checklist de entrega
-- `specs/tasks/TASK_TEMPLATE.md` — DoD com os comandos de gate reais
-- `README.md` — reescrito como documentação do pacote npm
+Every one of those is now locked by a regression test, each verified by reintroducing
+the bug on purpose.
 
-### 🗑️ Removido
-
-- `specs/ROADMAP.md` vazio → reescrito
-- `docs/PRODUCT.md` vazio → mantido como stub de template
-
-### 🐛 Correções encontradas pela própria validação
-
-1. `error.tsx` sem `"use client"` — quebrava o build
-2. `reactCompiler: true` sem `babel-plugin-react-compiler` — quebrava o build
-3. `biome.json` no schema 1.x — quebrava o lint no Biome 2
-4. `prepare: "husky || true"` — quebrava `npm install` no Windows
-5. `proxy.ts` redirecionando `/` — escondia a landing (achado pelo E2E)
-6. Rota `/` duplicada entre `app/page.tsx` e `(marketing)/page.tsx`
-7. `installShortcuts` retornava `undefined` no modo stub
-8. symlink dos atalhos com caminho relativo quebrado (`path.relative` com caminho não-absoluto) — **achado pelo CI no Linux**, mascarado no Windows pelo fallback pra stub
-9. `cache: npm` no workflow sem lockfile commitado
-10. rota `/` duplicada entre `app/page.tsx` e `(marketing)/page.tsx` (achado pelo E2E)
-11. `.gitignore` do template não empacotado pelo npm (achado conferindo o `npm pack`)
-
-> O nº 8 é o melhor argumento pra manter o CI que **revalida o template a cada push**:
-> o teste passava 100% na minha máquina e só quebrou no Linux.
-
-[0.1.17]: https://github.com/marcelinosandroni/sdd-ai-stack/releases/tag/v0.1.17
+[0.1.18]: https://github.com/marcelinosandroni/sdd-ai-stack/releases/tag/v0.1.18

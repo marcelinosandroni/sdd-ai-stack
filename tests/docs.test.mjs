@@ -5,14 +5,14 @@ import { checkLinks, collectMarkdown } from "../lib/check-links.mjs";
 
 const DOC_ROOTS = [
   "AGENTS.md", "APP.md", "APP-STACK.md", "ARCHITECTURE.md", "DESIGN.md",
-  "NEXT.md", "NODE.md", "REACT.md", "README.md", "specs", "stacks", "docs", "SKILLS",
+  "README.md", "specs", "stacks", "docs", "SKILLS",
 ];
 
 test("documentação: existe todo o documento de regra obrigatório", () => {
   const found = new Set(collectMarkdown(DOC_ROOTS));
   for (const required of [
     "AGENTS.md", "APP.md", "APP-STACK.md", "ARCHITECTURE.md", "DESIGN.md",
-    "NEXT.md", "NODE.md", "REACT.md", "specs/PLAN.md", "stacks/README.md",
+    "specs/PLAN.md", "stacks/README.md", "stacks/next.md", "stacks/node.md", "stacks/react.md",
   ]) {
     assert.ok(found.has(required), `faltou ${required}`);
   }
@@ -47,13 +47,13 @@ test("publish: provenance NÃO pode estar no publishConfig", () => {
   assert.equal(pkg.publishConfig?.access, "public");
 });
 
-test("publish: o passo Publica passa --provenance explicitamente", () => {
+test("publish: the Publica step passes --provenance explicitly", () => {
   const yml = fs.readFileSync(".github/workflows/release.yml", "utf8");
   const publishStep = yml.slice(yml.indexOf("- name: Publica"));
   assert.match(publishStep, /npm publish .*--provenance/);
 });
 
-test("publish: o passo Publica NÃO define NODE_AUTH_TOKEN (senão OIDC não engata)", () => {
+test("publish: the Publica step does NOT define NODE_AUTH_TOKEN (or OIDC never engages)", () => {
   const yml = fs.readFileSync(".github/workflows/release.yml", "utf8");
   const publishStep = yml.slice(yml.indexOf("- name: Publica"));
   assert.doesNotMatch(
@@ -63,11 +63,11 @@ test("publish: o passo Publica NÃO define NODE_AUTH_TOKEN (senão OIDC não eng
   );
 });
 
-test("publish: o .npmrc do projeto NÃO pode declarar _authToken", () => {
-  // o .npmrc do projeto tem prioridade sobre o ~/.npmrc do usuário. Uma linha
-  // _authToken aqui sombreia o token do usuário e, se a variável estiver vazia,
-  // zera a auth de tudo silenciosamente: 401 no whoami, 404 no PUT de primeira
-  // publicação (erro que parece "pacote não existe", mas é falta de auth).
+test("publish: the project .npmrc must not declare _authToken", () => {
+  // the project .npmrc takes precedence over the user's ~/.npmrc. An _authToken
+  // line here shadows the user's token and, with the variable empty, silently
+  // zeroes auth everywhere: 401 on whoami, 404 on the first publish's PUT (an
+  // error that looks like a missing package, but is missing auth).
   const npmrc = fs
     .readFileSync(".npmrc", "utf8")
     .split("\n")
@@ -77,19 +77,19 @@ test("publish: o .npmrc do projeto NÃO pode declarar _authToken", () => {
   assert.doesNotMatch(
     npmrc,
     /_authToken/,
-    "o .npmrc do projeto não deve declarar _authToken — ele sombreia o ~/.npmrc",
+    "the project .npmrc must not declare _authToken — it shadows the user's ~/.npmrc",
   );
   // e o registry precisa continuar lá, senão o npm publish usa o registro errado
   assert.match(npmrc, /registry\s*=\s*https:\/\/registry\.npmjs\.org\//);
 });
 
-test("publish: o passo Autentica injeta o token via GITHUB_ENV, não em arquivo", () => {
+test("publish: the Authenticate step injects the token via GITHUB_ENV, not into a file", () => {
   const yml = fs.readFileSync(".github/workflows/release.yml", "utf8");
   const authStep = yml.slice(yml.indexOf("- name: Autentica"), yml.indexOf("- name: Publica"));
   assert.match(authStep, /NODE_AUTH_TOKEN=\$\{NPM_TOKEN\}.*GITHUB_ENV/);
   assert.doesNotMatch(
     authStep,
     /\.npmrc/,
-    "escrever token em .npmrc do runner não basta: o .npmrc do projeto tem prioridade",
+    "writing a token into the runner .npmrc is not enough: the project .npmrc wins",
   );
 });
