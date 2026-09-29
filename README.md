@@ -180,7 +180,9 @@ comum não publica (`EOTP` — o CI não tem como digitar o OTP). Duas saídas:
 
 ```bash
 # A. Recomendado: publica a 1ª versão da sua máquina, ativa OIDC e apaga o token
-npm publish --access public --otp=123456
+npm publish --access public --provenance=false --otp=123456
+#   ⚠️ --provenance=false é obrigatório fora do CI: o npm exige OIDC para gerar
+#      provenance e falha com "provider: null" se não achar o provedor
 # depois: npmjs.com → create-sdd-ai-stack → Settings → Trusted publishing
 #   owner: marcelinosandroni · repo: sdd-ai-stack · workflow: release.yml · allow: npm publish
 gh secret delete NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack

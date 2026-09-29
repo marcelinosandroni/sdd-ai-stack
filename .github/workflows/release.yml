@@ -150,9 +150,14 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # ⚠️ NÃO defina NODE_AUTH_TOKEN aqui. Com ele presente, o npm ignora o OIDC.
+      #
+      # `--provenance` é explícito e NÃO pode vir do publishConfig: o npm lê
+      # `publishConfig` com prioridade sobre flag de CLI e sobre env, então
+      # deixar `provenance: true` lá quebra o bootstrap local com
+      # "Automatic provenance generation not supported for provider: null".
       - name: Publica
         if: ${{ !inputs.dry_run }}
-        run: npm publish --access public
+        run: npm publish --access public --provenance
 
       - name: Simula (dry run)
         if: ${{ inputs.dry_run }}

@@ -70,8 +70,7 @@
     "prepublishOnly": "npm run test && npm run check:pack"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "directories": {
     "doc": "docs",
