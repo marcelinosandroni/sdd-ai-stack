@@ -44,6 +44,35 @@ proteção de `.env`.
 
 - 20 → **22 testes** (symlink resolvendo conteúdo certo + `.gitignore` presente no app gerado)
 
+### 🔐 Autenticação: 2FA no npm quebrou o publish por token
+
+Com 2FA ligado na conta, `npm publish` por token passa a exigir **OTP do autenticador**,
+que o CI não tem como digitar:
+
+```
+npm error code EOTP
+npm error This operation requires a one-time password from your authenticator.
+```
+
+Três saídas, e o workflow agora suporta as duas principais:
+
+- **Bootstrap local + Trusted Publishing (OIDC)** — publica a primeira versão da máquina
+  com `--otp`, configura o publisher no npmjs.com, **apaga o token**. Da frente em diante
+  o CI publica sem credencial nenhuma. É o caminho recomendado.
+- **Token com "Bypass 2FA"** — funciona hoje, mas o npm avisa que publicação direta com
+  token granular **será removida em janeiro de 2027**, e há bug aberto onde o bypass é
+  ignorado pelo npm 11.x ([npm/cli#9268](https://github.com/npm/cli/issues/9268)).
+- **Token stage-only** — o CI sobe a versão, um maintainer aprova com 2FA.
+
+Mudanças no workflow:
+
+- `npm install -g npm@latest` no job de publish — **OIDC exige npm ≥ 11.5.1** e o Node 22
+  do runner do GitHub vem com npm 10.x. Sem isso o OIDC nunca engata.
+- `NODE_AUTH_TOKEN` **removido** do passo `Publica`. O npm só usa OIDC quando o auth está
+  **ausente**; com a variável no ambiente, ele ignora o OIDC e volta a falhar por token.
+- Step `Autentica` virou condicional: com `NPM_TOKEN` escreve o token; sem ele, **não
+  escreve nada** no `.npmrc` e deixa o npm escolher o OIDC sozinho.
+
 ### 🎯 Objetivo
 Reestruturar o core de regras para **Next.js 16 como stack padrão** (antes: React/Vite + Node),
 tornar o repositório instalável como **git submodule em `SDD/`**, e transformar em **pacote npm
