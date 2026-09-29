@@ -31,9 +31,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
+        # sem `cache: npm`: a raiz é um pacote de CLI sem dependências,
+        # e o app é gerado em .sandbox (sem lockfile até o npm install rodar)
         with:
           node-version: 22
-          cache: npm
 
       - name: Gera o app a partir do próprio template
         run: |
@@ -42,7 +43,7 @@ jobs:
 
       - name: Instala dependências
         working-directory: .sandbox
-        run: npm ci || npm install
+        run: npm install --no-audit --no-fund
 
       - name: Typecheck
         working-directory: .sandbox
@@ -60,8 +61,10 @@ jobs:
         working-directory: .sandbox
         run: npm run build
 
+      - name: Instala o browser do Playwright
+        working-directory: .sandbox
+        run: npx playwright install --with-deps chromium
+
       - name: E2E
         working-directory: .sandbox
-        run: |
-          npm run test:e2e --prefix ../.sandbox || npx playwright install --with-deps chromium
-          npm run test:e2e
+        run: npm run test:e2e
