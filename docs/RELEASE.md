@@ -365,8 +365,8 @@ If all goes well: <https://www.npmjs.com/package/create-sdd-ai-stack>
 | --- | --- |
 | CI green on the tagged commit (`guard`) | never publish from a red main |
 | template gates re-run (`typecheck`, `lint`, `test`, `build`) | never ship a template that does not build |
-| `npm test` (46 tests) | never publish on a red test |
-| `npm run check:coverage` (line 90 / branch 70 / func 80) | a careless commit cannot silently reduce coverage |
+| `npm test` (52 tests) | never publish on a red test |
+| `npm run check:coverage` (line 95 / branch 85 / func 90) | a careless commit cannot silently reduce coverage |
 | `node SKILLS/check-docs/check-docs.mjs` | no rule pointing at a dead file |
 | tag `vX.Y.Z` == `version` in `package.json` | avoids publishing 0.1.18 when the tag is 0.1.17 |
 | 12 essential files present in the tarball | catches a misconfigured `files` array |

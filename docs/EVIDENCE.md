@@ -7,8 +7,8 @@
 
 | Claim | Command | Floor |
 | --- | --- | --- |
-| The CLI works and the scaffold is correct | `npm test` | 46 tests, 0 failures |
-| Coverage did not regress | `npm run check:coverage` | line 90 / branch 70 / func 80 |
+| The CLI works and the scaffold is correct | `npm test` | 52 tests, 0 failures |
+| Coverage did not regress | `npm run check:coverage` | line 95 / branch 85 / func 90 |
 | No rule points at a deleted file | `npm run check:docs` | 45 docs, 0 broken links |
 | The tarball has everything | `npm run check:pack` | ≥ 12 essential files |
 

@@ -68,8 +68,11 @@ code") was broken in its own template.
 
 ### 📏 Gates that cannot be bypassed
 
-- `npm run check:coverage` — floor at line 90 / branch 70 / func 80. Currently
-  **93.73 / 75.53 / 82.14**.
+- `npm run check:coverage` — floor at line 95 / branch 85 / func 90. Currently
+  **98.51 / 90.63 / 95.19**. `bin/` is excluded from the report: it is a
+  top-level script that executes on import, so the runner cannot instrument it
+  without running the whole CLI. It is covered by `tests/bin.test.mjs` instead,
+  which spawns the real binary.
 - `tests/bin.test.mjs` — 9 tests driving the real `bin` and real `git`, which
   is where three of the bugs above were hiding.
 - `supply-chain` CI job: `npm audit --omit=dev --audit-level=high`.

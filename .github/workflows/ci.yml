@@ -26,7 +26,7 @@ jobs:
       - name: Testes da CLI e do scaffold
         run: npm test
 
-      - name: "Cobertura (piso: line 90, branch 70, func 80)"
+      - name: "Cobertura (piso: line 95, branch 85, func 90)"
         run: npm run check:coverage
 
       - name: Links da documentação

@@ -303,7 +303,7 @@ The GitHub job needs no secret — `GITHUB_TOKEN` is built in and the workflow g
 creates packages **private**, so flip the visibility once, or installs will need a token.
 
 Guards before publishing: **CI green on the tagged commit** · the template gates
-re-run (`typecheck`, `lint`, `test`, `build`) · `npm test` (46 tests) · coverage
+re-run (`typecheck`, `lint`, `test`, `build`) · `npm test` (52 tests) · coverage
 floor · doc links · tag `vX.Y.Z` matches `package.json` · 12 essential files in
 the tarball · `npm ≥ 11.5.1` · `concurrency` · provenance (npm only).
 

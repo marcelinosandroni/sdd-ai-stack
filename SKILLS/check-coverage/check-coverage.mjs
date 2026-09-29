@@ -12,7 +12,7 @@
  */
 import { spawnSync } from "node:child_process";
 
-const FLOOR = { line: 90, branch: 70, func: 80 };
+const FLOOR = { line: 95, branch: 85, func: 90 };
 
 const [major] = process.versions.node.split(".").map(Number);
 if (major < 24) {
@@ -26,8 +26,19 @@ if (major < 24) {
 
 const result = spawnSync(
   process.execPath,
-  ["--test", "--experimental-test-coverage", "tests/cli-flags.test.mjs",
-    "tests/scaffold.test.mjs", "tests/bin.test.mjs", "tests/docs.test.mjs"],
+  [
+    "--test",
+    "--experimental-test-coverage",
+    // bin/ is a top-level script: importing it executes it, so the test runner
+    // cannot instrument it without running the whole CLI. It is covered instead
+    // by tests/bin.test.mjs, which spawns the real binary. Excluding it here
+    // keeps the number honest — an unmeasurable file must not drag the total.
+    "--test-coverage-exclude=bin/**",
+    "tests/cli-flags.test.mjs",
+    "tests/scaffold.test.mjs",
+    "tests/bin.test.mjs",
+    "tests/docs.test.mjs",
+  ],
   { encoding: "utf8", shell: false },
 );
 

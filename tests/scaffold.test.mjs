@@ -3,7 +3,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { scaffold, installRules, installShortcuts } from "../lib/scaffold.mjs";
+import {
+  scaffold,
+  installRules,
+  installShortcuts,
+  installTemplate,
+  restoreGitignore,
+} from "../lib/scaffold.mjs";
 import { parseArgs } from "../src/cli.mjs";
 import { DEFAULT_SUBMODULE_URL } from "../lib/constants.mjs";
 
@@ -262,4 +268,47 @@ test("scaffold: refuses a non-empty folder", () => {
   const target = tmp();
   fs.writeFileSync(path.join(target, "existe.txt"), "x", "utf8");
   assert.throws(() => scaffold({ target, log: silent }), /already exists and is not empty/);
+});
+
+test("installTemplate: a missing template fails loudly instead of writing half an app", () => {
+  const target = tmp();
+  assert.throws(
+    () => installTemplate(target, "angular", { log: silent }),
+    /Template "angular" not found/,
+  );
+});
+
+test("installTemplate: a template without gitignore fails instead of shipping secrets", () => {
+  // The npm packer renames .gitignore to gitignore, and restoreGitignore puts
+  // it back. If that file is ever missing, the app would ship WITHOUT a
+  // .gitignore — and .env.local and .next would go into the user's git.
+  const target = tmp();
+  assert.throws(() => restoreGitignore(target), /no gitignore/);
+});
+
+test("scaffold --install: skips npm when the template has no package.json", () => {
+  const parent = tmp();
+  const target = path.join(parent, "so-regras");
+  const s = scaffold({ target, template: "none", install: true, log: silent, shortcutMode: "stub" });
+
+  // There is nothing to install, so the flag is recorded as NOT done. Running
+  // npm install in a rules-only folder would be a pointless network call.
+  assert.equal(s.install, false);
+  assert.ok(fs.existsSync(path.join(target, "SDD", "AGENTS.md")));
+});
+
+test("scaffold: the summary reports what actually happened", () => {
+  const parent = tmp();
+  const target = path.join(parent, "app");
+  const s = scaffold({ target, template: "next", log: silent, shortcutMode: "stub" });
+
+  assert.equal(s.rules, true);
+  assert.equal(s.git, false, "git was not requested");
+  assert.equal(s.install, false, "install was not requested");
+  assert.equal(s.template, "next");
+  assert.equal(s.target, path.resolve(target));
+  // installShortcuts reports the outcome per file; scaffold does not echo it
+  // into the summary, so assert the files themselves exist instead.
+  assert.ok(fs.existsSync(path.join(target, "AGENTS.md")));
+  assert.ok(fs.existsSync(path.join(target, "CLAUDE.md")));
 });
