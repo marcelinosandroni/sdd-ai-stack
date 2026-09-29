@@ -143,7 +143,9 @@ Se tudo der certo: <https://www.npmjs.com/package/create-sdd-ai-stack>
 
 | Sintoma | Causa | Solução |
 | --- | --- | --- |
-| `401 Unauthorized` | secret ausente ou expirado | `gh secret set NPM_TOKEN` de novo; confira a data no npm |
+| `secret NPM_TOKEN não encontrado` | secret ausente no repositório | `gh secret set NPM_TOKEN` |
+| `ENEEDAUTH / need auth` | token expirado ou revogado | regere no npm e grave de novo |
+| `401 Unauthorized` | secret inválido | confira a data de expiração no npm |
 | `E403 Forbidden` | token sem permissão de escrita no pacote | regere com Read and write em `create-sdd-ai-stack` |
 | `cannot publish over previously published version` | já existe essa versão | bump a versão (`npm run version:patch`) |
 | `tag 'v0.1.17' não bate com package.json '0.1.18'` | esqueceu de commitar o bump | `git add package.json && git commit -m "chore: v0.1.18"` |
