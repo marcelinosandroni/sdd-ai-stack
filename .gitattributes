@@ -1,0 +1,30 @@
+# Normaliza line endings: o repositório é LF, o checkout no Windows converte.
+* text=auto eol=lf
+
+# Precisam de LF de verdade (executáveis unix)
+*.sh text eol=lf
+*.mjs text eol=lf
+SKILLS/** text eol=lf
+
+# Binários
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.node binary
+
+# Linguagem
+*.md text eol=lf diff=markdown
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Docs geradas
+docs/CHANGELOG.md linguist-generated

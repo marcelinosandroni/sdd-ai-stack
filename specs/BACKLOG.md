@@ -1,20 +1,24 @@
-# 📥 BACKLOG (O Purgatório das Ideias)
+# 📥 BACKLOG
 
-> 🛑 **REGRA FIXA (Agente IA, LEIA ISSO):** 
-> 1. O dev tem TDAH. Ideias aqui são só descarga mental e NÃO DEVEM SER CODIFICADAS AGORA. 
-> 2. Mantenha o foco no `PLAN.md`. 
-> 3. **PROIBIDO EDITAR ACIMA DO TRAÇO.** Você SÓ tem permissão para adicionar, remover ou editar itens ABAIXO da linha `---`. O cabeçalho é imutável.
+> Ideias soltas, débito técnico e explorações. **Nada aqui é promessa.**
+> Quando virar trabalho de verdade, promova para `specs/PLAN.md` como task.
 
----
+## 💡 Ideias
 
-## Title - PHASE 1
-Description
-[x] - [title](./tasks/TASK-1.1.md) - feito
-[-] - [title](./tasks/TASK-1.1.md) - fazendo
-[ ] - [title](./tasks/TASK-1.1.md) - fazer
+- [ ] Definir regras de refinamento/produto em `docs/PLANNING.md` (artefatos visuais de planejamento)
+- [ ] Gerar PR template que force o preenchimento da evidência de teste
+- [ ] Script de release que abre PR automático do changelog
+- [ ] Storybook para os componentes de `src/shared/ui`
+- [ ] Integração com GitHub Actions para o Next.js DevTools MCP
 
-## Title - PHASE 2
-Description
-[ ] - [title](./tasks/TASK-2.1.md)
-[ ] - [title](./tasks/TASK-2.1.md)
-[ ] - [title](./tasks/TASK-2.1.md)
+## 🧾 Débito técnico
+
+_(adicionado quando algo fica pra depois — com o motivo)_
+
+- [ ] Nenhum registrado ainda
+
+## 🗑️ Descartado
+
+_(ideias que testamos e não valem o custo — registre o porquê pra não repetir)_
+
+- _(vazio)_

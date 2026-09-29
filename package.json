@@ -1,0 +1,70 @@
+{
+  "name": "create-sdd-ai-stack",
+  "version": "1.0.0",
+  "description": "Cria um projeto pronto para agentes de IA com Spec-Driven Development: regras SDD + template Next.js 16 + design system.",
+  "keywords": [
+    "sdd",
+    "spec-driven-development",
+    "ai",
+    "agent",
+    "agents",
+    "claude",
+    "cursor",
+    "nextjs",
+    "template",
+    "boilerplate",
+    "scaffold"
+  ],
+  "homepage": "https://github.com/marcelinosandroni/sdd-ai-stack#readme",
+  "bugs": {
+    "url": "https://github.com/marcelinosandroni/sdd-ai-stack/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcelinosandroni/sdd-ai-stack.git"
+  },
+  "license": "MIT",
+  "author": "Marcelino Sandroni <marcelino.sandroni@gmail.com>",
+  "type": "module",
+  "bin": {
+    "create-sdd-ai-stack": "bin/create-sdd-ai-stack.mjs"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "files": [
+    "bin",
+    "src",
+    "lib",
+    "template",
+    "AGENTS.md",
+    "APP.md",
+    "APP-STACK.md",
+    "ARCHITECTURE.md",
+    "DESIGN.md",
+    "NEXT.md",
+    "NODE.md",
+    "REACT.md",
+    "stacks",
+    "specs",
+    "docs",
+    "SKILLS",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",    "release": "npm run test && npm version $npm_config_semver --git-tag-version && npm publish --access public",
+    "release:minor": "npm run release --semver=minor",
+    "release:major": "npm run release --semver=major",
+    "prepublishOnly": "npm run test"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib",
+    "test": "tests"
+  }
+}

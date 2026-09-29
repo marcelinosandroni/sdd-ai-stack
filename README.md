@@ -1,91 +1,244 @@
-# 🤖 sdd-ai-stack
+# 🤖 create-sdd-ai-stack
 
-> **O ecossistema definitivo para Agentes de IA baseado em Spec-Driven Development (SDD).**
-> Este monorepo integra um Frontend ultra-rápido (React/Vite) e um Backend escalável (Node.js) utilizando **Arquitetura de Vertical Slices** e **Injeção de Dependência** estrita.
-
-## 🛑 Projeto SDD (Spec-Driven Development)
-
-⚠️ **ATENÇÃO AGENTE DE IA (CRÍTICO):**
-Você está operando em um ambiente de Desenvolvimento Guiado por Especificações.
-**NÃO** inicie nenhuma análise de código, **NÃO** crie arquivos e **NÃO** sugira implementações antes de ler OBRIGATORIAMENTE o arquivo `AGENTS.md` na raiz deste projeto.
-
-O `AGENTS.md` contém suas leis de funcionamento e o fluxo de trabalho exato que você deve seguir. Leia-o agora.
-
----
-
-## 🗺️ Mapa do Cérebro (Documentação)
-
-A arquitetura é estrita e desenhada para hiperfoco e isolamento de contexto. Leia antes de codar:
-
-- 🧠 **O que é este app e stack:** [APP.md](./APP.md)
-- 🎯 **O que estamos fazendo AGORA (Foco):** [PLAN.md](./PLAN.md)
-- 🏗️ **Arquitetura Global:** [ARCHITECTURE.md](./ARCHITECTURE.md)
-- 💅 **Regras do Frontend (React):** [REACT.md](./REACT.md)
-- 🟢 **Regras do Backend (Node.js):** [NODE.md](./NODE.md)
-- 📥 **Ideias Soltas e Débito Técnico:** [BACKLOG.md](./BACKLOG.md)
-- 🗺️ **Visão Macro:** [ROADMAP.md](./ROADMAP.md)
-
----
-
-## 🛠️ Setup Inicial (Para Projetos Vazios)
-
-Se você acabou de clonar este repositório zerado, use os comandos abaixo na raiz para iniciar o ecossistema.
-
-### 1. Inicializar Frontend (Vite) e Backend (Node)
-```bash
-# Cria o app React com Vite na pasta 'client'
-npm create vite@latest client -- --template react-ts
-
-# Cria e inicia a pasta do backend
-mkdir server && cd server && npm init -y && cd ..
-```
-
-### 2. Script Mágico: Criar Estrutura de Pastas (Vertical Slices)
-Rode o comando abaixo na raiz do projeto para criar instantaneamente todas as pastas da arquitetura e evitar perda de foco:
+> **O kit de regras de desenvolvimento para agentes de IA, baseado em Spec-Driven Development (SDD).**
+> Stack padrão: **Next.js 16**. Um `npx` e você tem um projeto com regras, arquitetura, design system e SDD prontos.
 
 ```bash
-# Pastas do Frontend
-mkdir -p client/assets client/components client/core client/features client/hooks client/providers client/store client/utils
-
-# Pastas do Backend
-mkdir -p server/api/adapters server/core/di server/core/config server/core/database server/core/logger server/core/errors server/core/middlewares server/core/http server/features
+npx create-sdd-ai-stack meu-dashboard
 ```
 
 ---
 
-## 🚀 Como Rodar Local
+## 🎯 O que é isto
+
+Um **template de regras + código** para agentes de IA (Claude Code, Cursor, Copilot, Codex, Gemini CLI, Cline, Windsurf…).
+
+O agente abre o projeto, lê **uma** sequência de arquivos, e já sabe:
+o que construir agora, como estruturar, como escrever código, como commitar, quando parar.
+
+| Entrega | O que você recebe |
+| --- | --- |
+| **Regras** | `SDD/` com leis do agente, stack, design, arquitetura, SDD e stacks por ferramenta |
+| **Template** | App Next.js 16 completo, com design system já aplicado e buildando |
+| **CLI** | `npx create-sdd-ai-stack <nome>` — cria tudo em 1 comando |
+| **Submodule** | Instala só as regras em qualquer projeto, com atalhos na raiz |
+
+---
+
+## ⚡ Começando
+
+### 1. Projeto novo (recomendado)
 
 ```bash
-# 1. Instale as dependências de todos os workspaces
-npm install
-
-# 2. Suba o Frontend e Backend simultaneamente
+npx create-sdd-ai-stack meu-app
+cd meu-app
 npm run dev
 ```
 
+O que nasce:
+
+```text
+meu-app/
+├── src/
+│   ├── app/           # rotas (marketing pública + /app logado)
+│   ├── features/      # vertical slice de exemplo (domain/application/infrastructure/ui)
+│   ├── shared/        # design system, lib, server-only
+│   ├── proxy.ts       # network boundary + headers
+│   └── app/globals.css# TOKENS DO DESIGN SYSTEM
+├── tests/             # unit + e2e prontos
+├── SDD/               # 🧠 as regras
+├── AGENTS.md          # → atalho para ./SDD/AGENTS.md
+├── CLAUDE.md, GEMINI.md, .cursorrules, .github/copilot-instructions.md, …
+└── package.json
+```
+
+### 2. Projeto existente (só as regras)
+
+```bash
+# Opção A — submodule (atualiza com git)
+git submodule add https://github.com/marcelinosandroni/sdd-ai-stack.git SDD
+node SDD/SKILLS/install-submodule/install-submodule.mjs
+
+# Opção B — CLI
+npx create-sdd-ai-stack . --rules-only
+```
+
+Os atalhos da raiz (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`…) apontam para `./SDD/AGENTS.md`,
+então **todo agente já começa pelo lugar certo** — sem você precisar configurar nada.
+
+Atualizar as regras depois:
+
+```bash
+git submodule update --remote --merge SDD
+```
+
+### 3. Opções da CLI
+
+```bash
+npx create-sdd-ai-stack meu-app --template next      # template (padrão)
+npx create-sdd-ai-stack meu-app --rules-only         # só as regras
+npx create-sdd-ai-stack meu-app --install            # roda npm install
+npx create-sdd-ai-stack meu-app --git                # git init + 1º commit
+npx create-sdd-ai-stack meu-app --submodule          # SDD/ como git submodule
+npx create-sdd-ai-stack meu-app --submodule <url>    # de um fork seu
+npx create-sdd-ai-stack meu-app --shortcuts stub     # sem symlink (Windows sem dev mode)
+```
+
 ---
 
-## 🔄 Como Sincronizar/Espelhar este Repositório
+## 🧠 O mapa das regras (`SDD/`)
 
-Se você precisa usar esse core dentro de outro projeto e manter atualizado, escolha sua rota:
-
-### Opção 1: Git Submodules (Recomendado e Seguro)
-Ideal se você quer controle absoluto de *quando* atualizar o código no repo destino.
-
-**1. Adicionar o submódulo (rode no repo destino):**
-```bash
-git submodule add [https://github.com/marcelinosandroni/sdd-ai-stack.git](https://github.com/marcelinosandroni/sdd-ai-stack.git) sdd-core
+```text
+SDD/
+├── AGENTS.md            ⭐ leis + fluxo — LEIA PRIMEIRO
+├── specs/PLAN.md        ⭐ a task AGORA
+├── APP.md               o que é este app
+├── APP-STACK.md         qual stack este app usa
+├── NEXT.md              ⭐ Next.js 16 (stack padrão)
+├── NODE.md              Node.js puro (worker, cron, fila)
+├── REACT.md             React (server-first)
+├── DESIGN.md            🎨 design system completo
+├── ARCHITECTURE.md      🏗️ vertical slices
+├── stacks/              🧱 por ferramenta
+│   ├── typescript.md    tailwind.md     shadcn.md
+│   ├── testing.md       database.md     ai.md
+│   └── git.md           ci.md
+├── specs/               SDD operacional
+│   ├── PLAN.md  BACKLOG.md  ROADMAP.md
+│   ├── tasks/TASK_TEMPLATE.md
+│   └── history/phases/
+├── docs/                PRODUCT.md  CHANGELOG.md  PLANNING.md
+└── SKILLS/              automações (create-feature, install-submodule)
 ```
 
-**2. Puxar as atualizações mais recentes depois:**
-```bash
-git submodule update --remote --merge
+### Ordem de leitura imposta pelo `AGENTS.md`
+
+```text
+1. SDD/AGENTS.md      leis e fluxo
+2. SDD/specs/PLAN.md  a única task [-]
+3. SDD/APP.md         o que é este app
+4. SDD/APP-STACK.md   qual stack
+5. SDD/NEXT.md        regras da stack
+6. SDD/DESIGN.md      só se mexer em UI
+7. SDD/stacks/…       só a ferramenta que está tocando
 ```
 
-### Opção 2: GitHub Actions (Automático)
-Para espelhar automaticamente via push, crie um workflow `.github/workflows/sync.yml` utilizando a action `ad-m/github-push-action`.
+> Cada doc de regra tem um **roteador no topo**: "se você está fazendo X, leia §Y".
+> Isso mantém o contexto do agente pequeno — importante, porque contexto longo é onde o agente morre.
+
+---
+
+## 🎨 Design System
+
+O `DESIGN.md` implementa o **Executive Engineering**: ardósia profunda (nunca preto puro),
+micro-bordas de 1px, acentos em lime neon `#BAF336` e mint `#34D399`, tipografia tripla
+(**Manrope** estrutural + **JetBrains Mono** técnica + **Playfair Display** editorial), grid de 12 colunas com max 1320px.
+
+Os tokens vivem em `src/app/globals.css` (bloco `@theme` do Tailwind v4) e viram utilitários
+(`bg-surface-raised`, `text-text-secondary`, `text-label-mono`, `border-border-subtle`…) +
+primitivos (`btn-primary`, `btn-secondary`, `card`, `card-metric`, `chip`, `field`).
+
+**Um lugar só.** Mudou o design? Muda no `@theme`, nunca no componente.
+
+---
+
+## 🏗️ Arquitetura
+
+Vertical slices. Uma pasta por domínio, com tudo que aquele domínio precisa:
+
+```text
+src/features/<dominio>/
+├── domain/           # entidades + contratos (I*.ts) — zero dependência
+├── application/      # use cases — regra pura, sem Next, sem Prisma
+├── infrastructure/   # Prisma, HTTP, filas
+├── container.ts      # DI do slice
+├── queries.ts        # entrada de leitura
+├── actions.ts        # entrada de escrita (Server Action)
+└── ui/               # componentes do domínio
+```
+
+Motivo de ser assim: **para entender um requisito você abre uma pasta só** — e o
+`application/` é testável sem mock de infra.
+
+---
+
+## 🚀 Publicar no npm
+
+```bash
+# 1. Login (uma vez)
+npm login
+
+# 2. Release (roda testes, versiona com git tag, publica)
+npm run release
+
+# 3. Bump de versão
+npm run release:minor   # 1.0.0 → 1.1.0
+npm run release:major   # 1.0.0 → 2.0.0
+```
+
+`npm run release` = `test` → `npm version` (com tag) → `npm publish --access public`.
+O `prepublishOnly` roda os testes de novo, então **não é possível publicar com teste vermelho**.
+
+```bash
+# Conferir o que vai para o pacote
+npm pack --dry-run
+```
+
+---
+
+## 🔌 Agentes suportados
+
+Os atalhos da raiz são criados para:
+
+| Arquivo | Agente |
+| --- | --- |
+| `AGENTS.md` | padrão de mercado (Cursor, Codex, Windsurf, Cline, Gemini) |
+| `CLAUDE.md` | Claude Code |
+| `GEMINI.md` | Gemini CLI |
+| `.cursorrules` | Cursor (formato antigo) |
+| `.windsurfrules` | Windsurf |
+| `.github/copilot-instructions.md` | GitHub Copilot |
+| `.clinerules` | Cline |
+
+Todos apontam para `SDD/AGENTS.md`. Nenhuma configuração manual necessária.
+
+---
+
+## 🧪 Verificação
+
+```bash
+npm test        # 20 testes da CLI, do scaffold e da documentação
+```
+
+O template em `template/next/` é validado de verdade: `typecheck` + `lint` + `test` + `test:e2e` + `build`.
+
+---
+
+## 📚 SKILLS
+
+| SKILL | O que faz |
+| --- | --- |
+| `create-feature` | Cria um vertical slice novo com domain/application/container/queries/actions |
+| `install-submodule` | Instala as regras em projeto existente + cria atalhos |
+| `check-docs` | Valida que todo link relativo entre documentos resolve |
+
+---
+
+## 🛡️ Qualidade
+
+```bash
+npm test                          # 20 testes: CLI, scaffold e integridade da documentação
+node SDD/SKILLS/check-docs/check-docs.mjs   # 29 documentos, links relativos
+npm pack --dry-run                # confere o que vai para o npm (67 arquivos, ~60 kB)
+```
+
+O template em `template/next/` é validado de verdade: `typecheck` + `lint` + `test` + `test:e2e` + `build`.
+O CI (`.github/workflows/ci.yml`) refaz essa validação a cada push, **gerando o app a partir do próprio template**.
 
 ---
 
 ## 👨‍💻 Autor
-[Marcelino Sandroni](https://github.com/marcelinosandroni)
+
+**Marcelino Sandroni** — [github.com/marcelinosandroni](https://github.com/marcelinosandroni)
+
+MIT License.

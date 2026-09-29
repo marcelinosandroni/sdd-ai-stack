@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Qualidade (testes da CLI + links da doc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Testes da CLI e do scaffold
+        run: npm test
+
+      - name: Links da documentação
+        run: node SKILLS/check-docs/check-docs.mjs
+
+      - name: Conferir o conteúdo do pacote
+        run: npm pack --dry-run
+
+  template:
+    name: Valida o template Next.js
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Gera o app a partir do próprio template
+        run: |
+          node bin/create-sdd-ai-stack.mjs .sandbox --no-install --shortcuts stub --yes
+          cd .sandbox
+
+      - name: Instala dependências
+        working-directory: .sandbox
+        run: npm ci || npm install
+
+      - name: Typecheck
+        working-directory: .sandbox
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: .sandbox
+        run: npm run lint
+
+      - name: Testes unitários
+        working-directory: .sandbox
+        run: npm run test
+
+      - name: Build
+        working-directory: .sandbox
+        run: npm run build
+
+      - name: E2E
+        working-directory: .sandbox
+        run: |
+          npm run test:e2e --prefix ../.sandbox || npx playwright install --with-deps chromium
+          npm run test:e2e
