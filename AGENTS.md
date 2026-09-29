@@ -35,8 +35,10 @@ Whenever you are triggered, read in exactly this order:
 4. **`SDD/ARCHITECTURE.md`** — global architecture.
 5. **`SDD/stacks/README.md`** — the stack index, then open the one you need
    (default: [`stacks/next.md`](./stacks/next.md)).
-6. **`SDD/DESIGN.md`** — UI/UX rules (only when touching UI).
-7. **`SDD/stacks/language.md`** — output language, and only if you are unsure.
+6. **`SDD/stacks/clean-code.md`** — the shared spine: SRP, SOLID, hexagonal, smells.
+   Read it for **any** language, not just JavaScript.
+7. **`SDD/DESIGN.md`** — UI/UX rules (only when touching UI).
+8. **`SDD/stacks/language.md`** — output language + doc compression. Only if unsure.
 
 > ⚠️ **Hyperfocus rule (ADHD):** read the **minimum necessary**. Do not read everything
 > "just in case". Open a stack doc only when the task requires it. Context is the
@@ -55,13 +57,25 @@ SDD/
 ├── DESIGN.md           ← design system (tokens, typography, components)
 ├── stacks/             ← EVERYTHING stack/tool/language-specific
 │   ├── README.md       ← index
+│   ├── clean-code.md   ← 🧹 SPINE: SRP, SOLID, hexagonal, patterns, smells
+│   ├── architecture.md ← 🏗 slices, boundaries, dependency rule
+│   ├── language.md     ← 🗣 ENGLISH + token economy
+│   ├── agent-tooling.md ← 🤖 companion tools, with trade-offs
+│   │
 │   ├── next.md         ← Next.js 16  ⭐ DEFAULT STACK
+│   ├── java.md         ← Java 21+ · Spring Boot · Quarkus
+│   ├── dotnet.md       ← C# · .NET · ASP.NET Core
+│   ├── go.md           ← Go
+│   ├── python.md       ← Python · Django · FastAPI
+│   ├── node-frameworks.md ← Express · Fastify · Nest
+│   ├── angular.md      ← Angular  (signals, OnPush, standalone)
+│   ├── vue.md          ← Vue      (script setup)
+│   ├── svelte.md       ← Svelte   (runes, SvelteKit)
+│   ├── javascript.md   ← JS/TS core rules
 │   ├── node.md         ← plain Node.js (worker, cron, queue)
 │   ├── react.md        ← React (hooks, state, composition)
-│   ├── typescript.md   tailwind.md    shadcn.md     testing.md
-│   ├── database.md     ai.md          git.md        ci.md
-│   ├── language.md     ← 🗣 ENGLISH BY DEFAULT
-│   └── agent-tooling.md ← 🤖 companion tools, with trade-offs
+│   └── typescript.md   tailwind.md    shadcn.md     testing.md
+│       database.md     ai.md          git.md        ci.md
 ├── specs/              ← operational SDD
 │   ├── PLAN.md         (the task RIGHT NOW)
 │   ├── BACKLOG.md      (loose ideas, tech debt)
@@ -76,13 +90,16 @@ SDD/
 | I need to know… | Open |
 | --- | --- |
 | The next task | `specs/PLAN.md` |
+| **Rules that apply to any language** | `stacks/clean-code.md` |
+| How to structure a feature | `stacks/architecture.md` |
 | Next.js rules | `stacks/next.md` |
+| Another language | `stacks/README.md` (index) |
 | Which stack this app uses | `APP-STACK.md` |
 | Colors, type, spacing | `DESIGN.md` |
 | How to commit | `stacks/git.md` |
 | How to write a test | `stacks/testing.md` |
 | TypeScript rules | `stacks/typescript.md` |
-| Which language to write in | `stacks/language.md` |
+| Which language / how dense | `stacks/language.md` |
 | Folder structure | `ARCHITECTURE.md` |
 | Tools that cut tokens | `stacks/agent-tooling.md` |
 
@@ -108,6 +125,14 @@ SDD/
 6. **🗣 Write in English.** Commit messages, docs, comments, specs, identifiers —
    everything you put in the repository. Talk to the *user* in their language.
    Full rule: [`stacks/language.md`](./stacks/language.md).
+7. **✂️ Every line must earn its tokens.** Cut filler, hedging, preamble and symmetry.
+   Never compress a `not`, a number, an error string or a command. Never invent
+   abbreviations — the tokenizer splits them anyway, and the reader still decodes.
+   Same law for your replies: full word beats abbreviation, clarity beats compression.
+   Rule: [`stacks/language.md`](./stacks/language.md) §2.
+8. **One file = one reason to change.** SOLID, separation of concerns, hexagonal arrows
+   inward, no `Utils` class. Applies to every language.
+   Rule: [`stacks/clean-code.md`](./stacks/clean-code.md).
 
 ---
 
@@ -134,6 +159,11 @@ When you find your task in `specs/PLAN.md`:
 ### Evidence is never compressed
 > A token-saving tool may shorten your prose. It may **never** shorten the evidence
 > block. The full command, the full exit code, the real counts.
+
+### The only place full length wins
+> A rule nobody finishes reading is a rule nobody follows. Docs are compressed so they
+> can be reloaded cheaply on every task. **When compression creates ambiguity, clarity
+> wins** — restore the words.
 
 ---
 

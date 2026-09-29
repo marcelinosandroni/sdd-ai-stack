@@ -1,5 +1,7 @@
 # 🔷 TYPESCRIPT
 
+> Spine: [clean-code.md](./clean-code.md).
+
 ## 🚨 Non-negotiable rules
 
 1. **`strict: true` is mandatory.** No exceptions. The template's `tsconfig.json`

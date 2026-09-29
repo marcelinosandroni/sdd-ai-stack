@@ -105,14 +105,24 @@ SDD/
 ├── APP-STACK.md         which stack this app uses
 ├── ARCHITECTURE.md      🏗️ vertical slices
 ├── DESIGN.md            🎨 full design system (tokens, typography, components)
-├── stacks/              🧱 by language and tool
+├── stacks/              🧱 by language and tool — all compressed on purpose
+│   ├── clean-code.md    🧹 THE SPINE: SRP, SOLID, hexagonal, patterns, smells
+│   ├── architecture.md  🏗 slices, boundaries, dependency rule
 │   ├── next.md          ⭐ Next.js 16 (the default stack)
+│   ├── java.md          Java 21+ · Spring Boot · Quarkus
+│   ├── dotnet.md        C# · .NET · ASP.NET Core
+│   ├── go.md            Go · chi · sqlc · errgroup
+│   ├── python.md        Python 3.12+ · Django 5 · FastAPI
+│   ├── node-frameworks.md  Express 5 · Fastify · Nest
+│   ├── angular.md       Angular 20+ · signals · OnPush
+│   ├── vue.md           Vue 3.5+ · `<script setup>`
+│   ├── svelte.md        Svelte 5 · runes · SvelteKit
+│   ├── javascript.md    JS/TS core rules
 │   ├── node.md          plain Node.js (workers, cron, queues)
 │   ├── react.md         React (server-first)
-│   ├── typescript.md    tailwind.md     shadcn.md
-│   ├── testing.md       database.md     ai.md
-│   ├── git.md           ci.md
-│   ├── language.md      🗣 English by default
+│   ├── typescript.md    tailwind.md     shadcn.md     testing.md
+│   ├── database.md      ai.md           git.md        ci.md
+│   ├── language.md      🗣 English by default + token economy
 │   └── agent-tooling.md 🤖 tools that cut tokens, with trade-offs
 ├── specs/               operational SDD
 │   ├── PLAN.md  BACKLOG.md  ROADMAP.md
@@ -125,17 +135,62 @@ SDD/
 ### The read order `AGENTS.md` enforces
 
 ```text
-1. SDD/AGENTS.md      laws and flow
-2. SDD/specs/PLAN.md  the single [-] task
-3. SDD/APP.md         what this app is
-4. SDD/APP-STACK.md   which stack
-5. SDD/stacks/next.md the stack rules
-6. SDD/DESIGN.md      only when touching UI
-7. SDD/stacks/…       only the tool you're using
+1. SDD/AGENTS.md        laws and flow
+2. SDD/specs/PLAN.md    the single [-] task
+3. SDD/APP.md           what this app is
+4. SDD/APP-STACK.md     which stack
+5. SDD/stacks/next.md   the stack rules
+6. SDD/stacks/clean-code.md   the spine — for ANY language, not just JS
+7. SDD/DESIGN.md        only when touching UI
+8. SDD/stacks/…         only the tool you're using
 ```
 
 > Every rule doc has a **router at the top**: "if you are doing X, read §Y". That keeps
 > the agent's context small — which matters, because long context is where agents die.
+
+---
+
+## 🧹 One spine, every stack
+
+[`stacks/clean-code.md`](./stacks/clean-code.md) is the shared spine; every other stack
+file maps it:
+
+- **SRP** — one file, one resource, one reason to change. Never two.
+- **SOLID** — with a "smell when broken" column, because a principle nobody can detect is
+  a principle nobody follows
+- **Separation of concerns** — `inbound → application → domain ← outbound`, arrows inward
+- **Hexagonal / ports & adapters** — the default when it scales, which is always
+- **Design patterns** — with the pain that justifies each one. Add on the *second*
+  occurrence, never the first
+- **Code smells** — a refuse-in-review table: feature envy, primitive obsession, shotgun
+  surgery, boolean blindness, `Manager`/`Helper` naming
+- **A review checklist** with 8 items you can run before marking a task `[x]`
+
+And [`stacks/architecture.md`](./stacks/architecture.md) holds what stays constant across
+languages: feature-first folders, the dependency rule, the composition root, cross-module
+communication, and the per-stack folder table.
+
+---
+
+## ✂️ Every doc is compressed on purpose
+
+A rule nobody finishes reading is a rule nobody follows — and rule files reload on every
+single task. So the docs are dense, imperative, and free of filler.
+
+The rules are written down, not left to taste
+([`stacks/language.md`](./stacks/language.md) §2):
+
+- **Cut:** filler, hedging, preamble, symmetry padding, restating the obvious
+- **Never cut:** `not`, `never`, `no`, `only`, `except` — dropping them flips the meaning.
+  Numbers, versions, error strings, code and commands stay exact
+- **Never invent abbreviations:** `cfg`, `impl`, `req` cost the same as the full word under
+  a modern tokenizer *and* still cost a decode. The full word is cheaper and clearer
+- **Never grow output to sound compressed:** if a terse phrasing is not shorter than the
+  plain one, use the plain one
+- **Ambiguity wins over brevity.** Restore the words.
+
+> Applies to docs, comments, test names, commits, and the chat reply. **One exception:
+> evidence is never compressed.** Full command, full exit code, real counts.
 
 ---
 
@@ -169,7 +224,7 @@ plus primitives (`btn-primary`, `btn-secondary`, `card`, `card-metric`, `chip`, 
 
 ## 🏗️ Architecture
 
-Vertical slices. One folder per domain, carrying everything that domain needs:
+Vertical slices. One folder per domain, carrying everything that domain needs. Full map in [`stacks/architecture.md`](./stacks/architecture.md):
 
 ```text
 src/features/<domain>/

@@ -1,5 +1,7 @@
 # ⚙️ CI / CD
 
+> Spine: [clean-code.md](./clean-code.md).
+
 ## 🚨 Non-negotiable rules
 
 1. **Minimum pipeline in every repo:** `lint` → `typecheck` → `test` → `build`, in

@@ -1,5 +1,7 @@
 # 🌿 GIT
 
+> Spine: [clean-code.md](./clean-code.md) §7 (naming) and §8 (errors).
+
 > **Commit messages, PR titles and branch names are in English.** Always.
 > See [language.md](./language.md) § Commit messages.
 

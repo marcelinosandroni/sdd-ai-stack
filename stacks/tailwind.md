@@ -1,7 +1,7 @@
 # 🎨 TAILWIND CSS (v4)
 
 > The template's styling stack. **Dark mode only.** Full tokens in
-> [../DESIGN.md](../DESIGN.md).
+> [../DESIGN.md](../DESIGN.md). Spine: [clean-code.md](./clean-code.md).
 
 ## 🚨 Non-negotiable rules
 

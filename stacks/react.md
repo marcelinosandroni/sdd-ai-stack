@@ -2,7 +2,7 @@
 
 > **React Client is NOT the default.** Next.js 16 uses **Server Components** by default.
 > Read this doc only when the problem is **client component/state**, not the server.
-> Next.js rules: [next.md](./next.md) §3 (Server-First).
+> Spine: [clean-code.md](./clean-code.md). Next.js rules: [next.md](./next.md) §3.
 
 ## 🧭 Router
 

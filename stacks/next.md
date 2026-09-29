@@ -3,7 +3,8 @@
 > **THE DEFAULT STACK OF THIS TEMPLATE.** Every new application ships on Next.js.
 > Plain Node.js (workers, CLIs, cron, webhooks) is a **complement**, not the default —
 > see [node.md](./node.md).
-> Target version: **Next.js 16** (App Router, React 19.2, Turbopack).
+>> Target version: **Next.js 16** (App Router, React 19.2, Turbopack).
+> Spine: [clean-code.md](./clean-code.md) + [architecture.md](./architecture.md).
 
 ---
 
