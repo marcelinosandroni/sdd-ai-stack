@@ -20,7 +20,7 @@ on:
 
 # Impede dois publishes simultâneos (npm rejeita versão duplicada).
 concurrency:
-  group: release-npm
+  group: release-registry
   cancel-in-progress: false
 
 permissions:
@@ -30,7 +30,7 @@ permissions:
 
 jobs:
   verify:
-    name: Verifica pacote
+    name: Verify package
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.check.outputs.version }}
@@ -43,13 +43,13 @@ jobs:
           # gera um .npmrc no runner apontando para NODE_AUTH_TOKEN
           registry-url: https://registry.npmjs.org
 
-      - name: Testes
+      - name: Tests
         run: npm test
 
-      - name: Links da documentação
+      - name: Documentation links
         run: node SKILLS/check-docs/check-docs.mjs
 
-      - name: Confere versão e conteúdo do pacote
+      - name: Check the version and the package contents
         id: check
         run: |
           set -euo pipefail
@@ -85,7 +85,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   publish:
-    name: Publica no npm
+    name: Publish to npm
     needs: verify
     runs-on: ubuntu-latest
     environment:
@@ -103,12 +103,12 @@ jobs:
 
       # Trusted Publishing (OIDC) exige npm >= 11.5.1. O Node 22 do runner vem
       # com o npm 10.x, então sem isto o OIDC nunca engata e o publish falha.
-      - name: Sobe o npm para a versão com suporte a OIDC
+      - name: Upgrade npm to a version with OIDC support
         run: npm install -g npm@latest
 
       # o job anterior alterou package.json num checkout descartável;
       # aqui (checkout limpo) precisamos reaplicar a versão do dispatch
-      - name: Aplica a versão do dispatch
+      - name: Apply the dispatch version
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           node -e "
@@ -118,14 +118,14 @@ jobs:
             fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
           "
 
-      - name: Confere a versão
+      - name: Check the version
         run: |
           ACTUAL="$(node -p "require('./package.json').version")"
           if [ "$ACTUAL" != "${{ needs.verify.outputs.version }}" ]; then
-            echo "::error::versão divergente: '$ACTUAL' != '${{ needs.verify.outputs.version }}'"
+            echo "::error::version mismatch: '$ACTUAL' != '${{ needs.verify.outputs.version }}'"
             exit 1
           fi
-          echo "publicando create-sdd-ai-stack@$ACTUAL"
+          echo "publishing create-sdd-ai-stack@$ACTUAL"
 
       # ── Autenticação: dois modos, o npm escolhe ──
       #
@@ -139,7 +139,7 @@ jobs:
       # ⚠️ We do NOT write the token to a file. The project .npmrc has priority
       #    sobre o ~/.npmrc do runner, e um authToken vazio lá dentro quebra
       #    TUDO silenciosamente (401 no whoami, 404 no PUT de primeira publicação).
-      - name: Autentica
+      - name: Authenticate
         run: |
           if [ -z "${NPM_TOKEN}" ]; then
             echo "::notice::NPM_TOKEN ausente — publicando via Trusted Publishing (OIDC)."
@@ -158,10 +158,93 @@ jobs:
       # `publishConfig` com prioridade sobre flag de CLI e sobre env, então
       # deixar `provenance: true` lá quebra o bootstrap local com
       # "Automatic provenance generation not supported for provider: null".
-      - name: Publica
+      - name: Publish
         if: ${{ !inputs.dry_run }}
         run: npm publish --access public --provenance
 
-      - name: Simula (dry run)
+      - name: Simulate (dry run)
         if: ${{ inputs.dry_run }}
         run: npm publish --dry-run --access public
+
+  # ─────────────────────────────────────────────────────────────────
+  # GitHub Packages. Runs in PARALLEL with the npm job: a failure on one
+  # registry does not cancel the other, and both get the same version.
+  #
+  # GitHub Packages ONLY accepts scoped packages (@owner/name). Our npm name is
+  # unscoped, so this job rewrites `name` to the scoped form for the publish and
+  # then restores nothing — the checkout is disposable.
+  #
+  # It also strips `publishConfig`, because npm reads that with higher precedence
+  # than CLI flags: `access: public` and `provenance` are npm-registry-only and
+  # both are rejected by GitHub Packages.
+  # ─────────────────────────────────────────────────────────────────
+  publish-github:
+    name: Publish to GitHub Packages
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    environment:
+      name: github-packages
+      url: https://github.com/users/marcelinosandroni/packages
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: '@marcelinosandroni'
+
+      - name: Apply the dispatch version
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            p.version = '${{ inputs.version }}';
+            fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
+          "
+
+      - name: Check the version
+        run: |
+          ACTUAL="$(node -p "require('./package.json').version")"
+          if [ "$ACTUAL" != "${{ needs.verify.outputs.version }}" ]; then
+            echo "::error::version mismatch: '$ACTUAL' != '${{ needs.verify.outputs.version }}'"
+            exit 1
+          fi
+
+      # GitHub Packages links the package to the repo through `repository.url`,
+      # and the scope must match the account that owns the repo.
+      - name: Scope the name and drop the npm-only publishConfig
+        run: |
+          set -euo pipefail
+          node -e "
+            const fs = require('fs');
+            const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            const owner = 'marcelinosandroni';
+            if (!p.repository?.url) throw new Error('repository.url is required by GitHub Packages');
+            if (!p.repository.url.includes(owner)) {
+              throw new Error('repository.url must point at ' + owner + ' for the scope to match');
+            }
+            p.name = '@' + owner + '/' + p.name;
+            // npm reads publishConfig ABOVE CLI flags, so it has to go entirely
+            delete p.publishConfig;
+            fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
+            console.log('scoped name: ' + p.name);
+          "
+
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        run: npm publish --provenance=false
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Simulate (dry run)
+        if: ${{ inputs.dry_run }}
+        run: npm publish --dry-run --provenance=false
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

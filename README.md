@@ -263,19 +263,29 @@ Nothing here is a dependency. This core stays a set of rules; these are add-ons.
 
 ---
 
-## 🚀 Publishing to npm
+## 🚀 Publishing to npm and GitHub Packages
 
-Single path: **you version, GitHub Actions publishes.**
+Single path: **you version, GitHub Actions publishes — to both registries.**
 
 ```bash
-npm run version:minor              # 0.1.17 → 0.2.0 (commits + creates tag v0.2.0)
+npm run version:minor              # 0.1.19 → 0.2.0 (commits + creates tag v0.2.0)
 git push origin main
 git push origin --tags            # ← fires the publish
 ```
 
-The first time you have to settle authentication. With **2FA enabled on the npm
-account**, an ordinary token will not publish (`EOTP` — CI cannot type the OTP). Two
-ways out:
+One tag, two registries, in parallel, from the same commit:
+
+| Registry | Name | Auth |
+| --- | --- | --- |
+| npmjs.com | `create-sdd-ai-stack` | `NPM_TOKEN` or OIDC |
+| GitHub Packages | `@marcelinosandroni/create-sdd-ai-stack` | `GITHUB_TOKEN` (built in) |
+
+**Two names, one package:** GitHub Packages only accepts scoped packages, so the
+workflow rewrites the name for the GitHub step alone. Our committed `package.json`
+stays unscoped, because an npm scope publishes private by default.
+
+The npm side needs auth settled once. With **2FA on**, an ordinary token will not
+publish (`EOTP` — CI cannot type the OTP):
 
 ```bash
 # A. Recommended: publish the 1st version locally, enable OIDC, delete the token
@@ -288,15 +298,16 @@ gh secret delete NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
 gh secret set NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
 ```
 
-The workflow picks the mode by itself: **with** `NPM_TOKEN` it uses a token, **without**
-it uses OIDC. No token is ever written to a file.
+The GitHub job needs no secret — `GITHUB_TOKEN` is built in and the workflow grants
+`packages: write`. One thing to do by hand after the first publish: GitHub Packages
+creates packages **private**, so flip the visibility once, or installs will need a token.
 
-Guards before publishing: `npm test` (27 tests) · doc links · tag `vX.Y.Z` matches
+Guards before publishing: `npm test` (34 tests) · doc links · tag `vX.Y.Z` matches
 `package.json` · 10 essential files in the tarball · `npm ≥ 11.5.1` · `concurrency` ·
-provenance.
+provenance (npm only).
 
-📖 Full walkthrough, the three auth paths, and troubleshooting in
-[`docs/RELEASE.md`](./docs/RELEASE.md).
+📖 Full walkthrough, the three npm auth paths, the two-name design, and troubleshooting
+in [`docs/RELEASE.md`](./docs/RELEASE.md).
 
 ---
 
