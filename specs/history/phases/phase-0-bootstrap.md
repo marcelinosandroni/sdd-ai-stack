@@ -63,5 +63,5 @@ npm run build      →  ✓ Compiled successfully (Turbopack, Cache Components)
 ## 🏷️ Release
 
 ```bash
-git tag v1.0.0
+git tag v0.1.17
 ```

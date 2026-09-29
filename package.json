@@ -1,6 +1,6 @@
 {
   "name": "create-sdd-ai-stack",
-  "version": "1.0.0",
+  "version": "0.1.17",
   "description": "Cria um projeto pronto para agentes de IA com Spec-Driven Development: regras SDD + template Next.js 16 + design system.",
   "keywords": [
     "sdd",

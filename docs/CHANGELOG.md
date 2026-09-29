@@ -6,7 +6,11 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
-## [Não publicado]
+## [0.1.17] — 2026-09-29
+
+> **Primeira versão publicada.** O projeto segue em `0.x` de propósito: a API de
+> regras e o template ainda vão mudar com base no uso real. `0.y.z` comunica
+> isso sem versionar breaking changes a cada duas semanas.
 
 ### 🔒 Publicação no npm
 
@@ -39,10 +43,6 @@ proteção de `.env`.
 ### 📈 Cobertura de teste
 
 - 20 → **22 testes** (symlink resolvendo conteúdo certo + `.gitignore` presente no app gerado)
-
----
-
-## [1.0.0] — 2026-09-29
 
 ### 🎯 Objetivo
 Reestruturar o core de regras para **Next.js 16 como stack padrão** (antes: React/Vite + Node),
@@ -118,4 +118,4 @@ CLI** (`npx create-sdd-ai-stack`) com um template Next.js funcional embutido.
 > O nº 8 é o melhor argumento pra manter o CI que **revalida o template a cada push**:
 > o teste passava 100% na minha máquina e só quebrou no Linux.
 
-[1.0.0]: https://github.com/marcelinosandroni/sdd-ai-stack/releases/tag/v1.0.0
+[0.1.17]: https://github.com/marcelinosandroni/sdd-ai-stack/releases/tag/v0.1.17

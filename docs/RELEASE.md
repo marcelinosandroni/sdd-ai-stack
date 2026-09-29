@@ -4,9 +4,26 @@
 > Não existe `npm publish` manual neste projeto — é proposital, para não ter dois caminhos.
 
 ```text
-npm run version:minor   →  1.0.0 → 1.1.0 (commita + cria tag v1.1.0)
+npm run version:minor   →  0.1.17 → 0.2.0 (commita + cria tag v0.2.0)
 git push origin main --tags  →  dispara o workflow Release  →  publica no npm
 ```
+
+---
+
+## 0. Como versionar (estamos em `0.x`)
+
+O projeto está em **`0.1.x`** de propósito: as regras e o template ainda vão mudar com base
+no uso real. Leitura das versões:
+
+| Mudança | Bump | Exemplo | Version bump |
+| --- | --- | --- | --- |
+| Correção de bug, ajuste de doc, nova regra pontual | **patch** | `0.1.17 → 0.1.18` | `npm run version:patch` |
+| Regra nova, feature nova no template, Breaking em config | **minor** | `0.1.17 → 0.2.0` | `npm run version:minor` |
+| Reescritura de regra estrutural (ex.: Next 16 → 17) | **major** | `0.1.17 → 1.0.0` | `npm run version:major` |
+
+> Enquanto em `0.x`, **o minor é o breaking change**. Mudar a estrutura das regras ou
+> do template sobe o minor, não o patch. O `major` fica reservado para quando a interface
+> estabilizar e a gente for para `1.0.0`.
 
 ---
 
@@ -115,7 +132,7 @@ Se tudo der certo: <https://www.npmjs.com/package/create-sdd-ai-stack>
 | --- | --- |
 | `npm test` (22 testes) | nunca publica com teste vermelho |
 | `node SKILLS/check-docs/check-docs.mjs` | nenhuma regra apontando pra arquivo morto |
-| tag `vX.Y.Z` == `version` do `package.json` | evita publicar 1.0.1 quando a tag é 1.0.0 |
+| tag `vX.Y.Z` == `version` do `package.json` | evita publicar 0.1.18 quando a tag é 0.1.17 |
 | 10 arquivos essenciais presentes no tarball | pega `files` mal configurado no `package.json` |
 | `concurrency: release-npm` | dois publishes simultâneos não correm em paralelo |
 | `--provenance` | o pacote é assinado pelo GitHub — prova de que saiu deste repo |
@@ -129,7 +146,7 @@ Se tudo der certo: <https://www.npmjs.com/package/create-sdd-ai-stack>
 | `401 Unauthorized` | secret ausente ou expirado | `gh secret set NPM_TOKEN` de novo; confira a data no npm |
 | `E403 Forbidden` | token sem permissão de escrita no pacote | regere com Read and write em `create-sdd-ai-stack` |
 | `cannot publish over previously published version` | já existe essa versão | bump a versão (`npm run version:patch`) |
-| `tag 'v1.0.0' não bate com package.json '1.0.1'` | esqueceu de commitar o bump | `git add package.json && git commit -m "chore: v1.0.1"` |
+| `tag 'v0.1.17' não bate com package.json '0.1.18'` | esqueceu de commitar o bump | `git add package.json && git commit -m "chore: v0.1.18"` |
 | `EPUBLISHCONFLICT` com provenance | token não tem permissão de provenance | use Trusted Publishing (seção 1, alternativa) |
 | `faltando no pacote: X` | `files` do `package.json` incompleto | adicione o caminho em `files` |
 

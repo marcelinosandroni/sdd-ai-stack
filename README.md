@@ -170,7 +170,7 @@ Motivo de ser assim: **para entender um requisito você abre uma pasta só** —
 Fluxo único: **você versiona, o GitHub Actions publica.**
 
 ```bash
-npm run version:minor              # 1.0.0 → 1.1.0 (commita + cria tag v1.1.0)
+npm run version:minor              # 0.1.17 → 0.2.0 (commita + cria tag v0.2.0)
 git push origin main
 git push origin --tags            # ← dispara a publicação
 ```
