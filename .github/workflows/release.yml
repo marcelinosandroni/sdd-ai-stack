@@ -122,9 +122,17 @@ jobs:
           fi
           echo "publicando create-sdd-ai-stack@$ACTUAL"
 
-      # o secret do repositório se chama NPM_TOKEN (é o nome combinado pra este projeto)
+      # o secret do repositório se chama NPM_TOKEN (é o nome combinado pra este projeto).
+      # Sem este guard, o npm falha com "ENEEDAUTH / need auth", que não diz
+      # NADA sobre a causa real (secret ausente) — já custou um debug.
       - name: Autentica
         run: |
+          if [ -z "${NPM_TOKEN}" ]; then
+            echo "::error::secret NPM_TOKEN não encontrado neste repositório."
+            echo "::error::crie em Settings → Secrets → Actions, com escopo Read and write no pacote create-sdd-ai-stack"
+            echo "::error::ou use Trusted Publishing (OIDC) e apague o secret — ver docs/RELEASE.md"
+            exit 1
+          fi
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
