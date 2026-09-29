@@ -110,6 +110,29 @@ test("installShortcuts: modo stub cria todos os atalhos com ponteiro", () => {
   }
 });
 
+test("installShortcuts: modo symlink cria atalho que resolve o conteúdo certo", () => {
+  const root = tmp();
+  installRules(root, { log: silent });
+  const results = installShortcuts(root, { log: silent, mode: "symlink" });
+
+  for (const rel of ["AGENTS.md", "CLAUDE.md"]) {
+    const p = path.join(root, rel);
+    assert.ok(fs.existsSync(p), `atalho ${rel} não foi criado (nem symlink nem stub)`);
+
+    const text = fs.readFileSync(p, "utf8");
+    const kind = results.find((r) => r.rel === rel).kind;
+
+    // Guard do bug do caminho relativo: se virou symlink, TEM que ler as regras.
+    // existsSync() segue symlink, então um link quebrado nem chegaria até aqui.
+    if (kind === "symlink") {
+      assert.match(text, /LEIS ABSOLUTAS DO AGENTE IA/, `symlink ${rel} não resolve para SDD/AGENTS.md`);
+    } else {
+      // fallback (Windows sem dev mode): stub com ponteiro explícito
+      assert.match(text, /SDD\/AGENTS\.md/, `stub ${rel} não aponta para SDD/AGENTS.md`);
+    }
+  }
+});
+
 test("installShortcuts: não sobrescreve arquivo existente", () => {
   const root = tmp();
   fs.writeFileSync(path.join(root, "AGENTS.md"), "meu conteudo", "utf8");
