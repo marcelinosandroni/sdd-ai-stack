@@ -1,24 +1,26 @@
 # 🧩 SKILL: check-docs
 
-> Valida que **todo link relativo entre documentos** resolve. Roda no hook de commit
-> e no CI para uma regra nunca apontar para arquivo morto.
+> Validates that **every relative link between documents** resolves. Run it in the
+> commit hook and in CI so a rule never points at a dead file.
 
-## ▶️ Uso
+## ▶️ Usage
 
 ```bash
 node SDD/SKILLS/check-docs/check-docs.mjs
-node SDD/SKILLS/check-docs/check-docs.mjs ../outro-projeto
+node SDD/SKILLS/check-docs/check-docs.mjs ../other-project
 ```
 
-## 📦 O que verifica
+## 📦 What it validates
 
-- Coleta todo `.md` a partir da raiz do `SDD/`
-- Ignora blocos de código (` ``` ` / `~~~ `) — link ilustrativo dentro de exemplo não conta
-- Ignora `node_modules`, `.next`, `test-results`, `playwright-report`
-- Saída: exit 1 com a lista dos quebrados, ou exit 0 com o total de documentos
+- Collects every `.md` from the `SDD/` root
+- Skips fenced code blocks (` ``` ` / `~~~ `) — an illustrative link inside an example
+  does not count
+- Skips `node_modules`, `.next`, `test-results`, `playwright-report` and `template`
+  (the template's README points at `./SDD/…`, which only exists after scaffolding)
+- Output: exit 1 with the list of broken links, or exit 0 with the document count
 
-## ✅ Quando rodar
+## ✅ When to run it
 
-- Antes de commitar mudança em documentação
-- No CI, junto com os testes
-- Depois de renomear/mover qualquer documento de regra
+- Before committing a documentation change
+- In CI, alongside the tests
+- After renaming or moving any rule document

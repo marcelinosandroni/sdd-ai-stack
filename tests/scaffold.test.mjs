@@ -39,52 +39,63 @@ test("parseArgs: --submodule com url usa a informada", () => {
   assert.equal(o.submodule, "https://exemplo.com/x.git");
 });
 
-test("parseArgs: rejeita template inválido", () => {
-  assert.throws(() => parseArgs(["app", "--template", "angular"]), /Template inválido/);
+test("parseArgs: rejects an invalid template", () => {
+  assert.throws(() => parseArgs(["app", "--template", "angular"]), /Invalid template/);
 });
 
-test("parseArgs: rejeita opção desconhecida", () => {
-  assert.throws(() => parseArgs(["app", "--nao-existe"]), /Opção desconhecida/);
+test("parseArgs: rejects an unknown option", () => {
+  assert.throws(() => parseArgs(["app", "--nao-existe"]), /Unknown option/);
 });
 
-test("parseArgs: rejeita --shortcuts inválido", () => {
-  assert.throws(() => parseArgs(["app", "--shortcuts", "hardlink"]), /--shortcuts inválido/);
+test("parseArgs: rejects an invalid --shortcuts", () => {
+  assert.throws(() => parseArgs(["app", "--shortcuts", "hardlink"]), /--shortcuts invalid/);
 });
 
 /* ── installRules ────────────────────────────────────────── */
 
-test("installRules: cria SDD/ com todos os documentos", () => {
+test("installRules: creates SDD/ with every document", () => {
   const root = tmp();
   installRules(root, { log: silent });
   const sdd = path.join(root, "SDD");
 
   for (const f of [
     "AGENTS.md", "APP.md", "APP-STACK.md", "ARCHITECTURE.md",
-    "DESIGN.md", "NEXT.md", "NODE.md", "REACT.md",
+    "DESIGN.md", "README.md",
   ]) {
-    assert.ok(fs.existsSync(path.join(sdd, f)), `faltou SDD/${f}`);
+    assert.ok(fs.existsSync(path.join(sdd, f)), `missing SDD/${f}`);
   }
 
   for (const d of ["stacks", "specs", "docs", "SKILLS"]) {
-    assert.ok(fs.statSync(path.join(sdd, d)).isDirectory(), `faltou SDD/${d}/`);
+    assert.ok(fs.statSync(path.join(sdd, d)).isDirectory(), `missing SDD/${d}/`);
   }
 
   assert.ok(fs.existsSync(path.join(sdd, "stacks", "README.md")));
   assert.ok(fs.existsSync(path.join(sdd, "stacks", "typescript.md")));
+  assert.ok(fs.existsSync(path.join(sdd, "stacks", "next.md")));
+  assert.ok(fs.existsSync(path.join(sdd, "stacks", "node.md")));
+  assert.ok(fs.existsSync(path.join(sdd, "stacks", "react.md")));
   assert.ok(fs.existsSync(path.join(sdd, "specs", "PLAN.md")));
+
+  // the stack files must not linger at the SDD root
+  for (const moved of ["NEXT.md", "NODE.md", "REACT.md"]) {
+    assert.ok(
+      !fs.existsSync(path.join(sdd, moved)),
+      `SDD/${moved} should have moved into stacks/`,
+    );
+  }
 });
 
-test("installRules: NÃO embute a própria lib (bin/src/lib/template)", () => {
+test("installRules: does NOT embed the library itself (bin/src/lib/template)", () => {
   const root = tmp();
   installRules(root, { log: silent });
   const sdd = path.join(root, "SDD");
 
   for (const leaked of ["bin", "src", "lib", "tests", "template", "node_modules"]) {
-    assert.ok(!fs.existsSync(path.join(sdd, leaked)), `SDD/ não deveria conter ${leaked}`);
+    assert.ok(!fs.existsSync(path.join(sdd, leaked)), `SDD/ should not contain ${leaked}`);
   }
 });
 
-test("installRules: o AGENTS.md instalado aponta para SDD/ e não para raiz", () => {
+test("installRules: the installed AGENTS.md points at SDD/, not the root", () => {
   const root = tmp();
   installRules(root, { log: silent });
   const text = fs.readFileSync(path.join(root, "SDD", "AGENTS.md"), "utf8");
@@ -94,7 +105,7 @@ test("installRules: o AGENTS.md instalado aponta para SDD/ e não para raiz", ()
 
 /* ── installShortcuts ────────────────────────────────────── */
 
-test("installShortcuts: modo stub cria todos os atalhos com ponteiro", () => {
+test("installShortcuts: stub mode creates every shortcut with the pointer", () => {
   const root = tmp();
   installRules(root, { log: silent });
   installShortcuts(root, { log: silent, mode: "stub" });
@@ -104,36 +115,43 @@ test("installShortcuts: modo stub cria todos os atalhos com ponteiro", () => {
     ".windsurfrules", path.join(".github", "copilot-instructions.md"), ".clinerules",
   ]) {
     const p = path.join(root, rel);
-    assert.ok(fs.existsSync(p), `faltou atalho ${rel}`);
+    assert.ok(fs.existsSync(p), `missing shortcut ${rel}`);
     const text = fs.readFileSync(p, "utf8");
-    assert.match(text, /SDD\/AGENTS\.md/, `atalho ${rel} não aponta para SDD/AGENTS.md`);
+    assert.match(text, /SDD\/AGENTS\.md/, `shortcut ${rel} does not point at SDD/AGENTS.md`);
   }
 });
 
-test("installShortcuts: modo symlink cria atalho que resolve o conteúdo certo", () => {
+test("installShortcuts: symlink mode creates a shortcut that resolves to the right content", () => {
   const root = tmp();
   installRules(root, { log: silent });
   const results = installShortcuts(root, { log: silent, mode: "symlink" });
+  // compare against the real file instead of a literal: the rules get translated and
+  // a hard-coded heading would break the suite for the wrong reason (it did, once)
+  const rules = fs.readFileSync(path.join(root, "SDD", "AGENTS.md"), "utf8");
 
   for (const rel of ["AGENTS.md", "CLAUDE.md"]) {
     const p = path.join(root, rel);
-    assert.ok(fs.existsSync(p), `atalho ${rel} não foi criado (nem symlink nem stub)`);
+    assert.ok(fs.existsSync(p), `shortcut ${rel} was not created (neither symlink nor stub)`);
 
     const text = fs.readFileSync(p, "utf8");
     const kind = results.find((r) => r.rel === rel).kind;
 
-    // Guard do bug do caminho relativo: se virou symlink, TEM que ler as regras.
-    // existsSync() segue symlink, então um link quebrado nem chegaria até aqui.
+    // Guard for the relative-path bug: if it became a symlink it MUST read the rules.
+    // existsSync() follows symlinks, so a broken link would not even get here.
     if (kind === "symlink") {
-      assert.match(text, /LEIS ABSOLUTAS DO AGENTE IA/, `symlink ${rel} não resolve para SDD/AGENTS.md`);
+      assert.equal(
+        text,
+        rules,
+        `symlink ${rel} does not resolve to SDD/AGENTS.md — wrong relative path?`,
+      );
     } else {
-      // fallback (Windows sem dev mode): stub com ponteiro explícito
-      assert.match(text, /SDD\/AGENTS\.md/, `stub ${rel} não aponta para SDD/AGENTS.md`);
+      // fallback (Windows without dev mode): a stub with an explicit pointer
+      assert.match(text, /SDD\/AGENTS\.md/, `stub ${rel} does not point at SDD/AGENTS.md`);
     }
   }
 });
 
-test("installShortcuts: não sobrescreve arquivo existente", () => {
+test("installShortcuts: does not overwrite an existing file", () => {
   const root = tmp();
   fs.writeFileSync(path.join(root, "AGENTS.md"), "meu conteudo", "utf8");
   const res = installShortcuts(root, { log: silent, mode: "stub" });
@@ -144,7 +162,7 @@ test("installShortcuts: não sobrescreve arquivo existente", () => {
 
 /* ── scaffold ────────────────────────────────────────────── */
 
-test("scaffold: cria app completo (template + SDD + atalhos)", () => {
+test("scaffold: creates a complete app (template + SDD + shortcuts)", () => {
   const parent = tmp();
   const target = path.join(parent, "meu-app");
   const s = scaffold({ target, template: "next", log: silent, shortcutMode: "stub" });
@@ -166,7 +184,7 @@ test("scaffold: cria app completo (template + SDD + atalhos)", () => {
   assert.ok(fs.existsSync(path.join(target, "README.md")));
 });
 
-test("scaffold: template next declara cacheComponents e reactCompiler", () => {
+test("scaffold: the next template declares cacheComponents and reactCompiler", () => {
   const parent = tmp();
   const target = path.join(parent, "app-cfg");
   scaffold({ target, template: "next", log: silent, shortcutMode: "stub" });
@@ -175,7 +193,7 @@ test("scaffold: template next declara cacheComponents e reactCompiler", () => {
   assert.match(cfg, /reactCompiler:\s*true/);
 });
 
-test("scaffold: template não traz node_modules nem .next", () => {
+test("scaffold: the template ships without node_modules or .next", () => {
   const parent = tmp();
   const target = path.join(parent, "app-limpo");
   scaffold({ target, template: "next", log: silent, shortcutMode: "stub" });
@@ -183,7 +201,7 @@ test("scaffold: template não traz node_modules nem .next", () => {
   assert.ok(!fs.existsSync(path.join(target, ".next")));
 });
 
-test("scaffold: --rules-only não cria src/", () => {
+test("scaffold: --rules-only does not create src/", () => {
   const parent = tmp();
   const target = path.join(parent, "so-regras");
   scaffold({ target, template: "none", log: silent, shortcutMode: "stub" });
@@ -191,22 +209,22 @@ test("scaffold: --rules-only não cria src/", () => {
   assert.ok(fs.existsSync(path.join(target, "SDD", "AGENTS.md")));
 });
 
-test("scaffold: o app gerado TEM .gitignore (npm nunca empacota esse arquivo)", () => {
+test("scaffold: the generated app HAS a .gitignore (npm never packs that file)", () => {
   const parent = tmp();
   const target = path.join(parent, "app-gitignore");
   scaffold({ target, template: "next", log: silent, shortcutMode: "stub" });
 
   const gi = path.join(target, ".gitignore");
-  assert.ok(fs.existsSync(gi), "app gerado ficou sem .gitignore");
+  assert.ok(fs.existsSync(gi), "the generated app shipped without a .gitignore");
   const text = fs.readFileSync(gi, "utf8");
   for (const required of ["node_modules/", ".next/", ".env.local"]) {
-    assert.ok(text.includes(required), `.gitignore não protege ${required}`);
+    assert.ok(text.includes(required), `.gitignore does not protect ${required}`);
   }
-  assert.ok(!fs.existsSync(path.join(target, "gitignore")), "o gitignore sem ponto não pode sobrar");
+  assert.ok(!fs.existsSync(path.join(target, "gitignore")), "the dotless gitignore must not linger");
 });
 
-test("scaffold: recusa pasta não vazia", () => {
+test("scaffold: refuses a non-empty folder", () => {
   const target = tmp();
   fs.writeFileSync(path.join(target, "existe.txt"), "x", "utf8");
-  assert.throws(() => scaffold({ target, log: silent }), /já existe e não está vazia/);
+  assert.throws(() => scaffold({ target, log: silent }), /already exists and is not empty/);
 });

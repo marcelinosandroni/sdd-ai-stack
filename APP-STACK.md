@@ -1,31 +1,36 @@
-# 🧠 APP-STACK (qual stack este app usa)
+# 🧠 APP-STACK (which stack this app uses)
 
-> **Ponteiro de stack.** O agente lê o doc aqui e abre o arquivo de regras correspondente.
-> Trocar este arquivo é **automático** (é configuração do projeto). Trocar as regras em si, **não**.
+> **Stack pointer.** The agent reads this file and opens the matching rules document.
+> Editing this file is **automatic** (it's project configuration). Editing the rules
+> themselves is **not**.
 
 ---
 
-## 🎯 Stack ativa
+## 🎯 Active stack
 
-| Papel | Stack | Documento de regras |
+| Role | Stack | Rules document |
 | --- | --- | --- |
-| **App (frontend + backend)** | **Next.js 16** — App Router | [NEXT.md](./NEXT.md) ⭐ **STACK PADRÃO** |
+| **App (frontend + backend)** | **Next.js 16** — App Router | [stacks/next.md](./stacks/next.md) ⭐ **DEFAULT STACK** |
 | **UI library** | shadcn/ui + Tailwind CSS v4 | [stacks/shadcn.md](./stacks/shadcn.md) · [stacks/tailwind.md](./stacks/tailwind.md) |
-| **Linguagem** | TypeScript (strict) | [stacks/typescript.md](./stacks/typescript.md) |
-| **Backend extra** | Node.js puro (workers, cron, filas) | [NODE.md](./NODE.md) |
-| **Banco de dados** | Prisma ORM | [stacks/database.md](./stacks/database.md) |
-| **Validação** | Zod | [stacks/typescript.md](./stacks/typescript.md) |
-| **Testes** | Vitest + Playwright | [stacks/testing.md](./stacks/testing.md) |
-| **IA / LLM** | (se o app usar) | [stacks/ai.md](./stacks/ai.md) |
+| **Language** | TypeScript (strict) | [stacks/typescript.md](./stacks/typescript.md) |
+| **Output language** | English | [stacks/language.md](./stacks/language.md) |
+| **Extra backend** | Plain Node.js (workers, cron, queues) | [stacks/node.md](./stacks/node.md) |
+| **Database** | Prisma ORM | [stacks/database.md](./stacks/database.md) |
+| **Validation** | Zod | [stacks/typescript.md](./stacks/typescript.md) |
+| **Tests** | Vitest + Playwright | [stacks/testing.md](./stacks/testing.md) |
+| **AI / LLM** | (if the app uses it) | [stacks/ai.md](./stacks/ai.md) |
 | **Deploy** | Vercel | [stacks/ci.md](./stacks/ci.md) |
-| **Versionamento** | Git + Conventional Commits | [stacks/git.md](./stacks/git.md) |
+| **Versioning** | Git + Conventional Commits | [stacks/git.md](./stacks/git.md) |
 
 ---
 
-## 🔀 Como trocar a stack do app
+## 🔀 How to switch this app's stack
 
-1. Edite a tabela acima com a stack real deste projeto.
-2. Se usar uma stack que não tem doc aqui, crie `SDD/stacks/<stack>.md` seguindo o padrão dos outros.
-3. **Não mexa** em `AGENTS.md` §1 (que aponta o doc padrão) sem pedir ao humano.
+1. Edit the table above with the real stack for this project.
+2. If you use a stack that has no document here, create `SDD/stacks/<stack>.md`
+   following the pattern of the others.
+3. **Do not** edit `AGENTS.md` §1 (which points at the default doc) without asking the
+   human first.
 
-> Enquanto `APP-STACK.md` apontar para `NEXT.md`, a stack padrão do template é Next.js.
+> While `APP-STACK.md` points at `stacks/next.md`, the template's default stack is
+> Next.js.

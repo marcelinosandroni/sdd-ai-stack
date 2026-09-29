@@ -14,10 +14,10 @@ export async function createExampleAction(
   _prev: ExampleActionState,
   formData: FormData,
 ): Promise<ExampleActionState> {
-  // 1. AUTENTICAÇÃO (ver SDD/NEXT.md §5)
+  // 1. AUTHENTICATION (see SDD/stacks/next.md §5)
   // const user = await requireUser();
 
-  // 2. VALIDAÇÃO — Zod no server é a única fonte de verdade
+  // 2. VALIDATION — Zod on the server is the only source of truth
   const parsed = CreateExampleSchema.safeParse({
     title: formData.get("title"),
     body: formData.get("body"),
@@ -28,7 +28,7 @@ export async function createExampleAction(
   }
 
   try {
-    // 3. MUTAÇÃO via use case
+    // 3. MUTATION via the use case
     const { createExample } = createExampleUseCases();
     await createExample.execute(parsed.data);
 

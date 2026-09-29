@@ -1,28 +1,34 @@
 # 🗄️ DATABASE
 
-> Padrão: **Prisma ORM + PostgreSQL**. Acesso **sempre** dentro de `features/*/infrastructure/` ou `shared/server/db.ts`.
+> Default: **Prisma ORM + PostgreSQL**. Access **always** lives inside
+> `features/*/infrastructure/` or `shared/server/db.ts`.
 
-## 🚨 Regras não-negociáveis
+## 🚨 Non-negotiable rules
 
-1. **Query fora de `infrastructure/` é PROIBIDA.** O domínio só conhece a interface `I*Repository`.
-2. **`select` explícito em toda query.** Nunca `findMany()` sem filtro de colunas. Vaza dado e pesa payload.
-3. **Toda query que filtra por usuário filtra por `userId`/`tenantId`.** Autorização no dado, não na UI.
-4. **N+1 é proibido.** Use `include` aninhado ou `Promise.all` com mapa explícito.
-5. **Escrita que precisa de 2+ tabelas = `prisma.$transaction`.** Sem exceções.
-6. **Migration é feita via `npx prisma migrate dev --name <descricao>`** e vai pro repo. **Proibido `db push` em produção.**
-7. **Índice todo campo usado em `where` ou `orderBy` quente.** Antes de reclamar de performance no banco, indexa.
+1. **A query outside `infrastructure/` is FORBIDDEN.** The domain only knows the
+   `I*Repository` interface.
+2. **Explicit `select` on every query.** Never `findMany()` without a column filter.
+   It leaks data and bloats the payload.
+3. **Every query filtered by user filters by `userId`/`tenantId`.** Authorisation in
+   the data, not in the UI.
+4. **N+1 is forbidden.** Use a nested `include` or an explicit `Promise.all` map.
+5. **A write touching 2+ tables = `prisma.$transaction`.** No exceptions.
+6. **Migrations run via `npx prisma migrate dev --name <description>`** and are
+   committed. **`db push` in production is FORBIDDEN.**
+7. **Index every field used in a hot `where` or `orderBy`.** Before complaining about
+   database performance, index it.
 
-## 🧱 Onde fica o quê
+## 🧱 Where things live
 
 ```text
 features/billing/
-├── domain/IBillingRepository.ts     # contrato puro (interface)
+├── domain/IBillingRepository.ts     # pure contract (interface)
 └── infrastructure/
-    ├── billing-repository.ts        # implementa a interface com Prisma
-    └── billing.mapper.ts            # <row do Prisma> <-> <entidade de domínio>
+    ├── billing-repository.ts        # implements the interface with Prisma
+    └── billing.mapper.ts            # <Prisma row> <-> <domain entity>
 ```
 
-## 🧩 Exemplo
+## 🧩 Example
 
 ```ts
 // infrastructure/billing-repository.ts
@@ -33,24 +39,25 @@ import type { IBillingRepository } from "../domain/IBillingRepository";
 export class PrismaBillingRepository implements IBillingRepository {
   async findActiveByUser(userId: string) {
     return db.subscription.findFirst({
-      where: { userId, status: "ACTIVE" },   // SEMPRE filtra por userId
+      where: { userId, status: "ACTIVE" },   // ALWAYS filter by userId
       select: { id: true, planId: true, status: true, renewsAt: true },
     });
   }
 }
 ```
 
-## 🚫 Proibido
+## 🚫 Forbidden
 
-| Padrão | Por quê | Faça |
+| Pattern | Why | Do instead |
 | --- | --- | --- |
-| `db.x.findMany()` sem `select` | Vaza dado, pesa payload | Sempre `select` |
-| Query sem filtro de dono | Vazamento entre tenants | `where: { userId }` |
-| `db` importado em Server Component direto | Quebra o slice | via `queries.ts` do feature |
-| `db push` / `db seed` em prod | perde dado | `migrate deploy` |
-| `$transaction` aninhado profundo | lock demais | achatar /Batch |
+| `db.x.findMany()` with no `select` | leaks data, bloats payload | always `select` |
+| A query with no owner filter | cross-tenant leak | `where: { userId }` |
+| `db` imported in a Server Component | breaks the slice boundary | via the feature's `queries.ts` |
+| `db push` / `db seed` in prod | data loss | `migrate deploy` |
+| Deeply nested `$transaction` | lock contention | flatten or batch |
 
-## 🧪 Testes
+## 🧪 Tests
 
-- **Integração:** use **banco de verdade separado** (ou SQLite/Mongo in-memory via adapter). Mock do client Prisma só em unit.
-- **Migrations:** rode `migrate deploy` no setup do CI antes dos testes de integração.
+- **Integration:** use a **real, separate database** (or SQLite/Mongo in-memory via an
+  adapter). Mock the Prisma client only in unit tests.
+- **Migrations:** run `migrate deploy` in the CI setup before integration tests.

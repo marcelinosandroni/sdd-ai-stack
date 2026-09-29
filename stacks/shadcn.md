@@ -1,52 +1,59 @@
 # 🧩 SHADCN/UI
 
-> **Biblioteca de UI OFICIAL do template.** Componentes vão para `src/shared/ui/`.
+> **The template's OFFICIAL UI library.** Components live in `src/shared/ui/`.
 
-## 🚨 Regras não-negociáveis
+## 🚨 Non-negotiable rules
 
-1. **shadcn/ui é a única lib de UI.** Proibido MUI, AntD, Bootstrap, Chakra, styled-components.
-2. **Componente novo entra na pasta, não no registry.** `npx shadcn@latest add <comp>` e o arquivo nasce em `src/shared/ui/`.
-3. **Depois de adicionar, EDITE o componente local.** Ele é seu agora. Alinhe com [../DESIGN.md](../DESIGN.md) (tokens, raio, borda).
-4. **Todo componente novo precisa de:** `aria-*` nos que têm função, foco visível, e estado `disabled` real (não só visual).
-5. **Variante com `cva` (class-variance-authority).** Nunca `if/else` de className.
-6. **Ícone:** `lucide-react`. Tamanho default 16, stroke 2. Nada de SVG colado na mão.
+1. **shadcn/ui is the only UI library.** MUI, AntD, Bootstrap, Chakra,
+   styled-components are forbidden.
+2. **A new component lands in the folder, not in the registry.**
+   `npx shadcn@latest add <comp>` and the file is born in `src/shared/ui/`.
+3. **After adding it, EDIT the local file.** It is yours now. Align it with
+   [../DESIGN.md](../DESIGN.md) (tokens, radius, border).
+4. **Every new component needs:** `aria-*` where it has a role, visible focus, and a
+   real `disabled` state (not just visual).
+5. **Variants via `cva` (class-variance-authority).** Never an `if/else` of
+   classNames.
+6. **Icons: `lucide-react`.** Default size 16, stroke 2. No hand-pasted SVG.
 
-## 🧪 Fluxo para adicionar componente
+## 🧪 Flow to add a component
 
 ```bash
-# 1. Instala e cria o arquivo
+# 1. installs and creates the file
 npx shadcn@latest add dialog
 
-# 2. Verifique onde caiu: src/shared/ui/dialog.tsx
+# 2. check where it landed: src/shared/ui/dialog.tsx
 
-# 3. Edite o arquivo: troque as classes pelo DESIGN (tokens, rounded, border)
+# 3. edit the file: swap the classes for the DESIGN tokens
 ```
 
-## 🎨 Sobreposição com o DESIGN
+## 🎨 Overlap with the DESIGN
 
-O shadcn traz um theme genérico. **O DESIGN.md manda.** Checklist ao tocar um componente:
+shadcn ships a generic theme. **DESIGN.md wins.** Checklist when touching a component:
 
-- [ ] Cor de fundo/borda/text usando tokens do `globals.css` (`bg-surface-container`, `border-border-prominent`)
-- [ ] Raio: `rounded-md` (0.375rem) em input/botão, `rounded-lg` (0.5rem) em card
-- [ ] Borda hairline `1px`, **sem sombra pesada**
-- [ ] Botão primário: `bg-primary text-on-primary hover:bg-primary/90` com glow lime sutil
-- [ ] Foco: `focus-visible:ring-2 focus-visible:ring-primary`
+- [ ] Background/border/text using `globals.css` tokens
+      (`bg-surface-container`, `border-border-prominent`)
+- [ ] Radius: `rounded-md` (0.375rem) on inputs/buttons, `rounded-lg` (0.5rem) on cards
+- [ ] Hairline `1px` border, **no heavy shadow**
+- [ ] Primary button: `bg-primary text-on-primary hover:bg-primary/90` with a subtle
+      lime glow
+- [ ] Focus: `focus-visible:ring-2 focus-visible:ring-primary`
 
-## 📂 Onde cada coisa mora
+## 📂 Where each thing lives
 
-| Tipo | Caminho |
+| Type | Path |
 | --- | --- |
-| Primitive genérica (Button, Dialog, Input) | `src/shared/ui/` |
-| Componente de domínio (UserCard, InvoiceRow) | `src/features/<x>/ui/` |
-| Composição (form + action + validação) | `src/features/<x>/ui/` |
-| Hook de UI (useToast, useMediaQuery) | `src/shared/hooks/` |
+| Generic primitive (Button, Dialog, Input) | `src/shared/ui/` |
+| Domain component (UserCard, InvoiceRow) | `src/features/<x>/ui/` |
+| Composition (form + action + validation) | `src/features/<x>/ui/` |
+| UI hook (useToast, useMediaQuery) | `src/shared/hooks/` |
 
-## 🚫 Anti-padrões
+## 🚫 Anti-patterns
 
-| ❌ Não faça | ✅ Faça |
+| ❌ Don't | ✅ Do |
 | --- | --- |
-| `<div onClick>` como botão | `<button type="button">` |
-| Wrapper de `Dialog` com estado próprio espalhado | Estado no pai, ou `useActionState` |
-| Criar componente que é 90% igual ao do shadcn | Editar o existente |
-| Props customizadas com 8 booleanos | `variant` + `size` com cva |
-| Acessibilidade ignorada em modal/drawer | `DialogTitle`, `DialogDescription`, foco preso |
+| `<div onClick>` as a button | `<button type="button">` |
+| Dialog wrapper with its own scattered state | state in the parent, or `useActionState` |
+| Create a component that's 90% identical to shadcn's | edit the existing one |
+| Custom props with 8 booleans | `variant` + `size` with cva |
+| Accessibility ignored in a modal/drawer | `DialogTitle`, `DialogDescription`, trapped focus |

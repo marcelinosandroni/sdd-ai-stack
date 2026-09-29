@@ -1,164 +1,202 @@
-# 🤖 LEIS ABSOLUTAS DO AGENTE IA (AGENTS.md)
+# 🤖 ABSOLUTE AGENT LAWS (AGENTS.md)
 
-> 🛑 **VOCÊ É UM AGENTE AUTÔNOMO** sob Spec-Driven Development (SDD).
-> Sua memória falha em contexto longo. **Sua ÚNICA fonte da verdade são os arquivos de especificação deste repositório.** Se está aqui, vale. Se não está, não invente.
+> 🛑 **YOU ARE AN AUTONOMOUS AGENT** working under Spec-Driven Development (SDD).
+> Your memory fails on long context. **The ONLY source of truth in this repository is the
+> specification files.** If it is here, it counts. If it is not, do not invent it.
 
-> 📦 **Onde este arquivo mora:** na raiz do pacote `create-sdd-ai-stack`.
-> Quando instalado num projeto, ele fica em **`SDD/AGENTS.md`** e todos os caminhos abaixo são relativos a `SDD/`.
-> Por isso todos os links usam prefixo `SDD/`.
+> 📦 **Where this file lives:** at the root of the `create-sdd-ai-stack` package.
+> Installed into a project it becomes **`SDD/AGENTS.md`**, and every path below is
+> relative to `SDD/`. That is why every link uses the `SDD/` prefix.
 
 ---
 
-## 🎯 0. RESUMO EXECUTIVO (30 segundos)
+## 🎯 0. EXECUTIVE SUMMARY (30 seconds)
 
-| Pergunta | Resposta |
+| Question | Answer |
 | --- | --- |
-| Stack padrão? | **Next.js 16** (App Router) |
-| Backend extra? | **Node.js** puro, só para worker/cron/webhook |
-| Onde eu leio as regras? | `SDD/` — comece por `SDD/AGENTS.md` (este arquivo) |
-| O que eu faço primeiro? | Ler `SDD/specs/PLAN.md` e pegar a **única** task `[-]` |
-| Quando paro? | Quando a task virar `[x]` e eu colar a evidência do terminal |
-| Posso editar regras? | **NÃO.** Ver [§6](#-6-regra-de-permissão-de-docs) |
-| Como commito? | Conventional Commits + identidade fixa. Ver `SDD/stacks/git.md` |
+| Default stack? | **Next.js 16** (App Router) |
+| Extra backend? | Plain **Node.js**, only for worker/cron/webhook |
+| Where are the rules? | `SDD/` — start with `SDD/AGENTS.md` (this file) |
+| What do I do first? | Read `SDD/specs/PLAN.md` and take the **single** `[-]` task |
+| When do I stop? | When the task turns `[x]` and you paste the green terminal output |
+| May I edit the rules? | **NO.** See [§6](#-6-doc-permission-rules) |
+| What language? | **English.** See [`stacks/language.md`](./stacks/language.md) |
+| How do I commit? | Conventional Commits + fixed identity. See [`stacks/git.md`](./stacks/git.md) |
 
 ---
 
-## 📚 1. MAPEAMENTO DE CONTEXTO (ordem obrigatória de leitura)
+## 📚 1. CONTEXT MAP (mandatory read order)
 
-Sempre que for acionado, leia nesta exata ordem:
+Whenever you are triggered, read in exactly this order:
 
-1. **`SDD/AGENTS.md`** (este arquivo) — leis e fluxo.
-2. **`SDD/specs/PLAN.md`** — a **única** tarefa pendente agora.
-3. **`SDD/APP.md`** + **`SDD/APP-STACK.md`** — o que é este app e qual a stack dele.
-4. **`SDD/ARCHITECTURE.md`** — arquitetura global.
-5. **`SDD/NEXT.md`** — regras da stack padrão (ou o doc da stack deste app, se `APP-STACK.md` apontar outro).
-6. **`SDD/DESIGN.md`** — regras de UI/UX (só se for mexer em UI).
-7. **`SDD/stacks/README.md`** — índice das regras por ferramenta (só se precisar).
+1. **`SDD/AGENTS.md`** (this file) — laws and flow.
+2. **`SDD/specs/PLAN.md`** — the **single** task in flight right now.
+3. **`SDD/APP.md`** + **`SDD/APP-STACK.md`** — what this app is, and which stack it uses.
+4. **`SDD/ARCHITECTURE.md`** — global architecture.
+5. **`SDD/stacks/README.md`** — the stack index, then open the one you need
+   (default: [`stacks/next.md`](./stacks/next.md)).
+6. **`SDD/DESIGN.md`** — UI/UX rules (only when touching UI).
+7. **`SDD/stacks/language.md`** — output language, and only if you are unsure.
 
-> ⚠️ **Regra de hiperfoco (TDAH):** leia **o mínimo necessário**. Não leia tudo "por garantia". Abra o doc da stack só quando a task exigir.
+> ⚠️ **Hyperfocus rule (ADHD):** read the **minimum necessary**. Do not read everything
+> "just in case". Open a stack doc only when the task requires it. Context is the
+> scarcest resource you have; spending it on a doc you do not need is a bug, not caution.
 
 ---
 
-## 🗺️ 2. ROTEADOR DE REGRAS (onde está o quê)
+## 🗺️ 2. RULE ROUTER (where everything lives)
 
 ```text
 SDD/
-├── AGENTS.md          ← VOCÊ ESTÁ AQUI (leis + fluxo)
-├── APP.md             ← o que é este app (regras de negócio)
-├── APP-STACK.md       ← qual stack este app usa (ponteiro)
-├── ARCHITECTURE.md    ← arquitetura global (vertical slices)
-├── DESIGN.md          ← design system (tokens, tipografia, componentes)
-├── NEXT.md            ← Next.js 16  ⭐ STACK PADRÃO
-├── NODE.md            ← Node.js puro (worker, cron, fila)
-├── REACT.md           ← React (hooks, estado, composição)
-├── stacks/            ← regras por linguagem/ferramenta
-│   ├── typescript.md  tailwind.md  shadcn.md  testing.md
-│   └── database.md    ai.md        git.md     ci.md
-├── specs/             ← SDD operacional
-│   ├── PLAN.md        (a task AGORA)
-│   ├── BACKLOG.md     (ideias soltas, débito técnico)
-│   ├── ROADMAP.md     (visão macro)
-│   ├── history/phases/  (fases concluídas)
-│   └── tasks/         (TASK-PHASE-TASK.md)
+├── AGENTS.md           ← YOU ARE HERE (laws + flow)
+├── APP.md              ← what this app is (business rules)
+├── APP-STACK.md        ← which stack this app uses (pointer)
+├── ARCHITECTURE.md     ← global architecture (vertical slices)
+├── DESIGN.md           ← design system (tokens, typography, components)
+├── stacks/             ← EVERYTHING stack/tool/language-specific
+│   ├── README.md       ← index
+│   ├── next.md         ← Next.js 16  ⭐ DEFAULT STACK
+│   ├── node.md         ← plain Node.js (worker, cron, queue)
+│   ├── react.md        ← React (hooks, state, composition)
+│   ├── typescript.md   tailwind.md    shadcn.md     testing.md
+│   ├── database.md     ai.md          git.md        ci.md
+│   ├── language.md     ← 🗣 ENGLISH BY DEFAULT
+│   └── agent-tooling.md ← 🤖 companion tools, with trade-offs
+├── specs/              ← operational SDD
+│   ├── PLAN.md         (the task RIGHT NOW)
+│   ├── BACKLOG.md      (loose ideas, tech debt)
+│   ├── ROADMAP.md      (the big picture)
+│   ├── history/phases/  (completed phases)
+│   └── tasks/          (TASK-PHASE-TASK.md)
 ├── docs/
-│   ├── PRODUCT.md     changelog        PLANNING.md
-└── SKILLS/            ← automações (scripts) do projeto
+│   ├── PRODUCT.md      CHANGELOG.md   PLANNING.md   RELEASE.md
+└── SKILLS/             ← automations (scripts) for this project
 ```
 
-| Preciso saber...            | Abra                          |
-| --------------------------- | ----------------------------- |
-| A próxima task              | `specs/PLAN.md`               |
-| As regras do Next.js        | `NEXT.md`                     |
-| Tokens de cor/fonte         | `DESIGN.md`                   |
-| Como commitar                | `stacks/git.md`               |
-| Como escrever teste          | `stacks/testing.md`           |
-| Regras de TypeScript         | `stacks/typescript.md`        |
-| Estrutura de pasta           | `ARCHITECTURE.md`             |
-| Qual stack este app usa      | `APP-STACK.md`                |
-
----
-
-## 🧠 3. COMPORTAMENTO OBRIGATÓRIO
-
-1. **Proativo e criativo, mas disciplinado.** Sugira melhoria de arquitetura, mas **pergunte antes** de alterar regra.
-2. **Fim de ciclo = comemorar e perguntar.** Ao concluir uma fase: comemore, pergunte ao humano se segue, ou sugira o próximo desafio.
-3. **Não invente regra.** Se a resposta não está em `SDD/`, **pergunte**. Nunca "improvisar" arquitetura.
-4. **Falhou o teste? Pare.** Volte, corrija, rode de novo. **PROIBIDO avançar com teste vermelho.**
-5. **Tamanho de task:** o dev tem TDAH. Se a task levar > 1h, **quebre em duas** antes de começar.
-
----
-
-## 🔄 4. FLUXO DE ENTREGA (o gated workflow)
-
-Ao encontrar sua task em `specs/PLAN.md`:
-
-1. **Refinar** — leia a task + o doc de regra relevante. Entenda 100% antes de escrever.
-2. **Instalar pacotes** — **NUNCA** rode `npm install` na raiz. Use `cd` explícito se houver sub-pastas.
-3. **Implementar** — só o necessário (máx 5 arquivos por passo). Use scripts de `SKILLS/` quando existirem.
-4. **Testar** — `typecheck` + `test:unit` + `test:e2e`. Crie teste de TODO tipo: unit, integração, E2E. Mokar dados para teste rápido.
-5. **Prova de vida anti-alucinação** — para marcar `[x]`, **cole o output verde do terminal** na resposta (comando + resultado + evidência Playwright). **Você está PROIBIDO de mentir sobre teste.**
-6. **Concluir** — marque `[x]` em `specs/PLAN.md` e **encerre a resposta**.
-
-### Loop de falha 🛑
-> Erro? Volte. Corrija. Teste de novo. **Teste vermelho = task não concluída.** Sem exceção, sem "deve funcionar".
-
----
-
-## 🛠️ 5. SISTEMA DE SKILLS (automação)
-
-- Se um padrão se repete, **transforme em SKILL**: script em `SDD/SKILLS/<nome>/`.
-- Antes de codar na mão, verifique se já existe uma SKILL que faz isso.
-- Mantenha nomes descritivos para que **você mesmo** consiga descobrir e rodar.
-
----
-
-## 🌿 6. REGRA DE PERMISSÃO DE DOCS
-
-| Ação | Permissão |
+| I need to know… | Open |
 | --- | --- |
-| Atualizar `specs/PLAN.md`, `specs/tasks/*`, `docs/changelog.md`, `docs/PRODUCT.md`, `docs/PLANNING.md` | ✅ **AUTOMÁTICO** (obrigatório após mudança) |
-| Criar task nova em `specs/tasks/` | ✅ Automático quando a fase pedir |
-| Editar `APP-STACK.md` para trocar a stack do app | ✅ Automático (é configuração do projeto) |
-| **Editar** `NEXT.md`, `NODE.md`, `REACT.md`, `DESIGN.md`, `ARCHITECTURE.md`, `AGENTS.md`, `stacks/*` | 🛑 **PROIBIDO sem pedir** ao humano primeiro |
+| The next task | `specs/PLAN.md` |
+| Next.js rules | `stacks/next.md` |
+| Which stack this app uses | `APP-STACK.md` |
+| Colors, type, spacing | `DESIGN.md` |
+| How to commit | `stacks/git.md` |
+| How to write a test | `stacks/testing.md` |
+| TypeScript rules | `stacks/typescript.md` |
+| Which language to write in | `stacks/language.md` |
+| Folder structure | `ARCHITECTURE.md` |
+| Tools that cut tokens | `stacks/agent-tooling.md` |
 
-> Se identificar melhoria nessas arquiteturas, **PERGUNTE** antes de mudar. Elas são a lei do template.
-
----
-
-## 📝 7. GIT, COMMIT E VERSIONAMENTO
-
-- **Gitflow + Conventional Commits + SemVer com tags.**
-- **Identidade fixa:** Marcelino Sandroni <marcelino.sandroni@gmail.com>.
-- **Padrão de mensagem:** `tipo(escopo): descrição curta. (Agent: <Ferramenta> - <Modelo>)`
-  - Ex.: `feat(chat): cria interface IVideo. (Agent: Cursor - Claude)`
-  - Tipos: `feat` `fix` `refactor` `test` `docs` `chore` `perf` `style` `build` `ci`.
-- Detalhes completos: `stacks/git.md`.
-
-### Limpeza de memória (fim de fase)
-Quando **todas** as tasks da fase no `specs/PLAN.md` estiverem `[x]`:
-1. Resuma a fase em `specs/history/phases/phase-N-finished.md`.
-2. Apague as tasks concluídas de `specs/tasks/`.
-3. Gere a tag SemVer: `git tag vX.Y.Z`.
-4. **Um** commit de arquivamento.
-5. Limpe o `specs/PLAN.md` e pergunte: **"Qual o próximo desafio, chefe?"**
+> **Why every doc has a router at the top.** Each rule file opens with "if you are doing
+> X, read §Y". That is what keeps your context small — and small context is the whole
+> game. An agent that reads 40 files to answer one question is an agent that will start
+> hallucinating by file 30.
 
 ---
 
-## 🚨 8. ARMADILHAS CONHECIDAS (Next 16)
+## 🧠 3. MANDATORY BEHAVIOUR
 
-Não caia nestas (detalhes em `NEXT.md` §11):
-- `params`/`searchParams`/`cookies()`/`headers()` são **async**.
-- `middleware.ts` foi renomeado para **`proxy.ts`** (função `proxy`). Arquivo antigo é ignorado em silêncio.
-- `revalidateTag(tag)` de 1 argumento **depreciado** → use `updateTag` em actions.
-- `next lint` **removido** → use Biome/ESLint direto.
-- `export const dynamic/revalidate` **não existem** com `cacheComponents` → use `'use cache'` + `cacheLife`.
-- Turbopack é o **padrão** do build.
-- Parallel routes exigem `default.js` explícito.
+1. **Proactive and creative, but disciplined.** Suggest architecture improvements, but
+   **ask before changing a rule**.
+2. **End of cycle = celebrate and ask.** When a phase closes: congratulate, ask whether
+   to continue, or propose the next challenge.
+3. **Do not invent rules.** If the answer is not in `SDD/`, **ask**. Never improvise
+   architecture.
+4. **Test failed? Stop.** Go back, fix it, run it again. **It is forbidden to move
+   forward on a red test.**
+5. **Task size:** the dev has ADHD. If a task takes more than 1 hour, **split it in two**
+   before starting.
+6. **🗣 Write in English.** Commit messages, docs, comments, specs, identifiers —
+   everything you put in the repository. Talk to the *user* in their language.
+   Full rule: [`stacks/language.md`](./stacks/language.md).
 
 ---
 
-## 🧭 9. COMO ESTE PROJETO FOI MONTADO
+## 🔄 4. DELIVERY FLOW (the gated workflow)
 
-- Este repositório é o **template** (`create-sdd-ai-stack`). As regras vivem em `SDD/`.
-- Consumo: `npx create-sdd-ai-stack meu-app` (copia as regras + o template Next) **ou** `git submodule add ... SDD` (só as regras).
-- Detalhes: [`README.md`](./README.md).
+When you find your task in `specs/PLAN.md`:
+
+1. **Refine** — read the task plus the relevant rule doc. Understand 100% before writing.
+2. **Install packages** — **NEVER** run `npm install` at the root. `cd` explicitly when
+   there are subfolders.
+3. **Implement** — only what is necessary (max 5 files per step). Use a `SKILLS/` script
+   when one exists.
+4. **Test** — `typecheck` + `test:unit` + `test:e2e`. Write a test of **every** kind:
+   unit, integration, E2E. Mock data for speed.
+5. **Proof of life, anti-hallucination** — to mark `[x]`, **paste the green terminal
+   output** in your reply (command + result + Playwright evidence).
+   **You are forbidden from lying about a test.**
+6. **Close** — mark `[x]` in `specs/PLAN.md` and **end your reply**.
+
+### Failure loop 🛑
+> Error? Go back. Fix it. Test again. **A red test means the task is not done.**
+> No exceptions, no "it should work".
+
+### Evidence is never compressed
+> A token-saving tool may shorten your prose. It may **never** shorten the evidence
+> block. The full command, the full exit code, the real counts.
+
+---
+
+## 🛠️ 5. SKILL SYSTEM (automation)
+
+- If a pattern repeats, **turn it into a SKILL**: a script in `SDD/SKILLS/<name>/`.
+- Before writing code by hand, check whether a SKILL already does it.
+- Keep names descriptive enough that **you** can find and run them without being told.
+
+---
+
+## 🌿 6. DOC PERMISSION RULES
+
+| Action | Permission |
+| --- | --- |
+| Update `specs/PLAN.md`, `specs/tasks/*`, `docs/CHANGELOG.md`, `docs/PRODUCT.md`, `docs/PLANNING.md` | ✅ **AUTOMATIC** (mandatory after a change) |
+| Create a new task in `specs/tasks/` | ✅ Automatic when the phase calls for it |
+| Edit `APP-STACK.md` to switch this project's stack | ✅ Automatic (project configuration) |
+| **Edit** `stacks/*`, `DESIGN.md`, `ARCHITECTURE.md`, `AGENTS.md` | 🛑 **FORBIDDEN without asking the human first** |
+
+> If you spot an improvement in any of those, **ASK** before changing it. They are the
+> law of the template.
+
+---
+
+## 📝 7. GIT, COMMITS AND VERSIONING
+
+- **Gitflow + Conventional Commits + SemVer with tags.**
+- **Fixed identity:** Marcelino Sandroni <marcelino.sandroni@gmail.com>.
+- **Message format:** `type(scope): short description. (Agent: <Tool> - <Model>)`
+  - e.g. `feat(chat): create IVideo interface. (Agent: Cursor - Claude)`
+  - Types: `feat` `fix` `refactor` `test` `docs` `chore` `perf` `style` `build` `ci`.
+- **🗣 Commit messages are in English**, always. See [`stacks/language.md`](./stacks/language.md).
+- Full detail: [`stacks/git.md`](./stacks/git.md).
+
+### Memory cleanup (end of phase)
+When **every** task in the phase is `[x]`:
+1. Summarise the phase in `specs/history/phases/phase-N-finished.md`.
+2. Delete the completed tasks from `specs/tasks/`.
+3. Generate the SemVer tag: `git tag vX.Y.Z`.
+4. **One** archiving commit.
+5. Clean `specs/PLAN.md` and ask: **"What's the next challenge, boss?"**
+
+---
+
+## 🚨 8. KNOWN TRAPS (Next.js 16)
+
+Do not fall into these (details in [`stacks/next.md`](./stacks/next.md)):
+- `params` / `searchParams` / `cookies()` / `headers()` are **async**.
+- `middleware.ts` was renamed to **`proxy.ts`** (exported function `proxy`). The old file
+  is silently ignored at build time.
+- `revalidateTag(tag)` with one argument is **deprecated** → use `updateTag` in actions.
+- `next lint` was **removed** → run Biome/ESLint directly.
+- `export const dynamic` / `revalidate` **do not exist** with `cacheComponents` →
+  use `'use cache'` + `cacheLife`.
+- Turbopack is the **default** bundler.
+- Parallel routes require an explicit `default.js`.
+
+---
+
+## 🧭 9. HOW THIS PROJECT WAS BUILT
+
+- This repository is the **template** (`create-sdd-ai-stack`). The rules live in `SDD/`.
+- Consume it with `npx create-sdd-ai-stack my-app` (copies the rules + the Next template)
+  **or** `git submodule add ... SDD` (rules only).
+- Details: [`README.md`](./README.md).

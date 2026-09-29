@@ -76,7 +76,7 @@ jobs:
 
           # nenhum arquivo essencial pode faltar do tarball
           npm pack --dry-run 2>&1 | tee pack.txt
-          for f in "bin/create-sdd-ai-stack.mjs" "lib/scaffold.mjs" "AGENTS.md" "NEXT.md" \
+          for f in "bin/create-sdd-ai-stack.mjs" "lib/scaffold.mjs" "AGENTS.md" "stacks/next.md" \
                    "DESIGN.md" "APP-STACK.md" "stacks/README.md" "template/next/gitignore" \
                    "template/next/package.json" "SKILLS/create-feature/SKILL.md"; do
             grep -q "$f" pack.txt || { echo "::error::faltando no pacote: $f"; exit 1; }
@@ -136,7 +136,7 @@ jobs:
       # 2. SEM TOKEN: Trusted Publishing (OIDC). Não escrevemos NADA — o npm só
       #    engata o OIDC quando o auth está ausente.
       #
-      # ⚠️ NÃO escrevemos token em arquivo. O .npmrc do projeto tem prioridade
+      # ⚠️ We do NOT write the token to a file. The project .npmrc has priority
       #    sobre o ~/.npmrc do runner, e um authToken vazio lá dentro quebra
       #    TUDO silenciosamente (401 no whoami, 404 no PUT de primeira publicação).
       - name: Autentica

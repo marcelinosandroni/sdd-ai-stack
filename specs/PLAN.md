@@ -1,57 +1,61 @@
-# 🎯 PLAN (O Cérebro do Projeto)
+# 🎯 PLAN (the brain of the project)
 
-> 🛑 **REGRA FIXA (Agente IA, LEIA ISSO ANTES DE CODAR):**
-> O desenvolvedor (Marcelino) tem TDAH. As tarefas AQUI devem ser **microscópicas**.
-> Se uma tarefa levar mais de 1 hora pra fazer, QUEBRE ELA EM DUAS.
-> Nunca pule um passo. Nunca comece o Passo 2 sem testar e commitar o Passo 1.
-> Atualize os status rigorosamente no final de cada prompt: `[ ]` (To Do), `[-]` (In Progress), `[x]` (Done).
+> 🛑 **FIXED RULE (AI agent, READ THIS BEFORE YOU CODE):**
+> The developer (Marcelino) has ADHD. The tasks HERE must be **microscopic**.
+> If a task takes more than 1 hour, **SPLIT IT IN TWO**.
+> Never skip a step. Never start step 2 without testing and committing step 1.
+> Update statuses rigorously at the end of every prompt: `[ ]` (To Do), `[-]` (In
+> Progress), `[x]` (Done).
 
-> **Existe exatamente UMA task `[-]` em todo momento.** Se houver duas, o agente parou errado.
+> **There is exactly ONE task `[-]` at any moment.** If there are two, the agent stopped
+> wrong.
 
 ---
 
-## Fase atual: 0 — Bootstrap
+## Current phase: 0 — Bootstrap
 
-> Status: ✅ concluída (template + regras + CLI)
-> Histórico: [`history/phases/phase-0-bootstrap.md`](./history/phases/phase-0-bootstrap.md)
+> Status: ✅ done (template + rules + CLI)
+> History: [`history/phases/phase-0-bootstrap.md`](./history/phases/phase-0-bootstrap.md)
 
-### Como usar este arquivo
+### How to use this file
 
-1. Substitua o bloco abaixo pela fase atual do seu projeto.
-2. Nomeie a task `TASK-<FASE>-<NÚMERO>` e crie o arquivo em `specs/tasks/TASK-<FASE>-<NÚMERO>.md`
-   (use o [template](./tasks/TASK_TEMPLATE.md)).
-3. Marque `[-]` **antes** de começar a codar. Marque `[x]` **depois** de colar a evidência verde do terminal.
-4. Ao fechar a fase, arquive em `history/phases/` e gere a tag SemVer.
+1. Replace the block below with your project's current phase.
+2. Name the task `TASK-<PHASE>-<NUMBER>` and create the file at
+   `specs/tasks/TASK-<PHASE>-<NUMBER>.md` (start from
+   [the template](./tasks/TASK_TEMPLATE.md)).
+3. Mark `[-]` **before** you start coding. Mark `[x]` **after** you paste the green
+   terminal output.
+4. When the phase closes, archive it in `history/phases/` and create the SemVer tag.
 
 ---
 
 ```markdown
-## Fase atual: [N] — [NOME DA FASE]
+## Current phase: [N] — [PHASE NAME]
 
-[ ] - [TASK-1.1](./tasks/TASK-1.1.md) - [fazer]
-[-] - [TASK-1.2](./tasks/TASK-1.2.md) - [fazendo]   ← única task em progresso
-[ ] - [TASK-1.3](./tasks/TASK-1.3.md) - [fazer]
+[ ] - [TASK-1.1](./tasks/TASK-1.1.md) - [to do]
+[-] - [TASK-1.2](./tasks/TASK-1.2.md) - [in progress]   ← the only in-progress task
+[ ] - [TASK-1.3](./tasks/TASK-1.3.md) - [to do]
 
-### Critério de saída da fase
-- [ ] Todas as tasks `[x]` com evidência de teste colada
-- [ ] `npm run typecheck && npm run lint && npm run test && npm run build` verdes
-- [ ] `docs/CHANGELOG.md` atualizado
-- [ ] `specs/history/phases/phase-N-finished.md` escrito
-- [ ] Tag SemVer gerada
+### Phase exit criteria
+- [ ] All tasks `[x]` with test evidence pasted
+- [ ] `npm run typecheck && npm run lint && npm run test && npm run build` green
+- [ ] `docs/CHANGELOG.md` updated
+- [ ] `specs/history/phases/phase-N-finished.md` written
+- [ ] SemVer tag created
 ```
 
 ---
 
-## 📋 Checklist de entrega (cole no fim de cada task)
+## 📋 Delivery checklist (paste at the end of every task)
 
 ```markdown
-**Evidência:**
+**Evidence:**
 - `npm run typecheck` → exit 0
-- `npm run lint` → 0 erros
+- `npm run lint` → 0 errors
 - `npm run test` → N passed
 - `npm run test:e2e` → N passed
 - `npm run build` → ✓ Compiled successfully
 
-**Arquivos tocados:** (liste — máximo 5 por passo)
-**Commit:** `tipo(escopo): descrição. (Agent: <Ferramenta> - <Modelo>)`
+**Files touched:** (list them — max 5 per step)
+**Commit:** `type(scope): description. (Agent: <Tool> - <Model>)`
 ```

@@ -1,259 +1,293 @@
 # 🤖 create-sdd-ai-stack
 
-> **O kit de regras de desenvolvimento para agentes de IA, baseado em Spec-Driven Development (SDD).**
-> Stack padrão: **Next.js 16**. Um `npx` e você tem um projeto com regras, arquitetura, design system e SDD prontos.
+> **The development-rule kit for AI agents, built on Spec-Driven Development (SDD).**
+> Default stack: **Next.js 16**. One `npx` and you have a project with rules,
+> architecture, design system and SDD already in place.
 
 ```bash
-npx create-sdd-ai-stack meu-dashboard
+npx create-sdd-ai-stack my-dashboard
 ```
 
 ---
 
-## 🎯 O que é isto
+## 🎯 What this is
 
-Um **template de regras + código** para agentes de IA (Claude Code, Cursor, Copilot, Codex, Gemini CLI, Cline, Windsurf…).
+A **rules + code template** for AI agents (Claude Code, Cursor, Copilot, Codex, Gemini
+CLI, Cline, Windsurf…).
 
-O agente abre o projeto, lê **uma** sequência de arquivos, e já sabe:
-o que construir agora, como estruturar, como escrever código, como commitar, quando parar.
+The agent opens the project, reads **one** sequence of files, and already knows: what to
+build now, how to structure it, how to write code, how to commit, and when to stop.
 
-| Entrega | O que você recebe |
+| Deliverable | What you get |
 | --- | --- |
-| **Regras** | `SDD/` com leis do agente, stack, design, arquitetura, SDD e stacks por ferramenta |
-| **Template** | App Next.js 16 completo, com design system já aplicado e buildando |
-| **CLI** | `npx create-sdd-ai-stack <nome>` — cria tudo em 1 comando |
-| **Submodule** | Instala só as regras em qualquer projeto, com atalhos na raiz |
+| **Rules** | `SDD/` with agent laws, stack rules, design, architecture, SDD, and per-tool stacks |
+| **Template** | A complete Next.js 16 app, with the design system already applied and building |
+| **CLI** | `npx create-sdd-ai-stack <name>` — everything in one command |
+| **Submodule** | Installs only the rules into any project, with root shortcuts |
+
+**Everything is in English by default** — commits, docs, code, identifiers — unless you
+explicitly ask for another language. See [`SDD/stacks/language.md`](./stacks/language.md).
 
 ---
 
-## ⚡ Começando
+## ⚡ Getting started
 
-### 1. Projeto novo (recomendado)
+### 1. New project (recommended)
 
 ```bash
-npx create-sdd-ai-stack meu-app
-cd meu-app
+npx create-sdd-ai-stack my-app
+cd my-app
 npm run dev
 ```
 
-O que nasce:
+What you get:
 
 ```text
-meu-app/
+my-app/
 ├── src/
-│   ├── app/           # rotas (marketing pública + /app logado)
-│   ├── features/      # vertical slice de exemplo (domain/application/infrastructure/ui)
+│   ├── app/           # routes (public marketing + authenticated /app)
+│   ├── features/      # example vertical slice (domain/application/infrastructure/ui)
 │   ├── shared/        # design system, lib, server-only
 │   ├── proxy.ts       # network boundary + headers
-│   └── app/globals.css# TOKENS DO DESIGN SYSTEM
-├── tests/             # unit + e2e prontos
-├── SDD/               # 🧠 as regras
-├── AGENTS.md          # → atalho para ./SDD/AGENTS.md
+│   └── app/globals.css# DESIGN SYSTEM TOKENS
+├── tests/             # unit + e2e, ready
+├── SDD/               # 🧠 the rules
+├── AGENTS.md          # shortcut → ./SDD/AGENTS.md
 ├── CLAUDE.md, GEMINI.md, .cursorrules, .github/copilot-instructions.md, …
 └── package.json
 ```
 
-### 2. Projeto existente (só as regras)
+### 2. Existing project (rules only)
 
 ```bash
-# Opção A — submodule (atualiza com git)
+# Option A — submodule (updatable through git)
 git submodule add https://github.com/marcelinosandroni/sdd-ai-stack.git SDD
 node SDD/SKILLS/install-submodule/install-submodule.mjs
 
-# Opção B — CLI
+# Option B — CLI
 npx create-sdd-ai-stack . --rules-only
 ```
 
-Os atalhos da raiz (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`…) apontam para `./SDD/AGENTS.md`,
-então **todo agente já começa pelo lugar certo** — sem você precisar configurar nada.
+The root shortcuts (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`…) point to
+`./SDD/AGENTS.md`, so **every agent starts in the right place** — with no manual
+configuration from you.
 
-Atualizar as regras depois:
+Updating the rules later:
 
 ```bash
 git submodule update --remote --merge SDD
 ```
 
-> ⚠️ O `.gitignore` do app gerado protege `.env.local`, `.next/` e `node_modules/`.
-> Nunca commite um `.env` de verdade — só o `.env.example` (que tem placeholders).
+> ⚠️ The generated app's `.gitignore` protects `.env.local`, `.next/` and `node_modules/`.
+> Never commit a real `.env` — only `.env.example`, which has placeholders.
 
-### 3. Opções da CLI
+### 3. CLI options
 
 ```bash
-npx create-sdd-ai-stack meu-app --template next      # template (padrão)
-npx create-sdd-ai-stack meu-app --rules-only         # só as regras
-npx create-sdd-ai-stack meu-app --install            # roda npm install
-npx create-sdd-ai-stack meu-app --git                # git init + 1º commit
-npx create-sdd-ai-stack meu-app --submodule          # SDD/ como git submodule
-npx create-sdd-ai-stack meu-app --submodule <url>    # de um fork seu
-npx create-sdd-ai-stack meu-app --shortcuts stub     # sem symlink (Windows sem dev mode)
+npx create-sdd-ai-stack my-app --template next      # template (default)
+npx create-sdd-ai-stack my-app --rules-only         # rules only
+npx create-sdd-ai-stack my-app --install            # runs npm install
+npx create-sdd-ai-stack my-app --git                # git init + first commit
+npx create-sdd-ai-stack my-app --submodule          # SDD/ as a git submodule
+npx create-sdd-ai-stack my-app --submodule <url>    # from your fork
+npx create-sdd-ai-stack my-app --shortcuts stub     # no symlink (Windows without dev mode)
 ```
 
 ---
 
-## 🧠 O mapa das regras (`SDD/`)
+## 🧠 The rule map (`SDD/`)
 
 ```text
 SDD/
-├── AGENTS.md            ⭐ leis + fluxo — LEIA PRIMEIRO
-├── specs/PLAN.md        ⭐ a task AGORA
-├── APP.md               o que é este app
-├── APP-STACK.md         qual stack este app usa
-├── NEXT.md              ⭐ Next.js 16 (stack padrão)
-├── NODE.md              Node.js puro (worker, cron, fila)
-├── REACT.md             React (server-first)
-├── DESIGN.md            🎨 design system completo
+├── AGENTS.md            ⭐ laws + flow — READ FIRST
+├── specs/PLAN.md        ⭐ the task RIGHT NOW
+├── APP.md               what this app is
+├── APP-STACK.md         which stack this app uses
 ├── ARCHITECTURE.md      🏗️ vertical slices
-├── stacks/              🧱 por ferramenta
+├── DESIGN.md            🎨 full design system (tokens, typography, components)
+├── stacks/              🧱 by language and tool
+│   ├── next.md          ⭐ Next.js 16 (the default stack)
+│   ├── node.md          plain Node.js (workers, cron, queues)
+│   ├── react.md         React (server-first)
 │   ├── typescript.md    tailwind.md     shadcn.md
 │   ├── testing.md       database.md     ai.md
-│   └── git.md           ci.md
-├── specs/               SDD operacional
+│   ├── git.md           ci.md
+│   ├── language.md      🗣 English by default
+│   └── agent-tooling.md 🤖 tools that cut tokens, with trade-offs
+├── specs/               operational SDD
 │   ├── PLAN.md  BACKLOG.md  ROADMAP.md
 │   ├── tasks/TASK_TEMPLATE.md
 │   └── history/phases/
-├── docs/                PRODUCT.md  CHANGELOG.md  PLANNING.md
-└── SKILLS/              automações (create-feature, install-submodule)
+├── docs/                PRODUCT.md  CHANGELOG.md  PLANNING.md  RELEASE.md
+└── SKILLS/              automations (create-feature, install-submodule, check-docs)
 ```
 
-### Ordem de leitura imposta pelo `AGENTS.md`
+### The read order `AGENTS.md` enforces
 
 ```text
-1. SDD/AGENTS.md      leis e fluxo
-2. SDD/specs/PLAN.md  a única task [-]
-3. SDD/APP.md         o que é este app
-4. SDD/APP-STACK.md   qual stack
-5. SDD/NEXT.md        regras da stack
-6. SDD/DESIGN.md      só se mexer em UI
-7. SDD/stacks/…       só a ferramenta que está tocando
+1. SDD/AGENTS.md      laws and flow
+2. SDD/specs/PLAN.md  the single [-] task
+3. SDD/APP.md         what this app is
+4. SDD/APP-STACK.md   which stack
+5. SDD/stacks/next.md the stack rules
+6. SDD/DESIGN.md      only when touching UI
+7. SDD/stacks/…       only the tool you're using
 ```
 
-> Cada doc de regra tem um **roteador no topo**: "se você está fazendo X, leia §Y".
-> Isso mantém o contexto do agente pequeno — importante, porque contexto longo é onde o agente morre.
+> Every rule doc has a **router at the top**: "if you are doing X, read §Y". That keeps
+> the agent's context small — which matters, because long context is where agents die.
+
+---
+
+## 🗣 English by default
+
+Everything that lands in the repository is English: commits, PR titles, docs, code
+comments, identifiers, specs, task names, changelog. **You still talk to the agent in
+your own language.**
+
+Why it matters: English is ~15–25% cheaper in tokens for the same content, it matches
+every tool's vocabulary, and a rule file in English works for any team in any country.
+The full rule, the reasoning, and the exceptions:
+[`SDD/stacks/language.md`](./stacks/language.md).
 
 ---
 
 ## 🎨 Design System
 
-O `DESIGN.md` implementa o **Executive Engineering**: ardósia profunda (nunca preto puro),
-micro-bordas de 1px, acentos em lime neon `#BAF336` e mint `#34D399`, tipografia tripla
-(**Manrope** estrutural + **JetBrains Mono** técnica + **Playfair Display** editorial), grid de 12 colunas com max 1320px.
+`DESIGN.md` implements **Executive Engineering**: deep obsidian-tinted slates (never
+pure black), 1px micro-borders, accents in neon lime `#BAF336` and mint `#34D399`, a
+triple-font system (**Manrope** structural + **JetBrains Mono** technical +
+**Playfair Display** editorial), a 12-column grid capped at 1320px.
 
-Os tokens vivem em `src/app/globals.css` (bloco `@theme` do Tailwind v4) e viram utilitários
-(`bg-surface-raised`, `text-text-secondary`, `text-label-mono`, `border-border-subtle`…) +
-primitivos (`btn-primary`, `btn-secondary`, `card`, `card-metric`, `chip`, `field`).
+The tokens live in `src/app/globals.css` (Tailwind v4 `@theme`) and become utilities
+(`bg-surface-raised`, `text-text-secondary`, `text-label-mono`, `border-border-subtle`…)
+plus primitives (`btn-primary`, `btn-secondary`, `card`, `card-metric`, `chip`, `field`).
 
-**Um lugar só.** Mudou o design? Muda no `@theme`, nunca no componente.
+**One place.** Change the design in `@theme`, never in a component.
 
 ---
 
-## 🏗️ Arquitetura
+## 🏗️ Architecture
 
-Vertical slices. Uma pasta por domínio, com tudo que aquele domínio precisa:
+Vertical slices. One folder per domain, carrying everything that domain needs:
 
 ```text
-src/features/<dominio>/
-├── domain/           # entidades + contratos (I*.ts) — zero dependência
-├── application/      # use cases — regra pura, sem Next, sem Prisma
-├── infrastructure/   # Prisma, HTTP, filas
-├── container.ts      # DI do slice
-├── queries.ts        # entrada de leitura
-├── actions.ts        # entrada de escrita (Server Action)
-└── ui/               # componentes do domínio
+src/features/<domain>/
+├── domain/           # entities + contracts (I*.ts) — zero dependencies
+├── application/      # use cases — pure rules, no Next, no Prisma
+├── infrastructure/   # Prisma, HTTP, queues
+├── container.ts      # the slice's DI
+├── queries.ts        # read entrypoint
+├── actions.ts        # write entrypoint (Server Action)
+└── ui/               # domain components
 ```
 
-Motivo de ser assim: **para entender um requisito você abre uma pasta só** — e o
-`application/` é testável sem mock de infra.
+The reason: **to understand a requirement you open one folder** — and `application/` is
+testable without mocking infrastructure.
 
 ---
 
-## 🚀 Publicar no npm
+## 🤖 Companion tooling
 
-Fluxo único: **você versiona, o GitHub Actions publica.**
+[`SDD/stacks/agent-tooling.md`](./stacks/agent-tooling.md) reviews the ecosystem with
+honest trade-offs, verified against each project's own README:
+
+- **[caveman](https://github.com/JuliusBrussee/caveman)** — 65% average output-token
+  reduction as a skill, ~33% input-token reduction as a local proxy. Includes
+  `caveman-compress`, which rewrites `AGENTS.md` itself.
+- **[superpowers](https://github.com/obra/superpowers)** — a skills framework *and* a
+  methodology (TDD, planning, code review, worktrees). The strongest complement here.
+- **[spec-kit](https://github.com/github/spec-kit)** — GitHub's heavier SDD toolkit, with
+  a comparison table for choosing between it and this core.
+- **[BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD)** — agile AI-driven
+  development with multi-agent roles.
+- Work-pattern skills (`investigate-first`, `lean-build`, `surgical-patch`, …) — the
+  cheapest token saving available, because they prevent work instead of compressing it.
+
+Nothing here is a dependency. This core stays a set of rules; these are add-ons.
+
+---
+
+## 🚀 Publishing to npm
+
+Single path: **you version, GitHub Actions publishes.**
 
 ```bash
-npm run version:minor              # 0.1.17 → 0.2.0 (commita + cria tag v0.2.0)
+npm run version:minor              # 0.1.17 → 0.2.0 (commits + creates tag v0.2.0)
 git push origin main
-git push origin --tags            # ← dispara a publicação
+git push origin --tags            # ← fires the publish
 ```
 
-A primeira vez precisa resolver a autenticação. Com **2FA ligado na conta npm**, um token
-comum não publica (`EOTP` — o CI não tem como digitar o OTP). Duas saídas:
+The first time you have to settle authentication. With **2FA enabled on the npm
+account**, an ordinary token will not publish (`EOTP` — CI cannot type the OTP). Two
+ways out:
 
 ```bash
-# A. Recomendado: publica a 1ª versão da sua máquina, ativa OIDC e apaga o token
+# A. Recommended: publish the 1st version locally, enable OIDC, delete the token
 npm publish --access public --provenance=false --otp=123456
-#   ⚠️ --provenance=false é obrigatório fora do CI: o npm exige OIDC para gerar
-#      provenance e falha com "provider: null" se não achar o provedor
-# depois: npmjs.com → create-sdd-ai-stack → Settings → Trusted publishing
+# then npmjs.com → create-sdd-ai-stack → Settings → Trusted publishing
 #   owner: marcelinosandroni · repo: sdd-ai-stack · workflow: release.yml · allow: npm publish
 gh secret delete NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
 
-# B. Ponte: token granular com "Bypass 2FA" marcado (deprecado pelo npm em jan/2027)
+# B. Bridge: granular token with "Bypass 2FA" checked (deprecated by npm in Jan 2027)
 gh secret set NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
 ```
 
-O workflow escolhe o modo sozinho: **com** `NPM_TOKEN` usa token, **sem** ele usa OIDC.
-Nada de token fica gravado em arquivo.
+The workflow picks the mode by itself: **with** `NPM_TOKEN` it uses a token, **without**
+it uses OIDC. No token is ever written to a file.
 
-**Guards antes de publicar:** `npm test` (22 testes) · links da doc · tag `vX.Y.Z` bate com
-o `package.json` · 10 arquivos essenciais presentes no tarball · `npm ≥ 11.5.1` · `concurrency` · provenance.
+Guards before publishing: `npm test` (27 tests) · doc links · tag `vX.Y.Z` matches
+`package.json` · 10 essential files in the tarball · `npm ≥ 11.5.1` · `concurrency` ·
+provenance.
 
-📖 Passo a passo completo (os 3 caminhos de auth, troubleshooting e o caminho stage-only)
-em [`docs/RELEASE.md`](./docs/RELEASE.md).
+📖 Full walkthrough, the three auth paths, and troubleshooting in
+[`docs/RELEASE.md`](./docs/RELEASE.md).
 
 ---
 
-## 🔌 Agentes suportados
+## 🔌 Supported agents
 
-Os atalhos da raiz são criados para:
+Root shortcuts are created for:
 
-| Arquivo | Agente |
+| File | Agent |
 | --- | --- |
-| `AGENTS.md` | padrão de mercado (Cursor, Codex, Windsurf, Cline, Gemini) |
+| `AGENTS.md` | the de-facto standard (Cursor, Codex, Windsurf, Cline, Gemini) |
 | `CLAUDE.md` | Claude Code |
 | `GEMINI.md` | Gemini CLI |
-| `.cursorrules` | Cursor (formato antigo) |
+| `.cursorrules` | Cursor (legacy format) |
 | `.windsurfrules` | Windsurf |
 | `.github/copilot-instructions.md` | GitHub Copilot |
 | `.clinerules` | Cline |
 
-Todos apontam para `SDD/AGENTS.md`. Nenhuma configuração manual necessária.
+All of them point to `SDD/AGENTS.md`. No manual configuration required.
 
 ---
 
-## 🧪 Verificação
+## 🧪 Verification
 
 ```bash
-npm test        # 20 testes da CLI, do scaffold e da documentação
+npm test                              # 27 tests: CLI, scaffold, docs integrity, release guards
+node SDD/SKILLS/check-docs/check-docs.mjs   # 33 documents, relative links
+npm run check:pack                    # what will go to npm (73 files, ~66 kB)
 ```
 
-O template em `template/next/` é validado de verdade: `typecheck` + `lint` + `test` + `test:e2e` + `build`.
+The template in `template/next/` is validated for real: `typecheck` + `lint` + `test` +
+`test:e2e` + `build`. The CI (`.github/workflows/ci.yml`) re-runs that validation on
+every push, **generating the app from the template itself**.
 
 ---
 
 ## 📚 SKILLS
 
-| SKILL | O que faz |
+| SKILL | What it does |
 | --- | --- |
-| `create-feature` | Cria um vertical slice novo com domain/application/container/queries/actions |
-| `install-submodule` | Instala as regras em projeto existente + cria atalhos |
-| `check-docs` | Valida que todo link relativo entre documentos resolve |
+| `create-feature` | Creates a new vertical slice with domain/application/container/queries/actions |
+| `install-submodule` | Installs the rules into an existing project + creates the shortcuts |
+| `check-docs` | Validates that every relative link between documents resolves |
 
 ---
 
-## 🛡️ Qualidade
-
-```bash
-npm test                          # 22 testes: CLI, scaffold e integridade da documentação
-node SDD/SKILLS/check-docs/check-docs.mjs   # 29 documentos, links relativos
-npm run check:pack                # confere o que vai para o npm (71 arquivos, ~62 kB)
-```
-
-O template em `template/next/` é validado de verdade: `typecheck` + `lint` + `test` + `test:e2e` + `build`.
-O CI (`.github/workflows/ci.yml`) refaz essa validação a cada push, **gerando o app a partir do próprio template**.
-
----
-
-## 👨‍💻 Autor
+## 👨‍💻 Author
 
 **Marcelino Sandroni** — [github.com/marcelinosandroni](https://github.com/marcelinosandroni)
 

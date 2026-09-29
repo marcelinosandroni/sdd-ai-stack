@@ -38,20 +38,20 @@ async function main() {
 
   console.log("\n🤖 create-sdd-ai-stack — Spec-Driven Development para agentes de IA\n");
 
-  const name = opts.name ?? (await ask("Nome do projeto:", "meu-app"));
+  const name = opts.name ?? (await ask("Project name:", "meu-app"));
   const target = path.resolve(process.cwd(), name);
   const usingSubmodule = Boolean(opts.submodule);
 
   console.log(`
-  📁 projeto:  ${name}
-  📦 template: ${opts.template === "none" ? "(nenhum — só regras)" : opts.template}
-  🧠 regras:   ${usingSubmodule ? `submodule ${opts.submodule}` : "copiadas para ./SDD"}
+  📁 project:  ${name}
+  📦 template: ${opts.template === "none" ? "(none — rules only)" : opts.template}
+  🧠 rules:    ${usingSubmodule ? `submodule ${opts.submodule}` : "copied into ./SDD"}
 `);
 
   if (process.stdin.isTTY) {
-    const answer = await ask("Criar agora? [Y/n]", "Y");
+    const answer = await ask("Create it now? [Y/n]", "Y");
     if (!/^y(es)?$/i.test(answer)) {
-      console.log("\nCancelado. Nada foi criado.\n");
+      console.log("\nCancelled. Nothing was created.\n");
       return;
     }
   }
@@ -67,25 +67,25 @@ async function main() {
     });
 
     console.log(`
-✅ Projeto criado em: ${summary.target}
+✅ Project created at: ${summary.target}
 
-Próximos passos:
+Next steps:
   cd ${name}
-${opts.install ? "" : "  npm install\n"}${opts.git ? "" : "  git init && git add -A && git commit -m \"chore: scaffold inicial\"\n"}
+${opts.install ? "" : "  npm install\n"}${opts.git ? "" : "  git init && git add -A && git commit -m \"chore: initial scaffold\"\n"}
   npm run dev
 
-⚠️  LEIA ANTES DE CODAR:
-  cat SDD/AGENTS.md        # leis do agente
-  cat SDD/specs/PLAN.md    # a task AGORA
-  cat SDD/NEXT.md          # regras da stack (Next.js 16)
+⚠️  READ BEFORE YOU CODE:
+  cat SDD/AGENTS.md              # agent laws + delivery flow
+  cat SDD/specs/PLAN.md          # the task RIGHT NOW
+  cat SDD/stacks/next.md         # the stack rules (Next.js 16)
 
-Atualizar as regras depois (se submodule):
+Update the rules later (if submodule):
   git submodule update --remote --merge SDD
 
 Docs: ${pkg.homepage}
 `);
   } catch (err) {
-    console.error(`\n✖ Falhou: ${err.message}\n`);
+    console.error(`\n✖ Failed: ${err.message}\n`);
     process.exit(1);
   }
 }

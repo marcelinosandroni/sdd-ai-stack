@@ -1,18 +1,24 @@
 # 🤖 AI / LLM
 
-> Regras para integrar modelos de linguagem. Custo, latência e segurança importam tanto quanto a resposta.
+> Rules for integrating language models. Cost, latency and safety matter as much as
+> the answer.
 
-## 🚨 Regras não-negociáveis
+## 🚨 Non-negotiable rules
 
-1. **Chamada de LLM NUNCA acontece dentro de um Server Component.** Vai para uma Server Action ou um use case em `application/`.
-2. **NUNCA exponha a `OPENAI/ANTHROPIC_API_KEY` no client.** Sempre `import "server-only"` no módulo.
-3. **Toda chamada a LLM tem `timeout` e tratamento de erro.** O usuário nunca fica em loading eterno.
-4. **Streaming para UX longa.** Resposta de LLM > 1s é streaming (ver AI SDK / `ReadableStream`).
-5. **Limite de tokens SEMPRE explícito** (`max_tokens`/`maxOutputTokens`). Nunca deixe o modelo "falar à vontade".
-6. **Custo é requisito, não detalhe.** Modelos caros (Opus/GPT-4o) só com justificativa em `docs/CHANGELOG.md`.
-7. **Nada de dado sensível no prompt** sem necessidade (LGPD).Anonimize antes.
+1. **An LLM call NEVER happens inside a Server Component.** It goes into a Server
+   Action or a use case in `application/`.
+2. **NEVER expose `OPENAI`/`ANTHROPIC_API_KEY` to the client.** Always
+   `import "server-only"` in the module.
+3. **Every LLM call has a `timeout` and error handling.** The user must never sit in an
+   eternal loading state.
+4. **Stream for long UX.** An LLM response > 1s streams (AI SDK / `ReadableStream`).
+5. **Token limits are ALWAYS explicit** (`max_tokens`/`maxOutputTokens`). Never let the
+   model "ramble".
+6. **Cost is a requirement, not a detail.** Expensive models (Opus/GPT-4o) only with a
+   justification in `docs/CHANGELOG.md`.
+7. **No sensitive data in the prompt without a reason** (LGPD). Anonymise first.
 
-## 🧩 Padrão de chamada
+## 🧩 Call pattern
 
 ```ts
 // features/chat/application/generate-reply.ts
@@ -23,30 +29,32 @@ export async function generateReply(prompt: string) {
   const { text } = await generateText({
     model: "openai/gpt-4o-mini",
     prompt,
-    maxTokens: 1024,          // SEMPRE limite
-    abortSignal: AbortSignal.timeout(15_000),  // SEMPRE timeout
+    maxTokens: 1024,                   // ALWAYS a limit
+    abortSignal: AbortSignal.timeout(15_000),   // ALWAYS a timeout
   });
   return text;
 }
 ```
 
-## 🎯 Escolha de modelo (custo vs qualidade)
+## 🎯 Model choice (cost vs quality)
 
-| Caso | Modelo típico |
+| Case | Typical model |
 | --- | --- |
-| Classificar/extrair/formatar | mini / small |
-| Copy de marketing, resumo | mini / small |
-| Raciocínio complexo, código | big / Opus |
-| Embedding | `*-embed` dedicado |
+| Classify / extract / format | mini / small |
+| Marketing copy, summarising | mini / small |
+| Complex reasoning, code | big / Opus |
+| Embeddings | a dedicated `*-embed` model |
 
-## 🛡️ Segurança
+## 🛡️ Security
 
-- **Valide a saída do LLM antes de usar.** Saída é input não-confiável. Zod no retorno, sempre.
-- **Never inlined secrets em prompt de cliente.**
-- **Rate limit por usuário/rota** em qualquer endpoint que chame LLM (evite key draining).
-- **Log de chamada** com modelo + tokens (custo visível em produção).
+- **Validate the LLM output before using it.** Output is untrusted input. Zod on the
+  return, always.
+- **Never inline secrets in a client prompt.**
+- **Rate limit** any endpoint that calls an LLM, per user/route (prevents key draining).
+- **Log the call** with model + token count, so cost is visible in production.
 
-## 📊 O que observar
+## 📊 What to watch
 
-- **Streaming vs não:** UX (streaming) vs complexidade.
-- **Caching:** mesmo prompt → cache sem custo. Use `'use cache'` quando a entrada for estável.
+- **Streaming vs not:** UX (streaming) vs complexity.
+- **Caching:** identical prompt → cached at no cost. Use `'use cache'` when the input is
+  stable.
