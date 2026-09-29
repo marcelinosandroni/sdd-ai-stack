@@ -6,6 +6,86 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
+## [0.1.19] — 2026-09-29
+
+> Every stack covered, one shared spine, and every doc compressed on purpose.
+
+### 🧹 The spine: `stacks/clean-code.md`
+
+New. The shared discipline every other stack file maps:
+
+- **SRP** — one file, one resource, one reason to change, with the test: *"what is the one
+  reason this file changes?"* If more than one answer, split
+- **SOLID** — a table where each principle has a **smell when broken**, because a principle
+  nobody can detect is a principle nobody follows
+- **Separation of concerns** — `inbound → application → domain ← outbound`, and the exact
+  may-import / must-not-import matrix per layer
+- **Hexagonal / ports & adapters** — the default, with the lighter `features/<x>/{domain,
+  application, infrastructure, ui}` shape for prototypes and an explicit **when hexagonal is
+  too much** section that does *not* abandon the inward arrow
+- **Design patterns** — each one paired with the pain that justifies it, and the rule
+  "add on the second occurrence, never the first"
+- **Code smells** — 12 rows of refuse-in-review smells, each with the fix
+- **A review checklist** with 8 items to run before marking a task `[x]`
+
+Plus `stacks/architecture.md`: feature-first folders, the dependency rule, the composition
+root, cross-module communication, error flow, when to add an abstraction, layer tests, and
+a per-stack folder table.
+
+### ☕ Seven new stacks
+
+| File | Stack |
+| --- | --- |
+| `stacks/java.md` | Java 21 · Spring Boot 3 · Quarkus 3 — feature-first packages, records, `sealed` + pattern matching, constructor injection only, and the Quarkus native-image reflection rule |
+| `stacks/dotnet.md` | C# · .NET 10 · ASP.NET Core · EF Core — records, nullable reference types, `async` all the way, minimal API vs MVC, `sealed` by default. **.NET only** |
+| `stacks/go.md` | Go 1.23+ · chi · sqlc · errgroup — errors wrapped with `%w`, one goroutine owner, goroutine leak rules, `context` as first parameter, `-race` in CI, fakes over mocks |
+| `stacks/python.md` | Python 3.12+ · Django 5 · FastAPI — `Protocol` over `ABC`, no mutable defaults, `dataclass(frozen=True)`, and the two truth tables that matter: Django (queryset in `selectors.py`, signals are the anti-pattern) and FastAPI (a blocking DB call inside `async def` blocks the event loop) |
+| `stacks/javascript.md` | JS/TS core — `unknown` over `any`, `satisfies`, discriminated unions, plus **value objects for money, dates and ids**: integer minor units, injected clock, branded id types |
+| `stacks/node-frameworks.md` | Express 5 · Fastify · Nest — with a decision table, and the Express 5 gotcha (it forwards rejected promises, so the `asyncHandler` wrapper in most tutorials is Express 4). Nest's DI is the whole point; using it without DI is worse than Express |
+| `stacks/angular.md` | Angular 20+ — standalone only, `OnPush` everywhere, signals with `asReadonly()` on every exposed signal, `track` mandatory in `@for`, and `HttpTestingController.verify()` at the end of every HTTP test |
+| `stacks/vue.md` | Vue 3.5+ — `<script setup>` only, `ref` by default over `reactive`, `computed` for anything derived, `shallowRef` for lists, and Pinia explicitly for *client* state, never a server cache |
+| `stacks/svelte.md` | Svelte 5 + SvelteKit — runes over stores, `$effect` only for real side effects **with a mandatory cleanup**, and the `+page.svelte` renders / `+page.server.ts` fetches split |
+
+### ✂️ Every doc is now compressed on purpose
+
+`stacks/language.md` §2 is a new law: the docs themselves are written dense and
+imperative, because rule files reload on every task and a rule nobody finishes reading is
+a rule nobody follows.
+
+It states what to cut (filler, hedging, preamble, symmetry), what is never compressed
+(`not`/`never`/`no`/`only`/`except`, numbers, versions, error strings, code, commands), and
+two rules that are easy to get wrong:
+
+- **Never invent abbreviations.** `cfg`, `impl`, `req` cost the same as the full word under
+  a modern tokenizer *and* still cost a decode. The full word is cheaper and clearer.
+- **Never grow output to sound compressed.** If a terse phrasing is not shorter than the
+  plain one, use the plain one.
+
+And one hard limit: **ambiguity wins over brevity.** Restore the words. Plus the
+exception that already existed in `AGENTS.md`: evidence is never compressed.
+
+### 🧠 AGENTS.md
+
+Two new mandatory behaviours and a new read-order step:
+
+- `stacks/clean-code.md` in the read order, for **any** language
+- "Every line must earn its tokens" with the pointer to §2
+- "One file = one reason to change" with the pointer to the spine
+
+### 🧪 Tests
+
+27 → **30**. Three new guards, because every one of them already broke something:
+
+- every stack document the index promises exists
+- the index links each one (it caught `node.md` and `svelte.md` never being linked)
+- every stack doc references `clean-code.md` (it caught nine docs drifting off the spine)
+
+The first version of the third test was wrong — it asserted the link format
+`(./stacks/x.md)` while the index lives *inside* `stacks/`, so its links are
+sibling-relative. The test was fixed, not the doc.
+
+---
+
 ## [0.1.18] — 2026-09-29
 
 > Move every stack document into `stacks/`, make English the default output language,

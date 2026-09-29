@@ -2,6 +2,7 @@
 
 > Goal: **100% coverage on the critical paths** (use cases, actions, mutations).
 > Visual UI requires a mandatory E2E test.
+> Spine: [clean-code.md](./clean-code.md) \u00a79 \u2014 fakes over mocks.
 
 ## 📐 The project pyramid
 

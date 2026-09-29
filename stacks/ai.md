@@ -2,6 +2,7 @@
 
 > Rules for integrating language models. Cost, latency and safety matter as much as
 > the answer.
+> Spine: [clean-code.md](./clean-code.md).
 
 ## 🚨 Non-negotiable rules
 

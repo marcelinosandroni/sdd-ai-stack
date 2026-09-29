@@ -2,7 +2,8 @@
 
 > **The default stack is Next.js** ([next.md](./next.md)). Plain Node.js enters **only**
 > when the App Router is not enough.
-> Vertical Slices, as everywhere. No MVC. Total focus on the domain.
+> Spine: [clean-code.md](./clean-code.md) + [architecture.md](./architecture.md).
+> Vertical slices, as everywhere. No MVC. Total focus on the domain.
 
 ## 🤔 When to use plain Node.js (and when NOT to)
 

@@ -1,5 +1,7 @@
 # 🗄️ DATABASE
 
+> Spine: [clean-code.md](./clean-code.md).
+
 > Default: **Prisma ORM + PostgreSQL**. Access **always** lives inside
 > `features/*/infrastructure/` or `shared/server/db.ts`.
 

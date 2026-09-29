@@ -1,5 +1,7 @@
 # 🧩 SHADCN/UI
 
+> Spine: [clean-code.md](./clean-code.md).
+
 > **The template's OFFICIAL UI library.** Components live in `src/shared/ui/`.
 
 ## 🚨 Non-negotiable rules
