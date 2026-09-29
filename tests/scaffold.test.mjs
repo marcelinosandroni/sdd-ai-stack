@@ -191,6 +191,20 @@ test("scaffold: --rules-only não cria src/", () => {
   assert.ok(fs.existsSync(path.join(target, "SDD", "AGENTS.md")));
 });
 
+test("scaffold: o app gerado TEM .gitignore (npm nunca empacota esse arquivo)", () => {
+  const parent = tmp();
+  const target = path.join(parent, "app-gitignore");
+  scaffold({ target, template: "next", log: silent, shortcutMode: "stub" });
+
+  const gi = path.join(target, ".gitignore");
+  assert.ok(fs.existsSync(gi), "app gerado ficou sem .gitignore");
+  const text = fs.readFileSync(gi, "utf8");
+  for (const required of ["node_modules/", ".next/", ".env.local"]) {
+    assert.ok(text.includes(required), `.gitignore não protege ${required}`);
+  }
+  assert.ok(!fs.existsSync(path.join(target, "gitignore")), "o gitignore sem ponto não pode sobrar");
+});
+
 test("scaffold: recusa pasta não vazia", () => {
   const target = tmp();
   fs.writeFileSync(path.join(target, "existe.txt"), "x", "utf8");

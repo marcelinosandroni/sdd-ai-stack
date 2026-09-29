@@ -6,6 +6,42 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
+## [Não publicado]
+
+### 🔒 Publicação no npm
+
+- `.github/workflows/release.yml` — publica no push de tag `v*` (automático), com
+  `workflow_dispatch` para disparo manual e `dry_run` para validar sem queimar versão
+- Secret do repositório: **`NPM_TOKEN`** (mapeado para `NODE_AUTH_TOKEN` pelo npm)
+- `.npmrc` commitado apenas com `${NODE_AUTH_TOKEN}` — **nenhum token em arquivo**
+- `publishConfig`: `access: public` + `provenance` (pacote assinado via GitHub OIDC)
+- Guards antes do publish: `npm test` · links da doc · tag `vX.Y.Z` == `version` ·
+  10 arquivos essenciais no tarball · `concurrency: release-npm`
+- `exports` no `package.json` (consumo programático: `import { scaffold } from "create-sdd-ai-stack"`)
+- `docs/RELEASE.md` — passo a passo, troubleshooting e a alternativa sem token (Trusted Publishing/OIDC)
+- Scripts: `version:patch|minor|major`, `check:docs`, `check:pack`
+  (o `npm publish` manual saiu de propósito: **um caminho só**, o do CI)
+
+### 🐛 `.gitignore` do template não chegava no pacote
+
+O npm **nunca** empacota arquivo chamado `.gitignore` (é um dos default-ignore dele).
+O app gerado saía **sem `.gitignore`** — ou seja, `.env.local`, `.next/` e
+`node_modules/` podiam ser commitados por acidente.
+
+A negação `!template/**/.gitignore` no campo `files` **não resolve** (npm exclui por
+padrão, antes de aplicar o allowlist). Solução: o template guarda como `gitignore`
+(sem ponto, que o npm empacota normalmente) e `installTemplate` renomeia para
+`.gitignore` ao copiar — fonte única, sem duplicar conteúdo.
+
+`restoreGitignore()` lança erro se o arquivo faltar, então o app **nunca** sai sem
+proteção de `.env`.
+
+### 📈 Cobertura de teste
+
+- 20 → **22 testes** (symlink resolvendo conteúdo certo + `.gitignore` presente no app gerado)
+
+---
+
 ## [1.0.0] — 2026-09-29
 
 ### 🎯 Objetivo
@@ -74,5 +110,12 @@ CLI** (`npx create-sdd-ai-stack`) com um template Next.js funcional embutido.
 5. `proxy.ts` redirecionando `/` — escondia a landing (achado pelo E2E)
 6. Rota `/` duplicada entre `app/page.tsx` e `(marketing)/page.tsx`
 7. `installShortcuts` retornava `undefined` no modo stub
+8. symlink dos atalhos com caminho relativo quebrado (`path.relative` com caminho não-absoluto) — **achado pelo CI no Linux**, mascarado no Windows pelo fallback pra stub
+9. `cache: npm` no workflow sem lockfile commitado
+10. rota `/` duplicada entre `app/page.tsx` e `(marketing)/page.tsx` (achado pelo E2E)
+11. `.gitignore` do template não empacotado pelo npm (achado conferindo o `npm pack`)
+
+> O nº 8 é o melhor argumento pra manter o CI que **revalida o template a cada push**:
+> o teste passava 100% na minha máquina e só quebrou no Linux.
 
 [1.0.0]: https://github.com/marcelinosandroni/sdd-ai-stack/releases/tag/v1.0.0

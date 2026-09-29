@@ -72,6 +72,9 @@ Atualizar as regras depois:
 git submodule update --remote --merge SDD
 ```
 
+> ⚠️ O `.gitignore` do app gerado protege `.env.local`, `.next/` e `node_modules/`.
+> Nunca commite um `.env` de verdade — só o `.env.example` (que tem placeholders).
+
 ### 3. Opções da CLI
 
 ```bash
@@ -164,25 +167,34 @@ Motivo de ser assim: **para entender um requisito você abre uma pasta só** —
 
 ## 🚀 Publicar no npm
 
-```bash
-# 1. Login (uma vez)
-npm login
-
-# 2. Release (roda testes, versiona com git tag, publica)
-npm run release
-
-# 3. Bump de versão
-npm run release:minor   # 1.0.0 → 1.1.0
-npm run release:major   # 1.0.0 → 2.0.0
-```
-
-`npm run release` = `test` → `npm version` (com tag) → `npm publish --access public`.
-O `prepublishOnly` roda os testes de novo, então **não é possível publicar com teste vermelho**.
+Fluxo único: **você versiona, o GitHub Actions publica.**
 
 ```bash
-# Conferir o que vai para o pacote
-npm pack --dry-run
+npm run version:minor              # 1.0.0 → 1.1.0 (commita + cria tag v1.1.0)
+git push origin main
+git push origin --tags            # ← dispara a publicação
 ```
+
+A primeira vez precisa de duas coisas:
+
+```bash
+# 1. o token, gravado como secret do repositório
+gh secret set NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
+
+# 2. testar sem queimar versão
+gh workflow run release.yml -f version=9.9.9 -f dry_run=true
+```
+
+O secret é `NPM_TOKEN` (token granular do npm, escopo **Read and write** apenas em
+`create-sdd-ai-stack`). O `.npmrc` da raiz só referencia `${NODE_AUTH_TOKEN}` — nenhum
+token está gravado em arquivo.
+
+**Guards antes de publicar:** `npm test` (22 testes) · links da doc · tag `vX.Y.Z` bate com
+o `package.json` · 10 arquivos essenciais presentes no tarball · `concurrency` · `--provenance`
+(pacote assinado pelo GitHub).
+
+📖 Passo a passo completo, troubleshooting e a alternativa sem token
+(**Trusted Publishing / OIDC**) em [`docs/RELEASE.md`](./docs/RELEASE.md).
 
 ---
 
@@ -227,9 +239,9 @@ O template em `template/next/` é validado de verdade: `typecheck` + `lint` + `t
 ## 🛡️ Qualidade
 
 ```bash
-npm test                          # 20 testes: CLI, scaffold e integridade da documentação
+npm test                          # 22 testes: CLI, scaffold e integridade da documentação
 node SDD/SKILLS/check-docs/check-docs.mjs   # 29 documentos, links relativos
-npm pack --dry-run                # confere o que vai para o npm (67 arquivos, ~60 kB)
+npm run check:pack                # confere o que vai para o npm (71 arquivos, ~62 kB)
 ```
 
 O template em `template/next/` é validado de verdade: `typecheck` + `lint` + `test` + `test:e2e` + `build`.

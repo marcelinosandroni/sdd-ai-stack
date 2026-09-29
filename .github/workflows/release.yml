@@ -1,0 +1,142 @@
+name: Release
+
+# Publicação AUTOMÁTICA: basta dar push numa tag `v*`.
+# A version bump é feita localmente (npm run version:minor/major/patch),
+# depois o push da tag dispara este workflow.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versão a publicar (ex: 1.1.0). Não use prefixo v."
+        required: true
+        type: string
+      dry_run:
+        description: "Só valida o pacote, não publica de verdade"
+        required: false
+        default: false
+        type: boolean
+
+# Impede dois publishes simultâneos (npm rejeita versão duplicada).
+concurrency:
+  group: release-npm
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # necessário para o --provenance (assinatura do pacote pelo GitHub OIDC)
+  id-token: write
+
+jobs:
+  verify:
+    name: Verifica pacote
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          # gera um .npmrc no runner apontando para NODE_AUTH_TOKEN
+          registry-url: https://registry.npmjs.org
+
+      - name: Testes
+        run: npm test
+
+      - name: Links da documentação
+        run: node SKILLS/check-docs/check-docs.mjs
+
+      - name: Confere versão e conteúdo do pacote
+        id: check
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="${GITHUB_REF_NAME:-}"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="v${{ inputs.version }}"
+            node -e "
+              const fs = require('fs');
+              const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+              p.version = '${{ inputs.version }}';
+              fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
+            "
+            VERSION="${{ inputs.version }}"
+          fi
+
+          # a tag tem que bater com a versão do package.json
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "::error::tag '$TAG' não bate com package.json '$VERSION'"
+            exit 1
+          fi
+          echo "publicando $VERSION"
+
+          # nenhum arquivo essencial pode faltar do tarball
+          npm pack --dry-run 2>&1 | tee pack.txt
+          for f in "bin/create-sdd-ai-stack.mjs" "lib/scaffold.mjs" "AGENTS.md" "NEXT.md" \
+                   "DESIGN.md" "APP-STACK.md" "stacks/README.md" "template/next/gitignore" \
+                   "template/next/package.json" "SKILLS/create-feature/SKILL.md"; do
+            grep -q "$f" pack.txt || { echo "::error::faltando no pacote: $f"; exit 1; }
+          done
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Publica no npm
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/create-sdd-ai-stack
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # o job anterior alterou package.json num checkout descartável;
+      # aqui (checkout limpo) precisamos reaplicar a versão do dispatch
+      - name: Aplica a versão do dispatch
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            p.version = '${{ inputs.version }}';
+            fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
+          "
+
+      - name: Confere a versão
+        run: |
+          ACTUAL="$(node -p "require('./package.json').version")"
+          if [ "$ACTUAL" != "${{ needs.verify.outputs.version }}" ]; then
+            echo "::error::versão divergente: '$ACTUAL' != '${{ needs.verify.outputs.version }}'"
+            exit 1
+          fi
+          echo "publicando create-sdd-ai-stack@$ACTUAL"
+
+      # o secret do repositório se chama NPM_TOKEN (é o nome combinado pra este projeto)
+      - name: Autentica
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publica
+        if: ${{ !inputs.dry_run }}
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Simula (dry run)
+        if: ${{ inputs.dry_run }}
+        run: npm publish --dry-run --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
