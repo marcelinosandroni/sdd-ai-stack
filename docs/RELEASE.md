@@ -46,6 +46,44 @@ no uso real. Leitura das versões:
 | **B. Token com "Bypass 2FA"** | ~2 min | ⚠️ Funciona hoje, **deprecado em jan/2027** |
 | **C. Token stage-only** | ~10 min | 🛡️ Mais seguro, exige aprovar cada release |
 
+### 1.1 O `404 Not Found` na primeira publicação é enganoso
+
+> ```
+> npm error code E404
+> npm error 404 Not Found - PUT https://registry.npmjs.org/create-sdd-ai-stack - Not found
+> ```
+
+**Não é preciso "criar" o pacote antes.** O `npm publish` cria o pacote sozinho na
+primeira publicação. O 404 nesse PUT significa que **o registry não reconheceu você
+como autorizado** — e o npm não quer confirmar se o nome existe para quem não tem
+acesso.
+
+A causa mais comum (e a que aconteceu aqui) é o **`.npmrc` do projeto** declarar um
+`_authToken` que sobrescreve o seu:
+
+```text
+projeto  >  ~/.npmrc (usuário)  >  npm global
+```
+
+Com `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` no `.npmrc` do projeto e a
+variável vazia, o token efetivo fica **vazio** e o sintoma é dourado:
+
+| Comando | Com token válido | Com token zerado |
+| --- | --- | --- |
+| `npm whoami` | `seu-usuario` | `401 Unauthorized` |
+| `npm publish` (1ª vez) | cria o pacote | `404 Not Found` no PUT |
+
+**Diagnóstico em 5 segundos:**
+
+```bash
+npm whoami                      # tem que imprimir seu usuário, não 401
+npm config get "//registry.npmjs.org/:_authToken"   # tem que ter tamanho > 1
+```
+
+A correção é **não declarar `_authToken` no `.npmrc` do projeto** — só `registry=`.
+A auth vem do `~/.npmrc` (local) ou da variável `NODE_AUTH_TOKEN` (CI). Há um teste
+que trava isso: `publish: o .npmrc do projeto NÃO pode declarar _authToken`.
+
 ### 🏆 Caminho A — bootstrap local + Trusted Publishing (OIDC)
 
 O OIDC é a solução definitiva: credencial de vida curta, assinada pelo GitHub,
@@ -233,6 +271,7 @@ Se tudo der certo: <https://www.npmjs.com/package/create-sdd-ai-stack>
 
 | Sintoma | Causa | Solução |
 | --- | --- | --- |
+| `E404` / "PUT ... Not Found" **na primeira publicação** | **não é o pacote ausente** — é o `.npmrc` do projeto sombreando o seu token, deixando a auth vazia | veja §1.1 |
 | `EUSAGE` / "Automatic provenance generation not supported for provider: null" | `publishConfig.provenance: true` e o publish não saiu de um CI com OIDC | tire `provenance` do `publishConfig`; no local use `--provenance=false`, no CI `--provenance` |
 | `EOTP` / "requires a one-time password" | **2FA ligado** e o token não tem "Bypass 2FA" | seção 1 — caminho A (OIDC) ou B (bypass) |
 | `ENEEDAUTH` / "need auth" com OIDC configurado | `NODE_AUTH_TOKEN` presente no ambiente derruba o OIDC, **ou** o workflow não é o `release.yml`, **ou** o repo/owner está errado | confira os 3 campos no npmjs.com; eles são case-sensitive |

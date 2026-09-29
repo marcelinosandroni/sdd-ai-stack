@@ -62,3 +62,34 @@ test("publish: o passo Publica NÃO define NODE_AUTH_TOKEN (senão OIDC não eng
     "NODE_AUTH_TOKEN no passo Publica faz o npm ignorar o OIDC e tentar token",
   );
 });
+
+test("publish: o .npmrc do projeto NÃO pode declarar _authToken", () => {
+  // o .npmrc do projeto tem prioridade sobre o ~/.npmrc do usuário. Uma linha
+  // _authToken aqui sombreia o token do usuário e, se a variável estiver vazia,
+  // zera a auth de tudo silenciosamente: 401 no whoami, 404 no PUT de primeira
+  // publicação (erro que parece "pacote não existe", mas é falta de auth).
+  const npmrc = fs
+    .readFileSync(".npmrc", "utf8")
+    .split("\n")
+    .filter((line) => !line.trim().startsWith("#"))
+    .join("\n");
+
+  assert.doesNotMatch(
+    npmrc,
+    /_authToken/,
+    "o .npmrc do projeto não deve declarar _authToken — ele sombreia o ~/.npmrc",
+  );
+  // e o registry precisa continuar lá, senão o npm publish usa o registro errado
+  assert.match(npmrc, /registry\s*=\s*https:\/\/registry\.npmjs\.org\//);
+});
+
+test("publish: o passo Autentica injeta o token via GITHUB_ENV, não em arquivo", () => {
+  const yml = fs.readFileSync(".github/workflows/release.yml", "utf8");
+  const authStep = yml.slice(yml.indexOf("- name: Autentica"), yml.indexOf("- name: Publica"));
+  assert.match(authStep, /NODE_AUTH_TOKEN=\$\{NPM_TOKEN\}.*GITHUB_ENV/);
+  assert.doesNotMatch(
+    authStep,
+    /\.npmrc/,
+    "escrever token em .npmrc do runner não basta: o .npmrc do projeto tem prioridade",
+  );
+});
