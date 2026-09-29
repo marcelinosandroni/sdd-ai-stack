@@ -42,7 +42,40 @@ proteção de `.env`.
 
 ### 📈 Cobertura de teste
 
-- 20 → **22 testes** (symlink resolvendo conteúdo certo + `.gitignore` presente no app gerado)
+- 20 → **27 testes** (symlink resolvendo o conteúdo certo · `.gitignore` no app gerado ·
+  provenance fora do `publishConfig` · `--provenance` explícito no CI ·
+  `NODE_AUTH_TOKEN` ausente do passo Publica · `_authToken` fora do `.npmrc` do projeto ·
+  token injetado via `GITHUB_ENV`)
+
+### 🐛 `.npmrc` do projeto zerava a autenticação (404 na primeira publicação)
+
+```
+npm error code E404
+npm error 404 Not Found - PUT https://registry.npmjs.org/create-sdd-ai-stack - Not found
+```
+
+**Não era o pacote ausente** — o `npm publish` cria o pacote sozinho na primeira vez.
+O 404 no PUT significa que o registry não reconheceu o usuário como autorizado.
+
+Causa: o `.npmrc` do projeto declarava
+`//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`. O npm lê os arquivos nesta
+ordem — **projeto > usuário > global** — então esse placeholder **sombreava** o token
+real do `~/.npmrc`. Com a variável vazia, o token efetivo ficava vazio:
+
+| Comando | Antes | Depois |
+| --- | --- | --- |
+| `npm whoami` | `401 Unauthorized` | `marcelinosandroni` |
+| `npm publish` (1ª vez) | `404 Not Found` (PUT) | cria o pacote |
+
+O mesmo defeito atingia o caminho por token **no CI**, porque o `.npmrc` do repositório
+também é copiado para o runner e tem prioridade sobre o `~/.npmrc` gerado pelo
+`setup-node`.
+
+Correções:
+- `.npmrc` do projeto ficou só com `registry=` (o comentário no arquivo explica por quê)
+- CI passou a injetar `NODE_AUTH_TOKEN` via `$GITHUB_ENV` em vez de escrever token em
+  arquivo — assim o OIDC continua engatando quando não há secret
+- três testes de regressão, todos verificados reintroduzindo o bug de propósito
 
 ### 🐛 `publishConfig.provenance` quebrava o publish local
 

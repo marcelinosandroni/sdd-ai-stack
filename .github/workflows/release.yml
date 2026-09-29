@@ -129,14 +129,16 @@ jobs:
 
       # ── Autenticação: dois modos, o npm escolhe ──
       #
-      # 1. TEMPO: o secret NPM_TOKEN. Escreve a linha de token no ~/.npmrc,
-      #    que sobrepõe o placeholder do setup-node. Token de conta SEM
-      #    "Bypass 2FA" não publica com 2FA ligado (erro EOTP).
+      # 1. TEMPO: o secret NPM_TOKEN. Injetamos NODE_AUTH_TOKEN no ambiente dos
+      #    próximos passos. O setup-node (registry-url) já deixou no ~/.npmrc do
+      #    runner a linha `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`.
       #
-      # 2. SEM TOKEN: Trusted Publishing (OIDC). Não escrevemos NADA no .npmrc
-      #    e NÃO definimos NODE_AUTH_TOKEN — o npm só engata o OIDC quando o
-      #    auth está ausente. Se escrevesse uma linha vazia, ele cairia no modo
-      #    token e falharia com ENEEDAUTH.
+      # 2. SEM TOKEN: Trusted Publishing (OIDC). Não escrevemos NADA — o npm só
+      #    engata o OIDC quando o auth está ausente.
+      #
+      # ⚠️ NÃO escrevemos token em arquivo. O .npmrc do projeto tem prioridade
+      #    sobre o ~/.npmrc do runner, e um authToken vazio lá dentro quebra
+      #    TUDO silenciosamente (401 no whoami, 404 no PUT de primeira publicação).
       - name: Autentica
         run: |
           if [ -z "${NPM_TOKEN}" ]; then
@@ -145,7 +147,8 @@ jobs:
             echo "::notice::(owner: marcelinosandroni · repo: sdd-ai-stack · workflow: release.yml)"
             exit 0
           fi
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          echo "::notice::NPM_TOKEN presente — publicando por token."
+          echo "NODE_AUTH_TOKEN=${NPM_TOKEN}" >> "$GITHUB_ENV"
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
