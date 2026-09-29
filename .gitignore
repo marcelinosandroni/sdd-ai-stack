@@ -22,4 +22,7 @@ next-env.d.ts
 
 verify-app/
 demo-app/
+audit-test/
+.audit/
+.sandbox/
 *.tgz

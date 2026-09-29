@@ -128,8 +128,8 @@ SDD/
 │   ├── PLAN.md  BACKLOG.md  ROADMAP.md
 │   ├── tasks/TASK_TEMPLATE.md
 │   └── history/phases/
-├── docs/                PRODUCT.md  CHANGELOG.md  PLANNING.md  RELEASE.md
-└── SKILLS/              automations (create-feature, install-submodule, check-docs)
+├── docs/                PRODUCT.md  CHANGELOG.md  PLANNING.md  RELEASE.md  EVIDENCE.md
+└── SKILLS/              automations (create-feature, install-submodule, check-docs, check-coverage)
 ```
 
 ### The read order `AGENTS.md` enforces
@@ -302,12 +302,16 @@ The GitHub job needs no secret — `GITHUB_TOKEN` is built in and the workflow g
 `packages: write`. One thing to do by hand after the first publish: GitHub Packages
 creates packages **private**, so flip the visibility once, or installs will need a token.
 
-Guards before publishing: `npm test` (34 tests) · doc links · tag `vX.Y.Z` matches
-`package.json` · 10 essential files in the tarball · `npm ≥ 11.5.1` · `concurrency` ·
-provenance (npm only).
+Guards before publishing: **CI green on the tagged commit** · the template gates
+re-run (`typecheck`, `lint`, `test`, `build`) · `npm test` (46 tests) · coverage
+floor · doc links · tag `vX.Y.Z` matches `package.json` · 12 essential files in
+the tarball · `npm ≥ 11.5.1` · `concurrency` · provenance (npm only).
+
+A tag is a release, not an annotation: `git push --tags` ships the package.
 
 📖 Full walkthrough, the three npm auth paths, the two-name design, and troubleshooting
-in [`docs/RELEASE.md`](./docs/RELEASE.md).
+in [`docs/RELEASE.md`](./docs/RELEASE.md). What each command actually proves is
+listed in [`docs/EVIDENCE.md`](./docs/EVIDENCE.md).
 
 ---
 

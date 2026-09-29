@@ -6,6 +6,102 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
+## [0.2.0] — 2026-09-29
+
+> Deep audit. The example feature was dead code, the release could ship a red
+> `main`, and `--git` was broken on Windows. All of it is now covered by tests.
+
+### 🐛 Bugs found by the audit, all fixed
+
+- **`scaffold --git` never committed on Windows.** `execFileSync` with
+  `shell: true` joins arguments with plain spaces and never quotes them, so
+  `user.name=Marcelino Sandroni` was split and git reported
+  `Sandroni is not a git command`. Every Windows user got a repository with no
+  commits. Arguments are now quoted on Windows.
+- **`--submodule` always failed.** `git submodule add` needs a repository that
+  already exists, and the scaffold ran it before `git init`. The target is now
+  initialised first. Covered by two tests that clone a real local remote.
+- **`--yes` was parsed and thrown away.** The flag did nothing; a TTY user was
+  still asked to confirm. It is now recorded and honoured.
+- **A tag published a red `main`.** `release.yml` fired on `push: tags` with no
+  link to CI. A `guard` job now queries the CI conclusion for the tagged commit
+  and fails the release unless it is `success`.
+- **The release never re-ran the heavy gates.** `typecheck`, `lint`, `test` and
+  `build` lived only in the PR CI, which nobody re-reads after a merge. The
+  `verify` job now runs them against the app generated from the exact commit.
+- **`node_modules` leaked into generated apps.** `installTemplate` only ignored
+  `.git`, so a developer who ran `npm install` inside `template/next/` shipped
+  their own `node_modules` to every consumer.
+- **E2E ran against `next dev`,** which does not minify and takes a different
+  render path. It now runs against `next build && next start`.
+
+### 🧟 The example feature was dead code
+
+`CreateExampleForm` — the only stateful component in the template, with
+`useActionState`, `useFormStatus` and a pending button — was imported by nothing.
+The action it called was unreachable, and the rule the project lives by ("no dead
+code") was broken in its own template.
+
+- `/app` now renders the form against the real action, behind real auth.
+- The repository persists per process, so a created row is read back.
+- Four E2E cases: unauthenticated, invalid field, valid, and banned role.
+- `auth.ts` reads a demo header instead of returning `null` forever, and
+  `requireUser()` is actually called by the action.
+- `env.ts` is imported by the root layout, so a bad `DATABASE_URL` fails the
+  build instead of the first request.
+
+### 🔐 Security, now tested instead of asserted
+
+- `proxy.ts` sets every security header on **every** branch, extracted into one
+  function so no `return` can skip it.
+- E2E proves a forged `x-middleware-subrequest` (CVE-2025-29927) does not bypass
+  the proxy: the hardening headers would be missing if it had.
+- A 401-style rejection is proven to write nothing.
+
+### 🧰 The template became real
+
+- `components.json`, so `npx shadcn add` stops asking for a layout.
+- `Button` and `Skeleton` copied in, which finally uses the `class-variance-authority`
+  that was declared and never imported.
+- `loading.tsx` — the docs asked for it since the beginning.
+- E2E on Chromium **and** Firefox, 20 tests.
+
+### 📏 Gates that cannot be bypassed
+
+- `npm run check:coverage` — floor at line 90 / branch 70 / func 80. Currently
+  **93.73 / 75.53 / 82.14**.
+- `tests/bin.test.mjs` — 9 tests driving the real `bin` and real `git`, which
+  is where three of the bugs above were hiding.
+- `supply-chain` CI job: `npm audit --omit=dev --audit-level=high`.
+- `actions` CI job: fails if an action is pinned to a deprecated runtime.
+- `main` is protected with `strict: true` on all four jobs.
+- The published tarball grew to **16.803 files / 153 MB** because `files` listed
+  `template` as a directory and npm happily packed every developer's
+  `template/next/node_modules`. It is now 98 files / 153.6 kB, with the template
+  enumerated and the build artefacts negated.
+
+### 📚 Docs
+
+- `docs/EVIDENCE.md` — what each command proves, and what the historical
+  releases were actually validated by.
+- `stacks/git.md` — the tag example was `v1.2.0` in a `0.x` project.
+- `specs/tasks/TASK_TEMPLATE.md` — behavioural acceptance criteria and a
+  security checklist, because a green build does not prove correct behaviour.
+- `stacks/ci.md`, `docs/RELEASE.md` — branch protection, the release guard, and
+  why the template ships without a lockfile.
+
+---
+
+### 🔒 Permissions and provenance
+
+Every job now declares only what it needs. The workflow-level `id-token: write`
+applied OIDC minting to the verification job as well, which had no business
+having it. `guard` gets `actions: read` to read the CI conclusion, `verify` gets
+nothing but `contents: read`, npm gets `id-token: write` for provenance, and
+GitHub Packages gets `packages: write`.
+
+---
+
 ## [0.1.20] — 2026-09-29
 
 > One tag publishes to **npm and GitHub Packages**, in parallel.

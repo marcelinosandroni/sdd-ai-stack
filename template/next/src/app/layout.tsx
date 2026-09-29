@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Manrope, Playfair_Display } from "next/font/google";
+// Validated at boot: a bad DATABASE_URL or a short AUTH_SECRET fails the build
+// instead of the first request. See SDD/stacks/next.md §7.
+import "@/shared/server/env";
 import "./globals.css";
 
 const manrope = Manrope({

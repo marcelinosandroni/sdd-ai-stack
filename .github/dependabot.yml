@@ -1,0 +1,27 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /template/next
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: [dependencies, template]
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      next:
+        patterns: ["next", "react", "react-dom"]
+      tailwind:
+        patterns: ["tailwindcss", "@tailwindcss/*"]
+      testing:
+        patterns: ["vitest", "@vitest/*", "@playwright/*"]
+      typescript:
+        patterns: ["typescript", "@types/*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies, ci]
+    commit-message:
+      prefix: "chore(ci)"

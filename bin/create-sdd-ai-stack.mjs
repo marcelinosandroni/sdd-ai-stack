@@ -48,7 +48,10 @@ async function main() {
   🧠 rules:    ${usingSubmodule ? `submodule ${opts.submodule}` : "copied into ./SDD"}
 `);
 
-  if (process.stdin.isTTY) {
+  // `--yes` skips the confirmation. Before this fix the flag was parsed and
+  // thrown away, so a TTY user was still asked — and a script piping stdin
+  // non-interactively was never asked either way.
+  if (process.stdin.isTTY && !opts.yes) {
     const answer = await ask("Create it now? [Y/n]", "Y");
     if (!/^y(es)?$/i.test(answer)) {
       console.log("\nCancelled. Nothing was created.\n");

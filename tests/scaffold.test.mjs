@@ -53,6 +53,41 @@ test("parseArgs: rejects an invalid --shortcuts", () => {
 
 /* ── installRules ────────────────────────────────────────── */
 
+test("scaffold: the generated app ships the files the rules depend on", () => {
+  const parent = tmp();
+  const target = path.join(parent, "app-files");
+  scaffold({ target, template: "next", log: silent, shortcutMode: "stub" });
+
+  // Each of these is referenced by a rule doc or by the E2E suite. Shipping the
+  // template without one silently breaks the promise the docs make.
+  for (const rel of [
+    "src/proxy.ts",                          // next.md §8: renamed to proxy.ts
+    "components.json",                       // shadcn.md: npx shadcn add
+    "src/shared/ui/button.tsx",              // the real shadcn component
+    "src/shared/ui/skeleton.tsx",            // used by loading.tsx
+    "src/app/(app)/app/loading.tsx",         // next.md: loading state
+    "src/app/(app)/app/example-board.tsx",   // the Suspense boundary
+    "tests/e2e/example-flow.spec.ts",        // the auth + validation flow
+    "tests/e2e/proxy.spec.ts",               // the security headers
+    "playwright.config.ts",                  // the build-vs-dev switch
+  ]) {
+    assert.ok(fs.existsSync(path.join(target, rel)), `the generated app is missing ${rel}`);
+  }
+});
+
+test("scaffold: the template copies no build artefacts", () => {
+  const parent = tmp();
+  const target = path.join(parent, "app-clean");
+  scaffold({ target, template: "next", log: silent, shortcutMode: "stub" });
+
+  for (const junk of ["node_modules", ".next", "coverage", "test-results", "playwright-report"]) {
+    assert.ok(!fs.existsSync(path.join(target, junk)), `the generated app shipped ${junk}`);
+  }
+  // A lockfile in the template would pin the consumer to a resolution made
+  // elsewhere. See docs/RELEASE.md §5.1.
+  assert.ok(!fs.existsSync(path.join(target, "package-lock.json")));
+});
+
 test("installRules: creates SDD/ with every document", () => {
   const root = tmp();
   installRules(root, { log: silent });
