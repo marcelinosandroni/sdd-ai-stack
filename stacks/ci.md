@@ -37,13 +37,12 @@ jobs:
 ```
 
 > ⚠️ `cache: npm` in `setup-node` **requires a committed lockfile**. This repo is a
-> zero-dependency CLI, so it has none — leave the cache off. See
-> [../docs/RELEASE.md](../docs/RELEASE.md).
+> zero-dependency CLI, so it has none — leave the cache off.
 
-> ⚠️ **`npm ci` requires a lockfile, and the Next template ships without one**
-> (the reason is in [../docs/RELEASE.md](../docs/RELEASE.md) §5.1). In this repo's
-> CI use `npm install`. In a **generated app**, use `npm ci` after the consumer
-> commits their own lockfile.
+> ⚠️ **`npm ci` requires a lockfile, and the Next template ships without one.**
+> In this repo's CI use `npm install`. In a **generated app**, use `npm ci` after
+> the consumer commits their own lockfile — and treat the first `npm ci` as the
+> moment the cache becomes safe.
 
 ## 📦 DEPLOY (Vercel / Node)
 
@@ -72,7 +71,14 @@ jobs:
 
 1. Phase closed → SemVer tag (`vX.Y.Z`).
 2. CI runs on the tag → release build.
-3. Changelog updated ([../docs/CHANGELOG.md](../docs/CHANGELOG.md)).
+3. The tag must match the version in `package.json`, and the release must refuse
+   to run if it does not. A tag and a version that disagree ship two different
+   packages under one name.
+4. The changelog entry lands **in the release PR**, not after the tag. After the
+   tag it documents something that already happened.
+
+> 📌 A generated app has no `docs/CHANGELOG.md` — the template's changelog is
+> its own, and it is not copied. Create yours on the first release.
 
 ## 🚫 Anti-patterns
 

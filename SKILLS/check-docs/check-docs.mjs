@@ -44,8 +44,21 @@ const re = /\]\((\.{0,2}\/[^)#\s]+)(?:#[^)]*)?\)/g;
 for (const file of files) {
   const txt = stripCodeFences(fs.readFileSync(file, "utf8"));
   for (const m of txt.matchAll(re)) {
-    const target = path.resolve(path.dirname(file), m[1]);
-    if (!fs.existsSync(target)) broken.push(`  ${path.relative(root, file)} -> ${m[1]}`);
+    const target = m[1];
+
+    // Relative to the document, which is what Markdown means.
+    const fromFile = path.resolve(path.dirname(file), target);
+
+    // Or relative to the project root. A shortcut in `.github/` or a stub at
+    // the top level says `./SDD/AGENTS.md` meaning "the SDD folder of this
+    // project", and resolving it from `.github/` yields `.github/SDD/…`, which
+    // does not exist. Those files are read by tools that never leave the repo
+    // root, so the root-relative reading is the one their readers apply.
+    const fromRoot = path.resolve(root, target.replace(/^\.\//, ""));
+
+    if (!fs.existsSync(fromFile) && !fs.existsSync(fromRoot)) {
+      broken.push(`  ${path.relative(root, file)} -> ${target}`);
+    }
   }
 }
 
