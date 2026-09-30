@@ -8,6 +8,12 @@ updates:
     labels: [dependencies, template]
     commit-message:
       prefix: "chore(deps)"
+    ignore:
+      # @types/node describes the runtime API. The CI pins node-version 22, so a
+      # 26.x type package would describe functions the runtime does not have —
+      # a worse failure than an old type.
+      - dependency-name: "@types/node"
+        update-types: ["minor", "patch"]
     groups:
       next:
         patterns: ["next", "react", "react-dom"]
