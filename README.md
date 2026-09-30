@@ -32,6 +32,23 @@ explicitly ask for another language. See [`SDD/stacks/language.md`](./stacks/lan
 
 ## ⚡ Getting started
 
+### Requirements
+
+| | Version | Why |
+| --- | --- | --- |
+| **Node.js** | 22.x | What the CI builds and gates the template on, and what `@types/node` is pinned to |
+| **npm** | ≥ 11.5.1 | Only for *publishing* this template — Trusted Publishing (OIDC) does not engage below it |
+
+`engines` in the generated app says `>=20.9.0` because that is Next.js 16's own
+floor. **22 is what is verified**, and 20.9 will work but nothing in this
+repository ever tested it.
+
+> The version pin lives in three places that have to agree: `@types/node` in
+> `template/next/package.json`, `node-version` in `.github/workflows/ci.yml`, and
+> the table above. `tests/dependabot-contract.test.mjs` fails when they drift —
+> the first version of that guard let `@types/node` jump to 26 while the runtime
+> stayed on 22, and Dependabot opened the PR anyway.
+
 ### 1. New project (recommended)
 
 ```bash

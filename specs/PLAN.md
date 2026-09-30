@@ -21,15 +21,17 @@
 
 ---
 
-## Current phase: 5 — First real publish (DONE)
+## Current phase: 6 — A template that does not age badly (DONE)
 
-> Status: ✅ `create-sdd-ai-stack@0.3.1` live on npmjs **and** GitHub Packages
+> Status: ✅ the Dependabot ignore is no longer inverted, and the runtime pin is
+> asserted equal in three places
 > History: [0 Bootstrap](./history/phases/phase-0-bootstrap.md) ·
 > [1 English](./history/phases/phase-1-english.md) ·
 > [2 All stacks](./history/phases/phase-2-all-stacks.md) ·
 > [3 Rules that work](./history/phases/phase-3-rules-that-work.md) ·
 > [4 Site and responsive](./history/phases/phase-4-site-and-responsive.md) ·
-> [5 First real publish](./history/phases/phase-5-first-real-publish.md) — all ✅
+> [5 First real publish](./history/phases/phase-5-first-real-publish.md) ·
+> [6 A template that does not age badly](./history/phases/phase-6-no-age-badly.md)
 
 > ⚠️ **This file is the template's own PLAN, not a fresh project.** A generated app
 > gets a clean phase 0; this repository has five closed phases. Do not confuse the
@@ -57,6 +59,11 @@
       registry also removed the auth, and the dry run could not see it
 [x] - [PR #27](./history/phases/phase-5-first-real-publish.md) - A half-succeeded
       release could not be resumed
+[x] - [PR #29](./history/phases/phase-6-no-age-badly.md) - The documentation lied
+      about four numbers it could have verified; `check:facts` makes prose falsifiable
+[-] - [Phase 6](./history/phases/phase-6-no-age-badly.md) - Dependabot's
+      `@types/node` ignore blocked the safe bumps and let every major through. The
+      runtime pin lives in three files that must agree, and nothing enforced it.
 
 ### Phase exit criteria
 - [x] Every task `[x]` with the test evidence pasted

@@ -9,11 +9,23 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     ignore:
-      # @types/node describes the runtime API. The CI pins node-version 22, so a
-      # 26.x type package would describe functions the runtime does not have —
-      # a worse failure than an old type.
+      # @types/node describes the runtime API, and the template CI runs Node 22.
+      #
+      # A MAJOR bump is the dangerous one: @types/node 26 describes an API the
+      # runtime does not have, which fails the typecheck in a way that looks like
+      # a template bug rather than a version mismatch. That is worse than an old
+      # type, because it sends you looking in the wrong place.
+      #
+      # This said `["minor", "patch"]`, which is inverted: it ignored the safe
+      # bumps and let every major through. Dependabot opened PR #17 bumping
+      # 22.20.4 -> 26.6.3 and it had to be closed by hand.
+      #
+      # The runtime pin lives in `.github/workflows/ci.yml` (`node-version: 22`
+      # in the template, site and supply-chain jobs). Changing one means
+      # changing the other, and tests/dependabot-contract.test.mjs fails if they
+      # drift apart.
       - dependency-name: "@types/node"
-        update-types: ["minor", "patch"]
+        update-types: ["version-update:semver-major"]
     groups:
       next:
         patterns: ["next", "react", "react-dom"]
