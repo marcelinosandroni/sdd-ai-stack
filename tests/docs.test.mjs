@@ -177,8 +177,12 @@ test("publish: releases go to npm AND GitHub Packages", () => {
     const gh = yml.slice(yml.indexOf("  publish-github:"));
     assert.match(gh, /needs: verify/, "both registries must get the same version");
     assert.match(gh, /packages: write/, "GitHub Packages needs packages: write");
-    assert.match(gh, /npm\.pkg\.github\.com/);
-    assert.match(gh, /scope: '@marcelinosandroni'/);
+    // The registry is named on the publish command, NOT on setup-node.
+    // A `scope` on setup-node repoints every npm command in the job, and
+    // prepublishOnly has to resolve this repository's own dependencies. See
+    // tests/registry-isolation.test.mjs for what that cost.
+    assert.match(gh, /--registry=https:\/\/npm\.pkg\.github\.com/);
+    assert.doesNotMatch(gh, /^ {10}scope:/m, "no global scope rewrite in the publish job");
   });
 
 test("publish: the GitHub job rewrites the name to a scope (GitHub only accepts scoped)", () => {

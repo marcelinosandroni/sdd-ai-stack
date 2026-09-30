@@ -269,11 +269,21 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
+      # Deliberately NO `registry-url` and NO `scope` here.
+      #
+      # `prepublishOnly` runs the full gate suite, and those gates resolve npm
+      # packages. With the scope pointed at npm.pkg.github.com and the package
+      # name already rewritten to @marcelinosandroni/…, npm tried to resolve the
+      # repository's OWN dependencies from GitHub Packages, which requires a
+      # token it does not have at that point. The suite died 0.3s into the first
+      # test file, with an error that names neither the scope nor the registry.
+      #
+      # The auth for the publish itself comes from NODE_AUTH_TOKEN on the
+      # publish step, which is the documented way to target GitHub Packages
+      # without a global registry rewrite.
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          registry-url: https://npm.pkg.github.com
-          scope: '@marcelinosandroni'
 
       - name: Apply the dispatch version
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -313,14 +323,18 @@ jobs:
             console.log('scoped name: ' + p.name);
           "
 
+      # GitHub Packages is reached through the token, not through a global
+      # registry rewrite. `--registry` says where to publish; the scope mapping
+      # in .npmrc resolves @marcelinosandroni/* there without every unrelated
+      # npm command in the job inheriting the same registry.
       - name: Publish
         if: ${{ !inputs.dry_run }}
-        run: npm publish --provenance=false
+        run: npm publish --provenance=false --registry=https://npm.pkg.github.com
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Simulate (dry run)
         if: ${{ inputs.dry_run }}
-        run: npm publish --dry-run --provenance=false
+        run: npm publish --dry-run --provenance=false --registry=https://npm.pkg.github.com
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
