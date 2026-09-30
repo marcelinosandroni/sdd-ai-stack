@@ -7,9 +7,10 @@
 
 | Claim | Command | Floor |
 | --- | --- | --- |
-| The CLI works and the scaffold is correct | `npm test` | 52 tests, 0 failures |
+| The CLI works and the scaffold is correct | `npm test` | 62 tests, 0 failures |
 | Coverage did not regress | `npm run check:coverage` | line 95 / branch 85 / func 90 |
-| No rule points at a deleted file | `npm run check:docs` | 45 docs, 0 broken links |
+| The rules are executable, not prose | `npm run check:rules` | 0 violations, template and generated app |
+| No rule points at a deleted file | `npm run check:docs` | 49 docs, 0 broken links |
 | The tarball has everything | `npm run check:pack` | ≥ 12 essential files |
 
 ## Commands that prove the template is sound
@@ -34,10 +35,15 @@ inner loop.
 
 | Job | Prevents |
 | --- | --- |
-| `quality` | a red test or a dead documentation link reaching the registry |
-| `template` | shipping a template that does not typecheck, lint, build or run |
-| `supply-chain` | a known high/critical vulnerability in the generated app |
-| `actions` | an action stuck on the deprecated Node 20 runtime |
+| `Quality` | a red test, a coverage regression, an unenforced rule, a dead doc link or a broken tarball reaching the registry |
+| `Template` | shipping a template that does not typecheck, lint, build or run |
+| `Site` | a dead anchor or a broken claim on the public site |
+| `Supply Chain` | a known high/critical vulnerability in the generated app |
+| `Actions` | an action on the deprecated Node 20 runtime, or a floating runner image |
+
+> Runner image is pinned to `ubuntu-24.04`, not `ubuntu-latest`. The floating
+> label migrates to Ubuntu 26 on 2026-10-19, which would change the OS under a
+> green build. The `Actions` job fails if `ubuntu-latest` ever comes back.
 
 > The `quality` job pins **Node 24**, not 22. `node --test
 > --experimental-test-coverage` only aggregates coverage across the test

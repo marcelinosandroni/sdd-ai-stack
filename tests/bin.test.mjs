@@ -137,38 +137,120 @@ test("bin: --rules-only leaves no src/", () => {
 
 /* ── the git paths, with a real git ────────────────────────── */
 
-test("scaffold --git: creates a repository with a clean tree and one commit", { skip: !hasGit() }, () => {
+/**
+ * A GitHub runner has no `user.email` configured, and a fresh CI container has
+ * none either. The scaffold must not invent an author in that case, so every
+ * test that expects a real commit runs inside a repository with an explicit
+ * identity. Testing the no-identity path is a separate test, below.
+ */
+function withIdentity(fn) {
+  const previous = {
+    name: process.env.GIT_AUTHOR_NAME,
+    email: process.env.GIT_AUTHOR_EMAIL,
+    committer: process.env.GIT_COMMITTER_NAME,
+    committerEmail: process.env.GIT_COMMITTER_EMAIL,
+  };
+  process.env.GIT_AUTHOR_NAME = "Test Author";
+  process.env.GIT_AUTHOR_EMAIL = "test@example.invalid";
+  process.env.GIT_COMMITTER_NAME = "Test Author";
+  process.env.GIT_COMMITTER_EMAIL = "test@example.invalid";
+  try {
+    return fn();
+  } finally {
+    const restore = (key, value) => {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    };
+    restore("GIT_AUTHOR_NAME", previous.name);
+    restore("GIT_AUTHOR_EMAIL", previous.email);
+    restore("GIT_COMMITTER_NAME", previous.committer);
+    restore("GIT_COMMITTER_EMAIL", previous.committerEmail);
+  }
+}
+
+test("scaffold --git: creates a repository with a clean tree and one commit", { skip: !hasGit() }, () =>
+  withIdentity(() => {
+    const parent = tmp();
+    const target = path.join(parent, "app");
+    const s = scaffold({ target, template: "next", git: true, log: silent, shortcutMode: "stub" });
+
+    assert.equal(s.git, true);
+    const log = git(target, "log", "--oneline");
+    assert.equal(log.split("\n").length, 1, "expected exactly one commit");
+    assert.match(log, /initial scaffold/);
+    assert.equal(git(target, "status", "--porcelain"), "", "working tree must be clean");
+  }),
+);
+
+test("scaffold --git: the initial commit is authored by the developer, not the template", { skip: !hasGit() }, () =>
+  withIdentity(() => {
+    const parent = tmp();
+    const target = path.join(parent, "app");
+    scaffold({ target, template: "next", git: true, log: silent, shortcutMode: "stub" });
+
+    const author = git(target, "log", "-1", "--format=%an <%ae>");
+    assert.equal(author, "Test Author <test@example.invalid>");
+    // The regression: the scaffold used to hardcode its own name here, putting
+    // a stranger's identity on the user's first commit.
+    assert.doesNotMatch(author, /marcelino/i);
+  }),
+);
+
+test("scaffold --git: with no identity it warns and leaves the staging intact", { skip: !hasGit() }, () => {
   const parent = tmp();
   const target = path.join(parent, "app");
-  const s = scaffold({ target, template: "next", git: true, log: silent, shortcutMode: "stub" });
 
-  assert.equal(s.git, true);
-  const log = git(target, "log", "--oneline");
-  assert.equal(log.split("\n").length, 1, "expected exactly one commit");
-  assert.match(log, /initial scaffold/);
-  assert.equal(git(target, "status", "--porcelain"), "", "working tree must be clean");
+  // A config with no user.name/user.email at all, and no system/global one.
+  const emptyConfig = path.join(parent, "empty-gitconfig");
+  fs.writeFileSync(emptyConfig, "", "utf8");
+  const previous = { global: process.env.GIT_CONFIG_GLOBAL, system: process.env.GIT_CONFIG_SYSTEM };
+  process.env.GIT_CONFIG_GLOBAL = emptyConfig;
+  process.env.GIT_CONFIG_SYSTEM = emptyConfig;
+  for (const key of ["GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"]) {
+    delete process.env[key];
+  }
+
+  const messages = [];
+  try {
+    const s = scaffold({
+      target,
+      template: "next",
+      git: true,
+      log: (line) => messages.push(line),
+      shortcutMode: "stub",
+    });
+
+    assert.equal(s.git, false, "the summary must not claim a commit that never happened");
+    assert.ok(
+      messages.some((line) => /identity/i.test(line)),
+      `expected a message about the missing identity, got: ${messages.join(" | ")}`,
+    );
+    // The work is not lost: everything is staged and waiting for one command.
+    assert.ok(fs.existsSync(path.join(target, "package.json")));
+  } finally {
+    const restore = (key, value) => {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    };
+    restore("GIT_CONFIG_GLOBAL", previous.global);
+    restore("GIT_CONFIG_SYSTEM", previous.system);
+  }
 });
 
-test("scaffold --git: the initial commit keeps the author identity", { skip: !hasGit() }, () => {
-  const parent = tmp();
-  const target = path.join(parent, "app");
-  scaffold({ target, template: "next", git: true, log: silent, shortcutMode: "stub" });
+test("scaffold --git: a spaced argument survives the Windows shell", { skip: !hasGit() }, () =>
+  withIdentity(() => {
+    const parent = tmp();
+    const target = path.join(parent, "app");
+    scaffold({ target, template: "next", git: true, log: silent, shortcutMode: "stub" });
 
-  // Windows runs the commit through cmd.exe, which splits `user.name=First Last`
-  // unless the arguments are quoted. An unquoted argument fails the commit.
-  const author = git(target, "log", "-1", "--format=%an <%ae>");
-  assert.equal(author, "Marcelino Sandroni <marcelino.sandroni@gmail.com>");
-});
-
-test("scaffold --git: a spaced argument survives the Windows shell", { skip: !hasGit() }, () => {
-  const parent = tmp();
-  const target = path.join(parent, "app");
-  scaffold({ target, template: "next", git: true, log: silent, shortcutMode: "stub" });
-
-  const files = git(target, "ls-files");
-  assert.ok(files.includes("src/app/layout.tsx"), "the template must be committed");
-  assert.ok(!files.includes("node_modules"), "node_modules must never be committed");
-});
+    // Windows runs the commit through cmd.exe, which splits `user.name=First Last`
+    // unless the arguments are quoted. The commit used to fail with
+    // "Sandroni is not a git command".
+    const files = git(target, "ls-files");
+    assert.ok(files.includes("src/app/layout.tsx"), "the template must be committed");
+    assert.ok(!files.includes("node_modules"), "node_modules must never be committed");
+  }),
+);
 
 test("scaffold --submodule: initialises a repo so `git submodule add` can run", { skip: !hasGit() }, () => {
   const parent = tmp();

@@ -6,6 +6,122 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
+## [0.3.0] — 2026-09-30
+
+> An agent was let loose on this repository, followed the rules in the documented
+> order, and the rules failed him. Thirteen findings, all fixed — and the check
+> that would have caught most of them is now a gate.
+
+### 🧪 The simulation
+
+An agent with no context was given a generated app and asked to follow
+`AGENTS.md` §1. It ran the SKILL that §5 tells it to run before writing any
+code, and could not get past `npm run typecheck`. Everything below came out of
+actually doing it rather than reading the docs and assuming they were right.
+
+### 🐛 Three that broke the flow
+
+- **The `create-feature` SKILL generated code that did not compile.** `z.flattenError`
+  returns `string[] | undefined` per field in Zod 4, and the template was written for
+  Zod 3. It also used `undefined as never` and `throw new Error("not implemented")`, so
+  the slice was born broken. It now compiles on the first run, and the parts that need
+  a human decision fail loudly at runtime instead of at build time.
+- **The author's name shipped to every consumer.** `PLAN.md` said "The developer
+  (Marcelino) has ADHD", `git.md` declared a fixed identity, and `--git` committed as
+  `Marcelino Sandroni <marcelino.sandroni@gmail.com>` in the user's repository. The
+  first commit of somebody's project was in a name they never chose. Now the commit uses
+  the developer's own `git config`, and when git has no identity the scaffold says so and
+  leaves the staging intact instead of inventing an author.
+- **`AGENTS.md` §4 said never run `npm install` at the root** — but in a generated app
+  the root *is* the project. The rule was written from the template repository's point of
+  view. It now names both cases.
+
+### 🔧 Ten that made the agent drift
+
+| Finding | Fix |
+| --- | --- |
+| The template's own phase history shipped to a new app, so the agent read "phase 0 done" and concluded the app existed | `specs/history/` is not copied; the app gets a folder plus a README that says a new project starts empty |
+| `testing.md` told the agent to name tests in Portuguese | English, like every other rule |
+| The `testing.md` example did not compile (`repo as never`, an input the schema does not have) | rewritten against the real schema |
+| `next.md` asked for `src/DI/container.ts` that the template does not have | the slice container is the DI point, documented as such |
+| `README.md` never mentioned `npx playwright install`, so the first `test:e2e` failed | documented, in the install block |
+| `tests/integration` is named in the rules and absent from the template | a test now asserts every command `PREFLIGHT.md` names exists |
+| Portuguese strings in `error.tsx`, `not-found.tsx` and `.env.example` | English, which is the rule the template ships |
+| `DESIGN.md` documented `primary-container: #B4F230` while the CSS said `#BAF336` | both now `#BAF336`; a check compares them |
+| No SKILL to create a task, so ids and paths drifted | `SKILLS/create-task` writes the file, fills the title and registers it in `PLAN.md` |
+| Screenshots taken as E2E evidence landed in git | `test-results/` is gitignored and the screenshot path is documented |
+
+### 🛡️ The rules are executable now
+
+`SKILLS/check-rules` turns the load-bearing prose into checks. It found real
+violations the moment it was written — Portuguese in `lib/check-links.mjs` and
+`lib/scaffold.mjs` — that no review had caught.
+
+| Rule | What it catches |
+| --- | --- |
+| `language.md §1` | Portuguese in code, comments, error strings, test names |
+| `git.md §1` | a hardcoded identity passed to `git commit` |
+| — | the author's own name inside the rules that ship to every user |
+| `AGENTS.md §4` | the install rule contradicting the generated layout |
+| `AGENTS.md §4` | a command a doc tells the agent to run that no `package.json` defines |
+| `DESIGN.md §2` | a token whose hex disagrees between the doc and the CSS |
+| `testing.md` | a named test layer the template does not have |
+
+It runs against the generated app, not only the source — the template has to obey
+the rules it ships.
+
+### 🧭 PREFLIGHT.md
+
+Tier 1 now includes what each gate actually proves, and — more usefully — what
+each one does *not* prove. Commands 1 to 4 all pass on code that does the wrong
+thing. A table says which layer is required for which kind of change, and the
+three ways to fake evidence are named explicitly.
+
+### 🧠 Read order: 16.5k → 5.8k tokens
+
+`AGENTS.md` §1 was a flat list of eight documents, every one mandatory. It is now
+four tiers: three documents you cannot skip, two you read once per session, and
+everything else behind a decision. Tier 1 plus Tier 2 costs ~5.8k tokens instead
+of ~16.5k, and the rules that moved to Tier 3 are still one `Read` away.
+
+### 🌐 The site
+
+`site/` is a static Next.js export for **sdd.marcelinosandroni.com**: what SDD
+is, why it works, the six practices, how AI sits in the loop, how to install,
+recommended tooling, the author's track record, and how to contribute. Same design
+tokens as the portfolio and as `DESIGN.md` — one palette across the resume, the
+site and every app the template generates. A `Site` CI job proves its anchors
+resolve and its claims stay true.
+
+### 🔧 CI hygiene
+
+The annotations on every run were being ignored. Both were real:
+
+- `actions/checkout@v4` and `actions/setup-node@v4` run on the deprecated Node 20
+  runtime, and the `actions` job that was supposed to catch it only rejected
+  `@v[0-3]`. Both are on `@v7`, and the guard now has an explicit per-action floor.
+- `ubuntu-latest` migrates to Ubuntu 26 on 2026-10-19, which would change the OS
+  under a green build. Pinned to `ubuntu-24.04`, with a check that fails if the
+  floating label comes back.
+
+Job names, step names and every comment in both workflows are English now, and
+the check contexts in the branch protection match the real job names — they did
+not, which is why PR #10 sat at `BLOCKED` with four green jobs.
+
+### Evidence
+
+```
+npm test              → 62 passed (was 34)
+npm run check:coverage → line 98.59 / branch 90.77 / func 95.28
+npm run check:rules    → 0 violations, repo and generated app
+npm run check:docs     → 49 documents, 0 broken links
+
+template: typecheck 0 · lint 0 · unit 6/6 · build ✓ · e2e 20/20 · audit 0
+site:     typecheck 0 · lint 0 · unit 4/4 · build ✓ · e2e 8/8
+```
+
+---
+
 ## [0.2.0] — 2026-09-29
 
 > Deep audit. The example feature was dead code, the release could ship a red

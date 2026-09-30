@@ -129,24 +129,40 @@ SDD/
 │   ├── tasks/TASK_TEMPLATE.md
 │   └── history/phases/
 ├── docs/                PRODUCT.md  CHANGELOG.md  PLANNING.md  RELEASE.md  EVIDENCE.md
-└── SKILLS/              automations (create-feature, install-submodule, check-docs, check-coverage)
+└── SKILLS/              automations (create-feature, create-task, install-submodule, check-docs, check-coverage, check-rules)
 ```
+
+### The site
+
+**[sdd.marcelinosandroni.com](https://sdd.marcelinosandroni.com)** — the public page for this
+project: what SDD is, why it works, how to install it, and who built it. Lives in
+[`site/`](./site/), deployed to Vercel, and it obeys the same rules it documents.
 
 ### The read order `AGENTS.md` enforces
 
 ```text
+TIER 1 — every task, ~4.4k tokens, cannot skip
 1. SDD/AGENTS.md        laws and flow
 2. SDD/specs/PLAN.md    the single [-] task
-3. SDD/APP.md           what this app is
-4. SDD/APP-STACK.md     which stack
-5. SDD/stacks/next.md   the stack rules
-6. SDD/stacks/clean-code.md   the spine — for ANY language, not just JS
-7. SDD/DESIGN.md        only when touching UI
-8. SDD/stacks/…         only the tool you're using
+3. SDD/PREFLIGHT.md     the five gates, and what each one proves
+
+TIER 2 — once per session, ~2.4k tokens
+4. SDD/APP.md           what this app is
+5. SDD/APP-STACK.md     which stack
+
+TIER 3 — on demand, only the file you touch, ~9.7k tokens
+6. SDD/ARCHITECTURE.md  vertical slices
+7. SDD/stacks/next.md   the stack rules
+8. SDD/stacks/clean-code.md   the spine — for ANY language
+9. SDD/DESIGN.md        only when touching UI
+10. SDD/stacks/…        only the tool you are using
 ```
 
-> Every rule doc has a **router at the top**: "if you are doing X, read §Y". That keeps
-> the agent's context small — which matters, because long context is where agents die.
+> The tiered read order exists because **context is the scarcest resource an agent
+> has**. The old flat list cost ~16.5k tokens before the first line of code. The
+> tiering keeps Tier 1 at ~5.8k and moves the rest behind a decision.
+>
+> Every rule doc has a **router at the top**: "if you are doing X, read §Y".
 
 ---
 

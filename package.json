@@ -1,6 +1,6 @@
 {
   "name": "create-sdd-ai-stack",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Cria um projeto pronto para agentes de IA com Spec-Driven Development: regras SDD + template Next.js 16 + design system.",
   "keywords": [
     "sdd",
@@ -74,7 +74,8 @@
     "docs",
     "SKILLS",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "PREFLIGHT.md"
   ],
   "scripts": {
     "test": "node --test tests/*.test.mjs",
@@ -86,7 +87,8 @@
     "version:patch": "npm version patch --git-tag-version",
     "version:minor": "npm version minor --git-tag-version",
     "version:major": "npm version major --git-tag-version",
-    "prepublishOnly": "npm run test && npm run check:coverage && npm run check:docs && npm run check:pack"
+    "prepublishOnly": "npm run test && npm run check:coverage && npm run check:rules && npm run check:docs && npm run check:pack",
+    "check:rules": "node SKILLS/check-rules/check-rules.mjs"
   },
   "publishConfig": {
     "access": "public"

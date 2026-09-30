@@ -25,24 +25,38 @@
 
 ---
 
-## 📚 1. CONTEXT MAP (mandatory read order)
+## 📚 1. CONTEXT MAP (read in this order)
 
-Whenever you are triggered, read in exactly this order:
+> **Read the minimum necessary.** The full set below costs ~16.5k tokens before
+> the first line of code. You do not need all of it for most tasks.
+>
+> **Tier 1 — every task (≈4.4k tokens):** you cannot skip these.
+> 1. **`SDD/AGENTS.md`** (this file) — laws and flow.
+> 2. **`SDD/specs/PLAN.md`** — the **single** task in flight right now.
+> 3. **`SDD/PREFLIGHT.md`** — the five commands, and what each one proves.
+>
+> **Tier 2 — once per session, when the answer matters (≈2.4k tokens):**
+> 4. **`SDD/APP.md`** + **`SDD/APP-STACK.md`** — what this app is, and which
+>    stack it uses. Read once; the answer does not change between tasks.
+>
+> **Tier 3 — on demand (≈9.7k tokens, read only the file you touch):**
+> 5. `SDD/ARCHITECTURE.md` — global architecture, vertical slices.
+> 6. `SDD/stacks/README.md` — the index. Then open the **one** doc you need,
+>    usually [`stacks/next.md`](./stacks/next.md).
+> 7. `SDD/stacks/clean-code.md` — the shared spine. Any language.
+> 8. `SDD/DESIGN.md` — only when touching UI.
+> 9. `SDD/stacks/language.md` — only if unsure about the output language.
+>
+> **Tier 4 — never preloaded:** `stacks/{java,dotnet,go,python,angular,vue,svelte,
+> node-frameworks,node,database,ai,agent-tooling}.md` and the rest of the
+> tooling files. Open them the day you touch that stack, never before.
+>
+> If you are unsure which file answers your question, read
+> [`stacks/README.md`](./stacks/README.md) — that is the router, and it is cheap.
 
-1. **`SDD/AGENTS.md`** (this file) — laws and flow.
-2. **`SDD/specs/PLAN.md`** — the **single** task in flight right now.
-3. **`SDD/APP.md`** + **`SDD/APP-STACK.md`** — what this app is, and which stack it uses.
-4. **`SDD/ARCHITECTURE.md`** — global architecture.
-5. **`SDD/stacks/README.md`** — the stack index, then open the one you need
-   (default: [`stacks/next.md`](./stacks/next.md)).
-6. **`SDD/stacks/clean-code.md`** — the shared spine: SRP, SOLID, hexagonal, smells.
-   Read it for **any** language, not just JavaScript.
-7. **`SDD/DESIGN.md`** — UI/UX rules (only when touching UI).
-8. **`SDD/stacks/language.md`** — output language + doc compression. Only if unsure.
-
-> ⚠️ **Hyperfocus rule (ADHD):** read the **minimum necessary**. Do not read everything
-> "just in case". Open a stack doc only when the task requires it. Context is the
-> scarcest resource you have; spending it on a doc you do not need is a bug, not caution.
+> ⚠️ **Hyperfocus rule (ADHD):** the tiers above exist to be obeyed, not
+> admired. Spending context on a doc you do not need is a bug, not caution. An
+> agent that reads 40 files to answer one question hallucinates by file 30.
 
 ---
 
@@ -141,8 +155,10 @@ SDD/
 When you find your task in `specs/PLAN.md`:
 
 1. **Refine** — read the task plus the relevant rule doc. Understand 100% before writing.
-2. **Install packages** — **NEVER** run `npm install` at the root. `cd` explicitly when
-   there are subfolders.
+2. **Install packages** — run `npm install` in the folder that owns the
+   `package.json`, and nowhere else. In a **generated app** that folder is the
+   root. In a **monorepo** it is the workspace, never the root. If you are not
+   sure which, run `ls package.json` first.
 3. **Implement** — only what is necessary (max 5 files per step). Use a `SKILLS/` script
    when one exists.
 4. **Test** — `typecheck` + `test:unit` + `test:e2e`. Write a test of **every** kind:
@@ -192,7 +208,7 @@ When you find your task in `specs/PLAN.md`:
 ## 📝 7. GIT, COMMITS AND VERSIONING
 
 - **Gitflow + Conventional Commits + SemVer with tags.**
-- **Fixed identity:** Marcelino Sandroni <marcelino.sandroni@gmail.com>.
+- **Identity:** the developer's own `git config`. Never commit as somebody else.
 - **Message format:** `type(scope): short description. (Agent: <Tool> - <Model>)`
   - e.g. `feat(chat): create IVideo interface. (Agent: Cursor - Claude)`
   - Types: `feat` `fix` `refactor` `test` `docs` `chore` `perf` `style` `build` `ci`.

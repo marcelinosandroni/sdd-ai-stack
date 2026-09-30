@@ -1,24 +1,24 @@
 name: Release
 
-# Publicação AUTOMÁTICA: basta dar push numa tag `v*`.
-# A version bump é feita localmente (npm run version:minor/major/patch),
-# depois o push da tag dispara este workflow.
+# Automatic publishing: push a `v*` tag and this runs.
+# The version bump is done locally (npm run version:minor/major/patch), then the
+# tag push fires this workflow.
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
     inputs:
       version:
-        description: "Versão a publicar (ex: 1.1.0). Não use prefixo v."
+        description: "Version to publish (ex: 1.1.0). No v prefix."
         required: true
         type: string
       dry_run:
-        description: "Só valida o pacote, não publica de verdade"
+        description: "Validate the package without publishing"
         required: false
         default: false
         type: boolean
 
-# Impede dois publishes simultâneos (npm rejeita versão duplicada).
+# Two publishes never run at once (npm rejects a duplicate version).
 concurrency:
   group: release-registry
   cancel-in-progress: false
@@ -30,16 +30,16 @@ permissions:
 
 jobs:
   guard:
-    name: Guard (CI must be green on this commit)
-    runs-on: ubuntu-latest
+    name: Guard
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
       contents: read
-    # A tag dispara este workflow. Sem este gate, `git push --tags` publica o
-    # pacote mesmo com a main vermelha — os gates pesados do CI (typecheck, lint,
-    # build, E2E) ficam só no CI de PR, que ninguém reassiste depois do merge.
-    # A release NÃO espera a main: ela re-executa os gates localmente abaixo.
-    # Aqui só exigimos que o CI tenha rodado com sucesso neste commit.
+    # A tag fires this workflow. Without this gate, `git push --tags` publishes
+    # the package even when main is red: the heavy gates (typecheck, lint,
+    # build, E2E) live only in the PR CI, which nobody re-reads after a merge.
+    # The release does not wait on main; it re-runs the gates itself below.
+    # Here we only require that CI has already succeeded on this commit.
     steps:
       - name: Require a successful CI run on this commit
         env:
@@ -47,8 +47,8 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          # O workflow_dispatch pode rodar numa versão ainda não mergeada; nesse
-          # caso o CI do commit é a única fonte de verdade que temos.
+          # workflow_dispatch can run on a version that is not merged yet; in that
+          # case the CI run for the commit is the only source of truth we have.
           RUN=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&per_page=100" \
             --jq '[.workflow_runs[] | select(.name == "CI" and .event == "push")] | sort_by(.created_at) | last | "\(.id) \(.conclusion)"')
           if [ -z "$RUN" ] || [ "$RUN" = "null" ]; then
@@ -65,22 +65,22 @@ jobs:
           echo "CI is green for $SHA"
 
   verify:
-    name: Verify package
+    name: Verify
     needs: guard
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
       version: ${{ steps.check.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # Node 24 for the same reason as CI: the coverage floor needs the
           # aggregated report that only exists from 24 on.
           node-version: 24
-          # gera um .npmrc no runner apontando para NODE_AUTH_TOKEN
+          # writes an .npmrc on the runner pointing at NODE_AUTH_TOKEN
           registry-url: https://registry.npmjs.org
 
       - name: Tests
@@ -110,14 +110,14 @@ jobs:
             VERSION="${{ inputs.version }}"
           fi
 
-          # a tag tem que bater com a versão do package.json
+          # the tag must match the version in package.json
           if [ "$TAG" != "v$VERSION" ]; then
-            echo "::error::tag '$TAG' não bate com package.json '$VERSION'"
+            echo "::error::tag '$TAG' does not match package.json '$VERSION'"
             exit 1
           fi
           echo "publicando $VERSION"
 
-          # nenhum arquivo essencial pode faltar do tarball
+          # no essential file may be missing from the tarball
           npm pack --dry-run 2>&1 | tee pack.txt
           for f in "bin/create-sdd-ai-stack.mjs" "lib/scaffold.mjs" "AGENTS.md" "stacks/next.md" \
                    "DESIGN.md" "APP-STACK.md" "stacks/README.md" "template/next/gitignore" \
@@ -143,9 +143,9 @@ jobs:
           npm run build
 
   publish:
-    name: Publish to npm
+    name: Publish npm
     needs: verify
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: npm
       url: https://www.npmjs.com/package/create-sdd-ai-stack
@@ -154,22 +154,22 @@ jobs:
       # Only this job needs OIDC, for npm provenance.
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
       # Trusted Publishing (OIDC) exige npm >= 11.5.1. O Node 22 do runner vem
-      # com o npm 10.x, então sem isto o OIDC nunca engata e o publish falha.
+      # ships npm 10.x, so without this the OIDC never engages and the publish fails.
       - name: Upgrade npm to a version with OIDC support
         run: npm install -g npm@latest
 
       # o job anterior alterou package.json num checkout descartável;
-      # aqui (checkout limpo) precisamos reaplicar a versão do dispatch
+      # here (clean checkout) the dispatch version has to be reapplied
       - name: Apply the dispatch version
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
@@ -191,14 +191,14 @@ jobs:
 
       # ── Autenticação: dois modos, o npm escolhe ──
       #
-      # 1. TEMPO: o secret NPM_TOKEN. Injetamos NODE_AUTH_TOKEN no ambiente dos
+      # 1. LONG TERM: the NPM_TOKEN secret. We inject NODE_AUTH_TOKEN into the env of
       #    próximos passos. O setup-node (registry-url) já deixou no ~/.npmrc do
       #    runner a linha `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`.
       #
-      # 2. SEM TOKEN: Trusted Publishing (OIDC). Não escrevemos NADA — o npm só
+      # 2. NO TOKEN: Trusted Publishing (OIDC). We write NOTHING - the npm only
       #    engata o OIDC quando o auth está ausente.
       #
-      # ⚠️ We do NOT write the token to a file. The project .npmrc has priority
+      # We do NOT write the token to a file. The project .npmrc has priority
       #    sobre o ~/.npmrc do runner, e um authToken vazio lá dentro quebra
       #    TUDO silenciosamente (401 no whoami, 404 no PUT de primeira publicação).
       - name: Authenticate
@@ -214,11 +214,11 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # ⚠️ NÃO defina NODE_AUTH_TOKEN aqui. Com ele presente, o npm ignora o OIDC.
+      # Do NOT set NODE_AUTH_TOKEN here. With it present, the npm ignores the OIDC.
       #
-      # `--provenance` é explícito e NÃO pode vir do publishConfig: o npm lê
-      # `publishConfig` com prioridade sobre flag de CLI e sobre env, então
-      # deixar `provenance: true` lá quebra o bootstrap local com
+      # `--provenance` is explicit and must NOT come from publishConfig: the npm
+      # reads publishConfig with priority over a CLI flag and over the env, so
+      # leaving `provenance: true` there breaks the local bootstrap with
       # "Automatic provenance generation not supported for provider: null".
       - name: Publish
         if: ${{ !inputs.dry_run }}
@@ -241,9 +241,9 @@ jobs:
   # both are rejected by GitHub Packages.
   # ─────────────────────────────────────────────────────────────────
   publish-github:
-    name: Publish to GitHub Packages
+    name: Publish GitHub
     needs: verify
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
@@ -251,11 +251,11 @@ jobs:
       name: github-packages
       url: https://github.com/users/marcelinosandroni/packages
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           registry-url: https://npm.pkg.github.com

@@ -29,6 +29,6 @@ test.describe("Errors", () => {
   test("404 returns the not-found page", async ({ page }) => {
     const response = await page.goto("/route-that-does-not-exist");
     expect(response?.status()).toBe(404);
-    await expect(page.getByText("Recurso não encontrado")).toBeVisible();
+    await expect(page.getByText("Resource not found")).toBeVisible();
   });
 });
