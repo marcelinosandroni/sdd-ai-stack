@@ -182,6 +182,24 @@ jobs:
       - name: Upgrade npm to a version with OIDC support
         run: npm install -g npm@latest
 
+      # Skip when the version is already on npmjs.
+      #
+      # A tag publishes both registries, but a failure in one does not undo the
+      # other: tag v0.3.1 landed on npmjs while the GitHub Packages job died on
+      # ENEADAUTH. Without this, retrying the fix would fail here with
+      # EPUBLISHCONFLICT and bury the real work under a red job that is not the
+      # problem. The release must be resumable from whichever registry it reached.
+      - name: Skip if this version is already on npmjs
+        id: exists
+        run: |
+          set -euo pipefail
+          if npm view create-sdd-ai-stack@"${{ needs.verify.outputs.version }}" version >/dev/null 2>&1; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::${{ needs.verify.outputs.version }} is already on npmjs; not republishing"
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
+
       # o job anterior alterou package.json num checkout descartável;
       # here (clean checkout) the dispatch version has to be reapplied
       - name: Apply the dispatch version
@@ -203,30 +221,14 @@ jobs:
           fi
           echo "publishing create-sdd-ai-stack@$ACTUAL"
 
-      # ── Autenticação: dois modos, o npm escolhe ──
+      # No auth step. The npm job authenticates with Trusted Publishing (OIDC)
+      # through `id-token: write` above; a NODE_AUTH_TOKEN here would make npm
+      # prefer it and ignore the OIDC entirely.
       #
-      # 1. LONG TERM: the NPM_TOKEN secret. We inject NODE_AUTH_TOKEN into the env of
-      #    próximos passos. O setup-node (registry-url) já deixou no ~/.npmrc do
-      #    runner a linha `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`.
-      #
-      # 2. NO TOKEN: Trusted Publishing (OIDC). We write NOTHING - the npm only
-      #    engata o OIDC quando o auth está ausente.
-      #
-      # We do NOT write the token to a file. The project .npmrc has priority
-      #    sobre o ~/.npmrc do runner, e um authToken vazio lá dentro quebra
-      #    TUDO silenciosamente (401 no whoami, 404 no PUT de primeira publicação).
-      - name: Authenticate
-        run: |
-          if [ -z "${NPM_TOKEN}" ]; then
-            echo "::notice::NPM_TOKEN ausente — publicando via Trusted Publishing (OIDC)."
-            echo "::notice::configure em npmjs.com → create-sdd-ai-stack → Settings → Trusted publishing"
-            echo "::notice::(owner: marcelinosandroni · repo: sdd-ai-stack · workflow: release.yml)"
-            exit 0
-          fi
-          echo "::notice::NPM_TOKEN presente — publicando por token."
-          echo "NODE_AUTH_TOKEN=${NPM_TOKEN}" >> "$GITHUB_ENV"
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # An earlier version branched on secrets.NPM_TOKEN, which described two
+      # modes. That secret is deleted, so the branch always took the early exit
+      # and never did anything — a step that only existed to announce that it
+      # was unnecessary.
 
       # Do NOT set NODE_AUTH_TOKEN here. With it present, the npm ignores the OIDC.
       #
@@ -235,7 +237,7 @@ jobs:
       # leaving `provenance: true` there breaks the local bootstrap with
       # "Automatic provenance generation not supported for provider: null".
       - name: Publish
-        if: ${{ !inputs.dry_run }}
+        if: ${{ !inputs.dry_run && steps.exists.outputs.already == 'false' }}
         run: npm publish --access public --provenance
 
       - name: Simulate (dry run)
@@ -286,6 +288,22 @@ jobs:
       - name: Authenticate against GitHub Packages
         run: |
           echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Same rationale as the npm job: one registry succeeding must not block
+      # the other. GitHub Packages rejects a duplicate version too.
+      - name: Skip if this version is already on GitHub Packages
+        id: exists
+        run: |
+          set -euo pipefail
+          SCOPED="@marcelinosandroni/create-sdd-ai-stack@${{ needs.verify.outputs.version }}"
+          if npm view "$SCOPED" version >/dev/null 2>&1; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$SCOPED is already on GitHub Packages; not republishing"
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -346,7 +364,7 @@ jobs:
       # it runs npm test, the coverage floor, the docs links and the template
       # gates. Nothing is lost, and the contradiction is gone.
       - name: Publish
-        if: ${{ !inputs.dry_run }}
+        if: ${{ !inputs.dry_run && steps.exists.outputs.already == 'false' }}
         run: npm publish --provenance=false --ignore-scripts --registry=https://npm.pkg.github.com
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

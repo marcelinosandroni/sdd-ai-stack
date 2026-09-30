@@ -157,14 +157,38 @@ test("publish: the project .npmrc must not declare _authToken", () => {
   assert.match(npmrc, /registry\s*=\s*https:\/\/registry\.npmjs\.org\//);
 });
 
-test("publish: the Authenticate step injects the token via GITHUB_ENV, not into a file", () => {
+/**
+ * The npm job must NOT inject a token at all.
+ *
+ * It used to branch on secrets.NPM_TOKEN and write NODE_AUTH_TOKEN through
+ * GITHUB_ENV. That secret is deleted, so the branch always early-exited, and a
+ * NODE_AUTH_TOKEN in the env makes npm ignore Trusted Publishing entirely. The
+ * step is gone; `id-token: write` is the whole mechanism.
+ *
+ * The GitHub Packages job does write an auth line into ~/.npmrc, on purpose —
+ * that registry has no OIDC publisher, and the project .npmrc still wins over
+ * the runner's. registry-isolation.test.mjs covers that half.
+ */
+test("publish: the npm job injects no token, so Trusted Publishing can engage", () => {
     const yml = fs.readFileSync(".github/workflows/release.yml", "utf8");
-    const authStep = yml.slice(yml.indexOf("- name: Authenticate"), yml.indexOf("- name: Publish"));
-    assert.match(authStep, /NODE_AUTH_TOKEN=\$\{NPM_TOKEN\}.*GITHUB_ENV/);
+    const job = yml.slice(yml.indexOf("  publish:"), yml.indexOf("  publish-github:"));
+
     assert.doesNotMatch(
-      authStep,
+      job,
+      /NODE_AUTH_TOKEN=\$\{NPM_TOKEN\}/,
+      "writing NODE_AUTH_TOKEN makes npm ignore the OIDC; the npm job must " +
+        "authenticate with id-token: write and nothing else",
+    );
+    assert.doesNotMatch(
+      job,
       /\.npmrc/,
-      "writing a token into the runner .npmrc is not enough: the project .npmrc wins",
+      "the npm job must not touch .npmrc: the project .npmrc wins over the " +
+        "runner's, and an authToken there breaks OIDC silently",
+    );
+    assert.match(
+      job,
+      /id-token: write/,
+      "the npm job needs id-token: write for npm provenance and OIDC",
     );
   });
 
