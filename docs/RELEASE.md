@@ -176,7 +176,38 @@ The fix is **not to declare `_authToken` in the project `.npmrc`** — only `reg
 Auth comes from `~/.npmrc` (local) or the `NODE_AUTH_TOKEN` environment variable (CI).
 A test locks this in: `publish: the project .npmrc must not declare _authToken`.
 
-### 2.1 🏆 Path A — local bootstrap + Trusted Publishing (OIDC)
+### 2.1 Path A — Trusted Publishing (OIDC), the only path
+
+> **There is no token in this repository.** `NPM_TOKEN` was deleted once OIDC
+> worked, and it should not come back. A long-lived token plus mandatory 2FA is
+> the exact combination that produces `EOTP` at 3am, and a token in a repo is a
+> credential that can leak through a fork, a backup, or a collaborator.
+
+One-time setup, in npmjs.com → `create-sdd-ai-stack` → Settings → Trusted
+publishing:
+
+| Field | Value |
+| --- | --- |
+| Provider | GitHub Actions |
+| Organization / user | `marcelinosandroni` |
+| Repository | `sdd-ai-stack` |
+| Workflow filename | `release.yml` |
+| Environment name | `npm` |
+
+The environment name matters: the npm job declares `environment: { name: npm }`,
+and a Trusted Publisher that names a different environment never matches. The
+GitHub environment itself needs no protection rule — it exists to bind the
+credential, not to gate a human.
+
+Requirements:
+
+- the package must already exist on npm (it does: `0.1.17`)
+- the runner's npm must understand OIDC, so the job upgrades npm first
+- **do not set `NODE_AUTH_TOKEN`** in the job: with it present the npm ignores
+  the OIDC and the publish fails with an error that names neither cause
+
+With this configured, the `Authenticate` step sees no `NPM_TOKEN`, writes
+nothing, and `npm publish --provenance` picks up the OIDC identity.
 
 OIDC is the durable answer: short-lived, GitHub-signed credentials, **no token at
 all**. It has one limitation: **OIDC cannot publish a package's first version** — the
@@ -235,9 +266,11 @@ It publishes on its own, with provenance, **with no token at all**. You can even
 off "Require two-factor authentication" for the package afterwards — OIDC does not
 depend on it.
 
-### 2.2 ⚠️ Path B — token with "Bypass 2FA" (a bridge, not a destination)
+### 2.2 ⚠️ Path B — token with "Bypass 2FA" (the bridge this repo walked past)
 
-If you want CI working **today** without touching your machine:
+This repository shipped `0.1.17` this way, and then deleted the token. Kept
+because it is the fastest way to get a first publish done, not because it is a
+place to stay.
 
 At <https://www.npmjs.com/settings/access-tokens>, create a granular token with:
 
@@ -255,8 +288,11 @@ gh secret set NPM_TOKEN --repo marcelinosandroni/sdd-ai-stack
 > with a granular access token will be removed in January 2027"*. And there is an open
 > bug ([npm/cli#9268](https://github.com/npm/cli/issues/9268)) where "Bypass 2FA" is
 > ignored by npm 11.x. Treat it as a deadline, not a solution.
+>
+> This is also what produced the `EOTP` that blocked every release before the
+> OIDC path existed: a token without bypass, on an account with mandatory 2FA.
 
-### 2.3 🛡️ Path C — stage-only (safest, most friction)
+### 2.3 🛡️ Path C — stage-only (belt and braces)
 
 A **Read and write (stage only)** token: CI uploads the version but it **does not go
 live**. A maintainer has to approve it with 2FA:
@@ -276,14 +312,21 @@ one manual approval per release.
 
 ## 3. How the workflow picks the mode
 
-It doesn't need to: **npm picks by itself.**
+It doesn't need to: **npm picks by itself.** The `Authenticate` step only decides
+whether to write anything at all.
 
 | `NPM_TOKEN` in the repo | What the workflow does | How npm publishes |
 | --- | --- | --- |
 | **defined** | injects `NODE_AUTH_TOKEN` into the env | token mode |
 | **absent** | writes **nothing** | **OIDC** |
 
-> ⚠️ **The `Publica` step deliberately does not define `NODE_AUTH_TOKEN`.** npm only
+> **This repository has no `NPM_TOKEN`.** It was deleted once the Trusted
+> Publisher was configured, so the second row is the only one that happens.
+> If a release suddenly fails on npm with an auth error, check `gh secret list`
+> before anything else — someone re-added the token, and re-adding it is what
+> re-enables the `EOTP` failure mode.
+
+> ⚠️ **The `Publish` step deliberately does not define `NODE_AUTH_TOKEN`.** npm only
 > engages OIDC when auth is **absent**. With the variable in the environment it ignores
 > OIDC and tries a token — and fails again.
 
