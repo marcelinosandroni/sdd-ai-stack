@@ -35,6 +35,13 @@ jobs:
       - name: Documentation links
         run: node SKILLS/check-docs/check-docs.mjs
 
+      # The numbers this repository states about itself. It claimed 27 tests
+      # while running 79, and nothing was red, because a number in prose is not
+      # a check. A document that misstates what it could have verified teaches
+      # an agent to trust no document.
+      - name: The documented numbers are true
+        run: npm run check:facts
+
       - name: Check the package contents
         run: npm pack --dry-run
 
