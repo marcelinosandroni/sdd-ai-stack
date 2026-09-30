@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Home",
-  description: "Área logada da aplicação.",
+  title: "App",
+  description: "Signed-in area of the application.",
 };
 
 export default function AppLayout({ children }: Readonly<{ children: React.ReactNode }>) {

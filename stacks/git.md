@@ -42,8 +42,12 @@
 ## 🏷️ VERSIONING (SemVer + tags)
 
 - `MAJOR.MINOR.PATCH` — `feat`→MINOR, `fix`→PATCH, breaking→MAJOR.
-- Tag on the phase merge: `git tag v1.2.0` (annotated).
+- **Below 1.0.0 the minor is unstable**: `0.MINOR.PATCH`. Read `0.x` as "API may break".
+- Tag on the phase merge, matching the version in `package.json`:
+  `git tag v0.1.3` (annotated). Never invent a version: read it from `package.json`.
 - Phase closed? Archive in `specs/history/phases/`, tag, one archiving commit.
+- Tagging publishes. The `release` workflow runs on `v*` and the package goes to
+  the registries — so a tag is not a local annotation, it is a release.
 
 ## 🧭 Daily flow
 

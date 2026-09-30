@@ -321,17 +321,32 @@ This runs the tests, checks the links, verifies the tarball contents, and runs
 
 ## 5. Publishing for real
 
+> 🛑 **A tag publishes.** `git push --tags` sends the package to both
+> registries. This is not a local annotation.
+
 ```bash
 # 1. main is up to date and CI is green
+#    `main` is protected: quality, template, supply-chain and actions must pass.
 git checkout main && git pull
 
 # 2. bump the version (commits package.json and creates the tag)
 npm run version:patch    # or version:minor / version:major
 
-# 3. push code and tag
+# 3. push code, WAIT for CI, then push the tag
 git push origin main
+gh run watch            # the release refuses to publish while CI is red
 git push origin --tags
 ```
+
+> ⚠️ `npm version` **requires a clean working tree** and refuses to bump a dirty
+> one. If it errors with `Git working directory not clean`, you are standing on
+> uncommitted work — commit or stash first. Bump the version on its own commit,
+> never mixed with code.
+
+The `guard` job in `release.yml` queries the CI conclusion for the tagged
+commit and fails the whole release unless it is `success`. It also re-runs the
+template gates (`typecheck`, `lint`, `test`, `build`) before anything is
+published, so a release can never ship a template that does not build.
 
 The workflow fires on the tag push. Watch it:
 
@@ -348,13 +363,40 @@ If all goes well: <https://www.npmjs.com/package/create-sdd-ai-stack>
 
 | Guard | Why |
 | --- | --- |
-| `npm test` (27 tests) | never publish on a red test |
+| CI green on the tagged commit (`guard`) | never publish from a red main |
+| template gates re-run (`typecheck`, `lint`, `test`, `build`) | never ship a template that does not build |
+| `npm test` (52 tests) | never publish on a red test |
+| `npm run check:coverage` (line 95 / branch 85 / func 90) | a careless commit cannot silently reduce coverage |
 | `node SKILLS/check-docs/check-docs.mjs` | no rule pointing at a dead file |
 | tag `vX.Y.Z` == `version` in `package.json` | avoids publishing 0.1.18 when the tag is 0.1.17 |
-| 10 essential files present in the tarball | catches a misconfigured `files` array |
+| 12 essential files present in the tarball | catches a misconfigured `files` array |
 | `npm ≥ 11.5.1` in the publish job | otherwise OIDC never engages (Node 22 ships npm 10.x) |
-| `concurrency: release-npm` | two publishes never run in parallel |
+| `concurrency: release-registry` | two publishes never run in parallel |
 | `publishConfig.provenance` | the package is GitHub-signed — proof it came from this repo |
+
+---
+
+## 5.1 Why the template ships without a lockfile
+
+`template/next/` has **no `package-lock.json`**, on purpose.
+
+- A lockfile is ~1 MB of generated content. Committing one into a template
+  means every generated app inherits a resolution made on someone else's
+  machine, on someone else's day, and every Dependabot bump touches thousands
+  of lines that nobody reads.
+- The version ranges (`next: ^16.3.7`) are the contract. The consumer's first
+  `npm install` resolves and **commits** their own lockfile, which is the one
+  that matters for their reproducibility.
+
+Consequences, stated plainly:
+
+| Command | In this repo's template | In the generated app |
+| --- | --- | --- |
+| `npm install` | ✅ | ✅ |
+| `npm ci` | ❌ needs a lockfile | ✅ once the app commits its own |
+
+This is why the workflows use `npm install`, never `npm ci`. See
+`stacks/ci.md` §install.
 
 ---
 

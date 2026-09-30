@@ -46,6 +46,7 @@ export function parseArgs(argv) {
     submodule: null,
     rulesOnly: false,
     shortcutMode: "auto",
+    yes: false,
     help: false,
     version: false,
   };
@@ -65,6 +66,7 @@ export function parseArgs(argv) {
         break;
       case "-y":
       case "--yes":
+        opts.yes = true;
         break;
       case "--rules-only":
         opts.rulesOnly = true;

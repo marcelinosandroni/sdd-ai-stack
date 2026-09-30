@@ -40,6 +40,11 @@ jobs:
 > zero-dependency CLI, so it has none — leave the cache off. See
 > [../docs/RELEASE.md](../docs/RELEASE.md).
 
+> ⚠️ **`npm ci` requires a lockfile, and the Next template ships without one**
+> (the reason is in [../docs/RELEASE.md](../docs/RELEASE.md) §5.1). In this repo's
+> CI use `npm install`. In a **generated app**, use `npm ci` after the consumer
+> commits their own lockfile.
+
 ## 📦 DEPLOY (Vercel / Node)
 
 - **Vercel:** connect the repo. PR previews are automatic. `SDD/` is ignored in the
@@ -49,8 +54,18 @@ jobs:
 
 ## 🔒 PIPELINE SECURITY
 
-- `npm audit --production` as a warning gate (it must not block on minors).
+- `npm audit --omit=dev --audit-level=high` as a gate. High and critical block;
+  low and moderate do not.
 - Dependabot enabled.
+- Protect `main`: `required_status_checks` with `strict: true`, so a branch must
+  be up to date before merging. Without this, a red main is invisible until the
+  next release tries to ship it.
+- A release workflow must **verify CI is green on the commit it is releasing**,
+  and re-run the build gates itself. `on: push: tags` fires no matter what state
+  the repository was in.
+- Least privilege: `permissions: contents: read` at the top, and each job adds
+  only what it needs (`id-token: write` for npm provenance, `packages: write`
+  for GitHub Packages).
 - Never print `.env`/tokens in job output.
 
 ## 🏷️ RELEASE

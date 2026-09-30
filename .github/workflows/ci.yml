@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege. Nothing here needs to write.
+permissions:
+  contents: read
+
 jobs:
   quality:
     name: Qualidade (testes da CLI + links da doc)
@@ -14,10 +18,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # Node 24, not 22: `node --test --experimental-test-coverage` only
+          # aggregates coverage across the test-runner child processes from 24
+          # on. On 22 the summary is empty and the coverage floor reads as zero.
+          node-version: 24
 
       - name: Testes da CLI e do scaffold
         run: npm test
+
+      - name: "Cobertura (piso: line 95, branch 85, func 90)"
+        run: npm run check:coverage
 
       - name: Links da documentação
         run: node SKILLS/check-docs/check-docs.mjs
@@ -61,10 +71,51 @@ jobs:
         working-directory: .sandbox
         run: npm run build
 
-      - name: Instala o browser do Playwright
+      - name: Instala os browsers do Playwright
         working-directory: .sandbox
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox
 
+      # O E2E roda contra o build de produção por padrão (ver
+      # playwright.config.ts): `next dev` não minifica e esconde bugs de build.
       - name: E2E
         working-directory: .sandbox
         run: npm run test:e2e
+
+  supply-chain:
+    name: Cadeia de suprimentos
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Audit das dependências do app gerado
+        run: |
+          set -euo pipefail
+          node bin/create-sdd-ai-stack.mjs .audit --no-install --shortcuts stub --yes
+          cd .audit
+          npm install --no-audit --no-fund
+          # --omit=dev: o app vai pra produção, o resto é ferramenta.
+          # --audit-level=high: só vulnerabilidades altas/-críticas bloqueiam.
+          npm audit --omit=dev --audit-level=high
+
+  actions:
+    name: Versões das actions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # actions/checkout@v4 e actions/setup-node@v4 rodam em Node 20, que o
+      # GitHub já avisou estar deprecated (avisos de ACTIONS_RUNNER_FORCE_
+      # ACTIONS_NODE_VERSION no log de cada run).
+      - name: Nenhuma action presa no Node 20
+        run: |
+          set -euo pipefail
+          if grep -rnE "actions/(checkout|setup-node)@v[0-3]\b" .github/workflows; then
+            echo "::error::action presa em Node 20. Use actions/checkout@v4+ e actions/setup-node@v4+."
+            exit 1
+          fi
+          echo "all actions are on a maintained version"

@@ -36,7 +36,7 @@ async function main() {
     return;
   }
 
-  console.log("\n🤖 create-sdd-ai-stack — Spec-Driven Development para agentes de IA\n");
+  console.log("\n🤖 create-sdd-ai-stack — a project ready for AI agents (Spec-Driven Development)\n");
 
   const name = opts.name ?? (await ask("Project name:", "meu-app"));
   const target = path.resolve(process.cwd(), name);
@@ -48,7 +48,9 @@ async function main() {
   🧠 rules:    ${usingSubmodule ? `submodule ${opts.submodule}` : "copied into ./SDD"}
 `);
 
-  if (process.stdin.isTTY) {
+  // `--yes` skips the confirmation. Before this fix the flag was parsed and
+  // thrown away, so a TTY user was still asked.
+  if (process.stdin.isTTY && !opts.yes) {
     const answer = await ask("Create it now? [Y/n]", "Y");
     if (!/^y(es)?$/i.test(answer)) {
       console.log("\nCancelled. Nothing was created.\n");

@@ -12,10 +12,35 @@
 
 ---
 
-## Current phase: 0 — Bootstrap
+## Current phase: 3 — Audit findings
 
-> Status: ✅ done (template + rules + CLI)
-> History: [`history/phases/phase-0-bootstrap.md`](./history/phases/phase-0-bootstrap.md)
+> Status: 🚧 in progress (deep audit of the CLI, the template and the release)
+> Previous: [0 Bootstrap](./history/phases/phase-0-bootstrap.md) ·
+> [1 English](./history/phases/phase-1-english.md) ·
+> [2 All stacks](./history/phases/phase-2-all-stacks.md) — all ✅
+
+[x] - Wire the orphaned `CreateExampleForm` into `/app` behind real auth
+[x] - E2E of the full form flow: unauthenticated, invalid, valid, banned
+[x] - Boot-time env validation (`env.ts` was never imported)
+[x] - `proxy.ts` exists + E2E of the security headers and the CVE-2025-29927 header
+[x] - E2E against the production build, Chromium and Firefox
+[x] - Real shadcn components (`components.json`, Button, Skeleton) and `loading.tsx`
+[x] - `stacks/git.md`: tag examples match the `0.x` version in `package.json`
+
+[-] - Release must not publish when CI is red
+[ ] - Cover `scaffold --git` and `scaffold --submodule` with real git
+[ ] - End-to-end test of `bin/create-sdd-ai-stack.mjs`
+[ ] - Line coverage on the CLI library, with a threshold
+[ ] - Branch protection, Dependabot and an `npm audit` gate
+[ ] - Behavioural acceptance criteria in `specs/tasks/TASK_TEMPLATE.md`
+[ ] - Document the lockfile decision; add the evidence index
+
+### Phase exit criteria
+- [ ] All tasks `[x]` with test evidence pasted
+- [ ] `npm test` (library, with coverage) and the template gates green
+- [ ] `docs/CHANGELOG.md` updated
+- [ ] `specs/history/phases/phase-3-audit-findings.md` written
+- [ ] SemVer tag created — **only after a green CI on `main`**
 
 ### How to use this file
 

@@ -25,13 +25,51 @@ concurrency:
 
 permissions:
   contents: read
-  # necessário para o --provenance (assinatura do pacote pelo GitHub OIDC)
-  id-token: write
+  # Default is deny-by-default. Each job that needs more (id-token for npm
+  # provenance, packages for GitHub Packages) declares it explicitly.
 
 jobs:
+  guard:
+    name: Guard (CI must be green on this commit)
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    # A tag dispara este workflow. Sem este gate, `git push --tags` publica o
+    # pacote mesmo com a main vermelha — os gates pesados do CI (typecheck, lint,
+    # build, E2E) ficam só no CI de PR, que ninguém reassiste depois do merge.
+    # A release NÃO espera a main: ela re-executa os gates localmente abaixo.
+    # Aqui só exigimos que o CI tenha rodado com sucesso neste commit.
+    steps:
+      - name: Require a successful CI run on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # O workflow_dispatch pode rodar numa versão ainda não mergeada; nesse
+          # caso o CI do commit é a única fonte de verdade que temos.
+          RUN=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&per_page=100" \
+            --jq '[.workflow_runs[] | select(.name == "CI" and .event == "push")] | sort_by(.created_at) | last | "\(.id) \(.conclusion)"')
+          if [ -z "$RUN" ] || [ "$RUN" = "null" ]; then
+            echo "::error::no CI push run found for $SHA. Merge to main and wait for CI to finish."
+            exit 1
+          fi
+          RUN_ID="${RUN%% *}"
+          CONCLUSION="${RUN##* }"
+          echo "::notice::CI run $RUN_ID conclusion: $CONCLUSION"
+          if [ "$CONCLUSION" != "success" ]; then
+            echo "::error::CI for $SHA concluded '$CONCLUSION'. Refusing to publish."
+            exit 1
+          fi
+          echo "CI is green for $SHA"
+
   verify:
     name: Verify package
+    needs: guard
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.check.outputs.version }}
     steps:
@@ -39,12 +77,17 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # Node 24 for the same reason as CI: the coverage floor needs the
+          # aggregated report that only exists from 24 on.
+          node-version: 24
           # gera um .npmrc no runner apontando para NODE_AUTH_TOKEN
           registry-url: https://registry.npmjs.org
 
       - name: Tests
         run: npm test
+
+      - name: Coverage floor
+        run: npm run check:coverage
 
       - name: Documentation links
         run: node SKILLS/check-docs/check-docs.mjs
@@ -78,11 +121,26 @@ jobs:
           npm pack --dry-run 2>&1 | tee pack.txt
           for f in "bin/create-sdd-ai-stack.mjs" "lib/scaffold.mjs" "AGENTS.md" "stacks/next.md" \
                    "DESIGN.md" "APP-STACK.md" "stacks/README.md" "template/next/gitignore" \
-                   "template/next/package.json" "SKILLS/create-feature/SKILL.md"; do
+                   "template/next/package.json" "template/next/proxy.ts" \
+                   "template/next/components.json" "SKILLS/create-feature/SKILL.md"; do
             grep -q "$f" pack.txt || { echo "::error::faltando no pacote: $f"; exit 1; }
           done
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # The heavy template gates (typecheck, lint, unit, build, E2E) live in
+      # CI.yml and are re-run here, right before the publish. A release must
+      # never ship a package whose template does not build.
+      - name: Re-run the template gates
+        run: |
+          set -euo pipefail
+          node bin/create-sdd-ai-stack.mjs .sandbox --no-install --shortcuts stub --yes
+          cd .sandbox
+          npm install --no-audit --no-fund
+          npm run typecheck
+          npm run lint
+          npm run test
+          npm run build
 
   publish:
     name: Publish to npm
@@ -91,6 +149,10 @@ jobs:
     environment:
       name: npm
       url: https://www.npmjs.com/package/create-sdd-ai-stack
+    permissions:
+      contents: read
+      # Only this job needs OIDC, for npm provenance.
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:

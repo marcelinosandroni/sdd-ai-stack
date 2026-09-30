@@ -1,6 +1,6 @@
 {
   "name": "create-sdd-ai-stack",
-  "version": "0.1.20",
+  "version": "0.2.0",
   "description": "Cria um projeto pronto para agentes de IA com Spec-Driven Development: regras SDD + template Next.js 16 + design system.",
   "keywords": [
     "sdd",
@@ -44,7 +44,26 @@
     "bin",
     "src",
     "lib",
-    "template",
+    "template/next",
+    "template/next/package.json",
+    "template/next/next.config.ts",
+    "template/next/biome.json",
+    "template/next/gitignore",
+    "template/next/postcss.config.mjs",
+    "template/next/tsconfig.json",
+    "template/next/vitest.config.ts",
+    "template/next/playwright.config.ts",
+    "template/next/components.json",
+    "template/next/.env.example",
+    "template/next/public",
+    "template/next/src",
+    "template/next/tests",
+    "!template/next/node_modules",
+    "!template/next/.next",
+    "!template/next/coverage",
+    "!template/next/test-results",
+    "!template/next/playwright-report",
+    "!template/next/package-lock.json",
     "AGENTS.md",
     "APP.md",
     "APP-STACK.md",
@@ -59,12 +78,15 @@
   ],
   "scripts": {
     "test": "node --test tests/*.test.mjs",
+    "test:coverage": "node --test --experimental-test-coverage tests/*.test.mjs",
+    "test:unit": "npm run test",
+    "check:coverage": "node SKILLS/check-coverage/check-coverage.mjs",
     "check:docs": "node SKILLS/check-docs/check-docs.mjs",
     "check:pack": "npm pack --dry-run",
     "version:patch": "npm version patch --git-tag-version",
     "version:minor": "npm version minor --git-tag-version",
     "version:major": "npm version major --git-tag-version",
-    "prepublishOnly": "npm run test && npm run check:pack"
+    "prepublishOnly": "npm run test && npm run check:coverage && npm run check:docs && npm run check:pack"
   },
   "publishConfig": {
     "access": "public"
