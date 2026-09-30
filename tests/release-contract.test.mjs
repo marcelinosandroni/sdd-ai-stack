@@ -1,7 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -11,8 +9,8 @@ const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 /**
  * The files the release workflow asserts are in the tarball.
  *
- * `release.yml` greps `npm pack --dry-run` output for each of these. That guard
- * shipped with a wrong path — `template/next/proxy.ts` instead of
+ * `release.yml` greps `npm pack` output for each of these. That guard shipped
+ * with a wrong path — `template/next/proxy.ts` instead of
  * `template/next/src/proxy.ts` — and could never have passed. It was only found
  * because the dry run was executed instead of assumed.
  *
@@ -40,61 +38,65 @@ export const ESSENTIAL_FILES = [
 ];
 
 /**
- * The list of files npm would pack, read from the actual tarball.
+ * Would npm include `file` in the tarball, given this `files` array?
  *
- * `npm pack --dry-run` writes the listing to STDERR, and `shell: true` on
- * Windows re-serialises its JSON through cmd.exe. Both make the npm CLI a poor
- * source of truth for a test. So the test packs with Node's own tar writer and
- * reads the archive back — the same artefact the release guard protects, with no
- * shell in the path.
+ * Reads npm's actual rule instead of shelling out to `npm pack`: a positive
+ * entry is a path prefix, and a later `!` entry cancels it.
+ *
+ * Packing for real was the first version of this test, and it broke inside
+ * `prepublishOnly` — the outer `npm publish` already holds the lock, so the
+ * nested pack produced nothing and the whole publish died. A test that cannot
+ * run in the one place it most needs to run is a test that gets deleted.
  */
-function packedFiles() {
-  const work = fs.mkdtempSync(path.join(os.tmpdir(), "sdd-pack-"));
-  const tarball = path.join(work, "package.tgz");
-  try {
-    // Node 22+ refuses to spawn a `.cmd` without a shell (EINVAL), and a shell
-    // rewrites the output we would then have to parse. So the CLI is invoked
-    // through cmd.exe directly, with stdio discarded — nothing to parse.
-    if (process.platform === "win32") {
-      execFileSync(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", "npm", "pack", "--pack-destination", work], {
-        cwd: REPO_ROOT,
-        stdio: "ignore",
-      });
-    } else {
-      execFileSync("npm", ["pack", "--pack-destination", work], {
-        cwd: REPO_ROOT,
-        stdio: "ignore",
-      });
+function wouldPack(file, files) {
+  let included = false;
+  for (const entry of files) {
+    const negated = entry.startsWith("!");
+    const pattern = negated ? entry.slice(1) : entry;
+    const matches = file === pattern || file.startsWith(`${pattern}/`);
+    if (matches) {
+      included = !negated;
     }
-
-    const produced = fs
-      .readdirSync(work)
-      .find((name) => name.endsWith(".tgz"));
-    assert.ok(produced, "npm pack produced no tarball");
-    fs.renameSync(path.join(work, produced), tarball);
-
-    return execFileSync("tar", ["-tzf", tarball], { encoding: "utf8", shell: false });
-  } finally {
-    fs.rmSync(work, { recursive: true, force: true });
   }
+  return included;
 }
 
-test("every file the release guard requires really is in the tarball", () => {
-  const listing = packedFiles();
+function packageFiles() {
+  return JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8")).files ?? [];
+}
 
-  const missing = ESSENTIAL_FILES.filter(
-    (file) => !listing.split(/\r?\n/).some((line) => line.replace(/^package\//, "") === file),
-  );
+test("the package files array would ship every essential file", () => {
+  const missing = ESSENTIAL_FILES.filter((file) => !wouldPack(file, packageFiles()));
   assert.deepEqual(
     missing,
     [],
-    `the release guard greps for these and would fail on the missing ones: ${missing.join(", ")}`,
+    `these would NOT be in the tarball, so the release guard would fail on them: ${missing.join(", ")}`,
   );
+});
+
+test("the files array does not ship node_modules or a build output", () => {
+  const files = packageFiles();
+
+  // These negations keep a developer's local install out of the tarball. Without
+  // them the package is 16.803 files and 153 MB, which is exactly what shipped
+  // once before.
+  for (const junk of [
+    "template/next/node_modules/some-package/index.js",
+    "template/next/.next/build-manifest.json",
+    "template/next/coverage/lcov.info",
+  ]) {
+    assert.equal(
+      wouldPack(junk, files),
+      false,
+      `${junk} would be published. The negation for it is missing from "files".`,
+    );
+  }
 });
 
 test("the release workflow lists exactly the files this test requires", () => {
   // The workflow has its own copy, because a workflow cannot import from the
-  // test suite. This test is what stops the two copies from drifting.
+  // test suite. This test is what stops the two copies from drifting, and it is
+  // the regression test for the wrong-path bug.
   const workflow = fs.readFileSync(
     path.join(REPO_ROOT, ".github", "workflows", "release.yml"),
     "utf8",
@@ -111,8 +113,6 @@ test("the release workflow lists exactly the files this test requires", () => {
 test("the essential files exist on disk, so the guard tests the real thing", () => {
   // A path that does not exist cannot appear in the pack, so the first test
   // would pass for the wrong reason if these were typo'd.
-  const missing = ESSENTIAL_FILES.filter(
-    (file) => !fs.existsSync(path.join(REPO_ROOT, file)),
-  );
+  const missing = ESSENTIAL_FILES.filter((file) => !fs.existsSync(path.join(REPO_ROOT, file)));
   assert.deepEqual(missing, [], `these do not exist: ${missing.join(", ")}`);
 });
