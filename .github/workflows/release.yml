@@ -117,14 +117,24 @@ jobs:
           fi
           echo "publicando $VERSION"
 
-          # no essential file may be missing from the tarball
+          # No essential file may be missing from the tarball.
+          #
+          # These paths are asserted against `npm pack` output, so they must be the
+          # real ones. The template uses a `src/` directory, which means `proxy.ts`
+          # is at `template/next/src/proxy.ts` — the earlier version of this guard
+          # said `template/next/src/proxy.ts` and could never have passed. A guard that
+          # has never gone green is not a guard.
           npm pack --dry-run 2>&1 | tee pack.txt
-          for f in "bin/create-sdd-ai-stack.mjs" "lib/scaffold.mjs" "AGENTS.md" "stacks/next.md" \
-                   "DESIGN.md" "APP-STACK.md" "stacks/README.md" "template/next/gitignore" \
-                   "template/next/package.json" "template/next/proxy.ts" \
-                   "template/next/components.json" "SKILLS/create-feature/SKILL.md"; do
-            grep -q "$f" pack.txt || { echo "::error::faltando no pacote: $f"; exit 1; }
+          for f in "bin/create-sdd-ai-stack.mjs" "lib/scaffold.mjs" "AGENTS.md" \
+                   "PREFLIGHT.md" "DESIGN.md" "APP-STACK.md" "stacks/README.md" \
+                   "stacks/clean-code.md" "stacks/language.md" \
+                   "template/next/gitignore" "template/next/package.json" \
+                   "template/next/src/proxy.ts" "template/next/components.json" \
+                   "SKILLS/create-feature/SKILL.md" "SKILLS/create-task/SKILL.md" \
+                   "SKILLS/check-rules/check-rules.mjs" "SKILLS/check-docs/SKILL.md"; do
+            grep -q "$f" pack.txt || { echo "::error::missing from the package: $f"; exit 1; }
           done
+          echo "all essential files are in the tarball"
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
