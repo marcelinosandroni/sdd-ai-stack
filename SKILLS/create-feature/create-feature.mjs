@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 /**
- * SKILL: create-feature (versão multiplataforma, espelha create-feature.sh)
- * Uso: node SDD/SKILLS/create-feature/create-feature.mjs <nome-do-slice>
+ * SKILL: create-feature (cross-platform; create-feature.sh mirrors it)
+ * Usage: node SDD/SKILLS/create-feature/create-feature.mjs <slice-name>
+ *
+ * Generates a vertical slice that COMPILES on the first run. A skeleton that
+ * fails `npm run typecheck` teaches the agent nothing except that the SKILL is
+ * broken — so every generated file here type-checks, and the places that
+ * genuinely need a human decision are `throw new NotImplementedError()` at
+ * runtime, not a type error at build time.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -14,7 +20,7 @@ if (!raw) {
 
 const name = raw.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
 if (!name) {
-  console.error("✖ Nome inválido.");
+  console.error("✖ Invalid name.");
   process.exit(1);
 }
 
@@ -26,7 +32,7 @@ const Pascal = name
 
 const dir = path.resolve(process.cwd(), "src", "features", name);
 if (fs.existsSync(dir)) {
-  console.error(`✖ Já existe: ${dir}`);
+  console.error(`✖ Already exists: ${dir}`);
   process.exit(1);
 }
 
@@ -40,89 +46,293 @@ const write = (rel, body) => {
   fs.writeFileSync(p, body, "utf8");
 };
 
-write(`domain/I${Pascal}Repository.ts`, `export interface I${Pascal}Repository {
-  // TODO: contratos do domínio. Sem dependência externa.
+/* ── domain ───────────────────────────────────────────────── */
+
+write(
+  `domain/I${Pascal}Repository.ts`,
+  `/**
+ * The port for the ${Pascal} slice. Lives INSIDE the slice, next to the
+ * implementation — a global src/types/ for domain types is forbidden.
+ * See SDD/ARCHITECTURE.md §2 and SDD/stacks/next.md §2.
+ *
+ * Domain code imports NOTHING external. No Prisma, no fetch, no Next.
+ */
+export interface ${Pascal}Entity {
+  id: string;
+  ownerId: string;
+  title: string;
+  createdAt: Date;
 }
-`);
 
-write(`domain/${name}.schema.ts`, `import { z } from "zod";
+export interface Create${Pascal}Data {
+  ownerId: string;
+  title: string;
+}
 
-export const ${Pascal}Schema = z.object({
-  // TODO: campos + validações
+export interface I${Pascal}Repository {
+  create(data: Create${Pascal}Data): Promise<${Pascal}Entity>;
+  findById(id: string): Promise<${Pascal}Entity | null>;
+  listByOwner(ownerId: string): Promise<${Pascal}Entity[]>;
+}
+`,
+);
+
+write(
+  `domain/${name}.schema.ts`,
+  `import { z } from "zod";
+
+/**
+ * Zod is the ONLY source of truth for input. The client check is a courtesy.
+ * See SDD/stacks/next.md §5.
+ *
+ * TODO: replace this with the real fields.
+ */
+export const Create${Pascal}Schema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(3, "Title needs at least 3 characters")
+    .max(120, "Title is too long"),
 });
 
-export type ${Pascal}Input = z.infer<typeof ${Pascal}Schema>;
-`);
+export type Create${Pascal}Input = z.infer<typeof Create${Pascal}Schema>;
+`,
+);
 
-write(`application/create-${name}.usecase.ts`, `import type { ${Pascal}Input } from "../domain/${name}.schema";
-import type { I${Pascal}Repository } from "../domain/I${Pascal}Repository";
+/* ── application ──────────────────────────────────────────── */
+
+write(
+  `application/create-${name}.usecase.ts`,
+  `import type { ${Pascal}Entity, Create${Pascal}Data, I${Pascal}Repository } from "../domain/I${Pascal}Repository";
+import { Create${Pascal}Schema, type Create${Pascal}Input } from "../domain/${name}.schema";
+
+/** Thrown for expected business failures. The action maps it to a message. */
+export class ${Pascal}Error extends Error {
+  constructor(
+    message: string,
+    readonly code: string,
+  ) {
+    super(message);
+    this.name = "${Pascal}Error";
+  }
+}
 
 export class Create${Pascal}UseCase {
   constructor(private readonly repo: I${Pascal}Repository) {}
 
-  async execute(input: ${Pascal}Input) {
-    // TODO: regra de negócio pura. Sem Next, sem Prisma.
-    throw new Error("not implemented");
+  async execute(input: Create${Pascal}Input & Create${Pascal}Data): Promise<${Pascal}Entity> {
+    // The schema is the source of truth, so the use case validates again: a
+    // Server Action is a public HTTP endpoint and the use case is reachable
+    // from anywhere.
+    const { title } = Create${Pascal}Schema.parse({ title: input.title });
+
+    if (!input.ownerId) {
+      throw new ${Pascal}Error("Owner is required", "${Pascal.toUpperCase()}_MISSING_OWNER");
+    }
+
+    return this.repo.create({ ownerId: input.ownerId, title });
   }
 }
-`);
+`,
+);
 
-write("container.ts", `import "server-only";
+/* ── infrastructure ───────────────────────────────────────── */
+
+write(
+  `infrastructure/${name}.repository.ts`,
+  `import "server-only";
+import { randomUUID } from "node:crypto";
+import type {
+  ${Pascal}Entity,
+  Create${Pascal}Data,
+  I${Pascal}Repository,
+} from "../domain/I${Pascal}Repository";
+
+/**
+ * REPLACE with Prisma. The domain interface does NOT change.
+ * See SDD/stacks/database.md.
+ *
+ * The store hangs off globalThis on purpose: in a production build Next compiles
+ * each route into its own module registry, so a plain module-level Map gives the
+ * Server Action and the page render DIFFERENT stores. A real database has no
+ * such problem.
+ */
+const globalStore = globalThis as typeof globalThis & {
+  __sdd${Pascal}Store?: Map<string, ${Pascal}Entity>;
+};
+
+export class ${Pascal}Repository implements I${Pascal}Repository {
+  private readonly store: Map<string, ${Pascal}Entity>;
+
+  constructor(store?: Map<string, ${Pascal}Entity>) {
+    if (store) {
+      this.store = store;
+      return;
+    }
+    globalStore.__sdd${Pascal}Store ??= new Map();
+    this.store = globalStore.__sdd${Pascal}Store;
+  }
+
+  async create(data: Create${Pascal}Data): Promise<${Pascal}Entity> {
+    const entity: ${Pascal}Entity = {
+      id: randomUUID(),
+      ownerId: data.ownerId,
+      title: data.title,
+      createdAt: new Date(),
+    };
+    this.store.set(entity.id, entity);
+    return entity;
+  }
+
+  async findById(id: string): Promise<${Pascal}Entity | null> {
+    return this.store.get(id) ?? null;
+  }
+
+  async listByOwner(ownerId: string): Promise<${Pascal}Entity[]> {
+    return [...this.store.values()]
+      .filter((entity) => entity.ownerId === ownerId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+}
+`,
+);
+
+/* ── wiring ───────────────────────────────────────────────── */
+
+write(
+  "container.ts",
+  `import "server-only";
 import { Create${Pascal}UseCase } from "./application/create-${name}.usecase";
 import type { I${Pascal}Repository } from "./domain/I${Pascal}Repository";
+import { ${Pascal}Repository } from "./infrastructure/${name}.repository";
 
-export function create${Pascal}UseCases(repo: I${Pascal}Repository) {
+export interface I${Pascal}UseCases {
+  create${Pascal}: Create${Pascal}UseCase;
+}
+
+export function create${Pascal}UseCases(repo: I${Pascal}Repository): I${Pascal}UseCases {
   return {
     create${Pascal}: new Create${Pascal}UseCase(repo),
   };
 }
-`);
 
-write("queries.ts", `import "server-only";
-// TODO: leituras do domínio. Marque com 'use cache' quando fizer sentido.
-// See SDD/stacks/next.md §4 and §6.
+/**
+ * The single wiring point. Swap the repository for Prisma here and nothing
+ * above it changes — that is the whole point of the port.
+ */
+const repository = new ${Pascal}Repository();
 
-export async function list${Pascal}() {
-  // TODO
-  throw new Error("not implemented");
+export const ${Pascal}UseCases: I${Pascal}UseCases = create${Pascal}UseCases(repository);
+export const ${Pascal}RepositoryInstance = repository;
+`,
+);
+
+/* ── read entrypoint ──────────────────────────────────────── */
+
+write(
+  "queries.ts",
+  `import "server-only";
+import { ${Pascal}RepositoryInstance } from "./container";
+
+/**
+ * Reads. Mark a function 'use cache' + cacheLife when the result can be shared
+ * between users; leave it dynamic when it depends on the request.
+ * See SDD/stacks/next.md §4 and §6.
+ */
+export async function list${Pascal}(ownerId: string) {
+  return ${Pascal}RepositoryInstance.listByOwner(ownerId);
 }
-`);
+`,
+);
 
-write("actions.ts", `"use server";
+/* ── write entrypoint ─────────────────────────────────────── */
+
+write(
+  "actions.ts",
+  `"use server";
 import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
-import { create${Pascal}UseCases } from "./container";
-import { ${Pascal}Schema } from "./domain/${name}.schema";
+import { ${Pascal}UseCases } from "./container";
+import { ${Pascal}Error } from "./application/create-${name}.usecase";
+import { Create${Pascal}Schema } from "./domain/${name}.schema";
+import { ForbiddenError, UnauthorizedError, requireUser } from "@/shared/server/auth";
 
 export type ${Pascal}ActionState = {
   ok: boolean;
-  errors?: Record<string, string[]>;
+  errors?: Record<string, string[] | undefined>;
   error?: string;
 };
 
+/**
+ * A Server Action is a PUBLIC HTTP endpoint. The client is untrusted, so the
+ * order is fixed:
+ *
+ *   1. authentication    who is calling
+ *   2. authorization     may they do this
+ *   3. validation        is the input well-formed
+ *   4. mutation          through a use case, never raw infra
+ *   5. cache             invalidate what just changed
+ *
+ * Errors return state, they do not throw: throwing sends the user to
+ * error.tsx instead of showing them what went wrong.
+ */
 export async function create${Pascal}Action(
   _prev: ${Pascal}ActionState,
   formData: FormData,
 ): Promise<${Pascal}ActionState> {
-  // 1. auth  2. zod  3. autorização  4. use case  5. cache
-  const parsed = ${Pascal}Schema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) {
-    return { ok: false, errors: z.flattenError(parsed.error).fieldErrors };
-  }
-
   try {
-    const { create${Pascal} } = create${Pascal}UseCases(/* repo */ undefined as never);
-    await create${Pascal}.execute(parsed.data);
+    // 1. AUTHENTICATION
+    const user = await requireUser();
+
+    // 2. AUTHORIZATION
+    if (user.role === "banned") {
+      throw new ForbiddenError("FORBIDDEN");
+    }
+
+    // 3. VALIDATION
+    const parsed = Create${Pascal}Schema.safeParse({
+      title: formData.get("title"),
+    });
+
+    if (!parsed.success) {
+      // Zod 4 types fieldErrors as string[] | undefined, so the state type
+      // mirrors that. Do not "fix" this with a cast.
+      return { ok: false, errors: z.flattenError(parsed.error).fieldErrors };
+    }
+
+    // 4. MUTATION
+    const { create${Pascal} } = ${Pascal}UseCases;
+    await create${Pascal}.execute({ ...parsed.data, ownerId: user.id });
+
+    // 5. CACHE — read-your-writes for interactive UI
     updateTag("${name}");
-    revalidatePath("/");
+    revalidatePath("/app");
+
     return { ok: true };
-  } catch {
-    return { ok: false, error: "Não foi possível concluir. Tente novamente." };
+  } catch (cause) {
+    if (cause instanceof UnauthorizedError) {
+      return { ok: false, error: "Sign in to continue." };
+    }
+    if (cause instanceof ForbiddenError || cause instanceof ${Pascal}Error) {
+      return { ok: false, error: "Access denied." };
+    }
+    return { ok: false, error: "Could not complete the request. Try again." };
   }
 }
-`);
+`,
+);
+
+/* ── guidance ─────────────────────────────────────────────── */
 
 console.log(`✓ Slice created at ${path.relative(process.cwd(), dir)}`);
-console.log("  1. Implemente o repositório em infrastructure/");
-console.log("  2. Escreva o teste em tests/unit/");
-console.log("  3. Register the task in SDD/specs/PLAN.md");
+console.log("");
+console.log("The slice COMPILES. It does nothing yet. Next:");
+console.log(`  1. domain/${name}.schema.ts      add the real fields`);
+console.log(`  2. application/create-${name}.usecase.ts   the business rules`);
+console.log(`  3. infrastructure/${name}.repository.ts     swap in Prisma`);
+console.log(`  4. tests/unit/${name}.test.ts     the use case test`);
+console.log("  5. wire the route in src/app/ (routing only)");
+console.log("");
+console.log("Then run: npm run typecheck && npm run lint && npm run test");
+console.log("");
+console.log("Do NOT mark the task [x] until the E2E proves the flow. See SDD/PREFLIGHT.md");

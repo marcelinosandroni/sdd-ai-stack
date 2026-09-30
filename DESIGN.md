@@ -62,11 +62,11 @@ fiscal stewardship**.
 | `border-prominent` | `#2D384B` | overlay border (Tier 2) |
 | `primary` | `#BAF336` | 🟢 **Neon lime** — critical executive action, ROI, active state |
 | `on-primary` | `#0A0D12` | text on lime |
-| `primary-container` | `#B4F230` | lime as a container |
+| `primary-container` | `#BAF336` | lime as a container |
 | `on-primary-container` | `#253600` | text on a lime container |
 | `secondary` | `#45DFA4` | 🟢 **Mint** — stability, SLA up, positive delta |
 | `on-secondary` | `#003825` | text on mint |
-| `tertiary` | `#9CC5FD` | 🔵 **Slate blue** — infra badges, pipeline stages, technical tags |
+| `tertiary` | `#93C5FD` | 🔵 **Slate blue** — infra badges, pipeline stages, technical tags |
 | `on-tertiary` | `#003257` | text on tertiary |
 | `error` | `#FFB4AB` | error |
 | `on-error` | `#690005` | text on error |

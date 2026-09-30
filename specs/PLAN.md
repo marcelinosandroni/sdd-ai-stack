@@ -1,7 +1,8 @@
 # 🎯 PLAN (the brain of the project)
 
 > 🛑 **FIXED RULE (AI agent, READ THIS BEFORE YOU CODE):**
-> The developer (Marcelino) has ADHD. The tasks HERE must be **microscopic**.
+> The developer has ADHD, time blindness, and zero patience for junk.
+> The tasks HERE must be **microscopic**.
 > If a task takes more than 1 hour, **SPLIT IT IN TWO**.
 > Never skip a step. Never start step 2 without testing and committing step 1.
 > Update statuses rigorously at the end of every prompt: `[ ]` (To Do), `[-]` (In
@@ -10,64 +11,38 @@
 > **There is exactly ONE task `[-]` at any moment.** If there are two, the agent stopped
 > wrong.
 
+> **The first task of a brand-new project is not a feature.** It is replacing the
+> placeholders with the real product: `APP.md`, the `DESIGN.md` tokens, and the first
+> vertical slice. A scaffold with `[YOUR APP NAME]` still in it is not a scaffold, it
+> is a placeholder with a build script.
+
 ---
 
-## Current phase: 3 — Audit findings
+## Current phase: 0 — Bootstrap
 
-> Status: 🚧 in progress (deep audit of the CLI, the template and the release)
-> Previous: [0 Bootstrap](./history/phases/phase-0-bootstrap.md) ·
-> [1 English](./history/phases/phase-1-english.md) ·
-> [2 All stacks](./history/phases/phase-2-all-stacks.md) — all ✅
+> Status: 🔲 not started. This is a brand-new project: the phase history is empty
+> (see `history/README.md`), because the template's own history is not yours.
 
-[x] - Wire the orphaned `CreateExampleForm` into `/app` behind real auth
-[x] - E2E of the full form flow: unauthenticated, invalid, valid, banned
-[x] - Boot-time env validation (`env.ts` was never imported)
-[x] - `proxy.ts` exists + E2E of the security headers and the CVE-2025-29927 header
-[x] - E2E against the production build, Chromium and Firefox
-[x] - Real shadcn components (`components.json`, Button, Skeleton) and `loading.tsx`
-[x] - `stacks/git.md`: tag examples match the `0.x` version in `package.json`
+### Tasks
 
-[-] - Release must not publish when CI is red
-[ ] - Cover `scaffold --git` and `scaffold --submodule` with real git
-[ ] - End-to-end test of `bin/create-sdd-ai-stack.mjs`
-[ ] - Line coverage on the CLI library, with a threshold
-[ ] - Branch protection, Dependabot and an `npm audit` gate
-[ ] - Behavioural acceptance criteria in `specs/tasks/TASK_TEMPLATE.md`
-[ ] - Document the lockfile decision; add the evidence index
+- [ ] No tasks yet. Create the first one:
+      `node SDD/SKILLS/create-task/create-task.mjs 0 1 "<what you are building>"`
 
 ### Phase exit criteria
-- [ ] All tasks `[x]` with test evidence pasted
-- [ ] `npm test` (library, with coverage) and the template gates green
+- [ ] Every task `[x]` with the test evidence pasted
+- [ ] `npm run typecheck && npm run lint && npm run test && npm run build` green
+- [ ] `npm run test:e2e` green against the production build
 - [ ] `docs/CHANGELOG.md` updated
-- [ ] `specs/history/phases/phase-3-audit-findings.md` written
-- [ ] SemVer tag created — **only after a green CI on `main`**
+- [ ] `specs/history/phases/phase-0-<name>.md` written
+- [ ] SemVer tag created
 
 ### How to use this file
 
-1. Replace the block below with your project's current phase.
-2. Name the task `TASK-<PHASE>-<NUMBER>` and create the file at
-   `specs/tasks/TASK-<PHASE>-<NUMBER>.md` (start from
-   [the template](./tasks/TASK_TEMPLATE.md)).
-3. Mark `[-]` **before** you start coding. Mark `[x]` **after** you paste the green
-   terminal output.
-4. When the phase closes, archive it in `history/phases/` and create the SemVer tag.
-
----
-
-```markdown
-## Current phase: [N] — [PHASE NAME]
-
-[ ] - [TASK-1.1](./tasks/TASK-1.1.md) - [to do]
-[-] - [TASK-1.2](./tasks/TASK-1.2.md) - [in progress]   ← the only in-progress task
-[ ] - [TASK-1.3](./tasks/TASK-1.3.md) - [to do]
-
-### Phase exit criteria
-- [ ] All tasks `[x]` with test evidence pasted
-- [ ] `npm run typecheck && npm run lint && npm run test && npm run build` green
-- [ ] `docs/CHANGELOG.md` updated
-- [ ] `specs/history/phases/phase-N-finished.md` written
-- [ ] SemVer tag created
-```
+1. Create the phase block when the phase changes: `## Current phase: N — NAME`.
+2. Tasks live under `### Tasks`, one per line, `[ ]` / `[-]` / `[x]`.
+3. Mark `[-]` **before** starting. Mark `[x]` **after** you paste the green output.
+4. When the phase closes, archive it in `history/phases/`, delete the finished task
+   files, and tag the release.
 
 ---
 
@@ -78,9 +53,11 @@
 - `npm run typecheck` → exit 0
 - `npm run lint` → 0 errors
 - `npm run test` → N passed
-- `npm run test:e2e` → N passed
 - `npm run build` → ✓ Compiled successfully
+- `npm run test:e2e` → N passed
 
 **Files touched:** (list them — max 5 per step)
 **Commit:** `type(scope): description. (Agent: <Tool> - <Model>)`
 ```
+
+Full gate and what each command proves: [`PREFLIGHT.md`](../PREFLIGHT.md).

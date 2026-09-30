@@ -1,7 +1,7 @@
 # ✅ TASK [TASK NAME]
 
 > 🛑 **FIXED RULE (AI agent, READ THIS):**
-> 1. The dev (Marcelino) has ADHD, time blindness, and zero patience for junk.
+> 1. The dev has ADHD, time blindness, and zero patience for junk.
 > 2. If the whole task takes more than 1 hour, **SPLIT IT INTO TWO TASKS NOW.**
 > 3. Deliver one step of code, wait for it to be tested, and **only then** move to the
 >    next one.
@@ -70,7 +70,9 @@
 - [ ] `npm run test:e2e` → all green **against the production build**, not dev
 - [ ] `npm run build` → ✓ Compiled successfully
 - [ ] Every acceptance criterion above has a test that would fail without this change
-- [ ] Coverage did not drop: `npm run check:coverage` passes
+- [ ] `npm run test:coverage` did not regress (or `npm run check:coverage` in this
+      template repo — the generated app has no such script, `vitest run --coverage`
+      is the equivalent)
 - [ ] Zero `any` in the new code
 - [ ] No dead code: every new export is imported somewhere (`grep` it)
 - [ ] Colours/styles use the [DESIGN.md](../../DESIGN.md) tokens (if you touched UI)

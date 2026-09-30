@@ -7,12 +7,13 @@
 
 ## 🚨 Non-negotiable rules
 
-1. **Fixed identity:** `Marcelino Sandroni <marcelino.sandroni@gmail.com>`. Configure it
-   once:
+1. **Identity:** whatever the developer already configured. Never hardcode a name
+   that is not the current user — a first commit in the wrong name is permanent.
    ```bash
-   git config user.name  "Marcelino Sandroni"
-   git config user.email "marcelino.sandroni@gmail.com"
+   git config user.name  "Your Name"
+   git config user.email "you@example.com"
    ```
+   If `git config user.email` is empty, ask before committing. Do not guess.
 2. **Conventional Commits are mandatory:**
    ```
    <type>(<scope>): <short imperative description>. (Agent: <Tool> - <Model>)

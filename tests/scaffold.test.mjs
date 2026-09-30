@@ -81,6 +81,35 @@ test("scaffold: the generated app ships the files the rules depend on", () => {
   }
 });
 
+test("scaffold: the app ships the gates PREFLIGHT.md tells the agent to run", () => {
+  const parent = tmp();
+  const target = path.join(parent, "app-gates");
+  scaffold({ target, template: "next", log: silent, shortcutMode: "stub" });
+
+  // PREFLIGHT.md is a Tier 1 document: the agent reads it before writing code,
+  // so every script it names must exist in the generated app.
+  const preflight = path.join(target, "SDD", "PREFLIGHT.md");
+  assert.ok(fs.existsSync(preflight), "the app has no PREFLIGHT.md");
+
+  const scripts = JSON.parse(fs.readFileSync(path.join(target, "package.json"), "utf8")).scripts;
+
+  // Everything ABOVE the "this template repository" section belongs to the app.
+  // Everything below it belongs to the CLI repo and is labelled as such.
+  const text = fs.readFileSync(preflight, "utf8");
+  const cut = text.indexOf("## 🧠 In this template repository");
+  assert.ok(cut > -1, "PREFLIGHT.md lost its section separating the app gate from the CLI gate");
+  const forTheApp = text.slice(0, cut);
+
+  const named = new Set([...forTheApp.matchAll(/npm run ([\w:-]+)/g)].map((m) => m[1]));
+  assert.ok(named.size >= 5, "PREFLIGHT.md stopped naming the app's gates");
+  for (const script of named) {
+    assert.ok(
+      scripts[script],
+      `PREFLIGHT.md tells the agent to run "npm run ${script}" but it does not exist`,
+    );
+  }
+});
+
 test("scaffold: the template copies no build artefacts", () => {
   const parent = tmp();
   const target = path.join(parent, "app-clean");
