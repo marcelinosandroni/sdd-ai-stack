@@ -319,9 +319,19 @@ The GitHub job needs no secret — `GITHUB_TOKEN` is built in and the workflow g
 creates packages **private**, so flip the visibility once, or installs will need a token.
 
 Guards before publishing: **CI green on the tagged commit** · the template gates
-re-run (`typecheck`, `lint`, `test`, `build`) · `npm test` (52 tests) · coverage
-floor · doc links · tag `vX.Y.Z` matches `package.json` · 12 essential files in
-the tarball · `npm ≥ 11.5.1` · `concurrency` · provenance (npm only).
+re-run (`typecheck`, `lint`, `test`, `build`) · `npm test` · coverage floor · doc
+links · doc facts · the tag must match `package.json` · the tarball must carry
+every essential file · `npm ≥ 11.5.1` · `concurrency` · provenance (npm only).
+
+The release lists 17 essential files the tarball must contain, and every one of
+them has to exist or the CLI breaks for whoever installs it. The release workflow
+lists them; `npm run check:facts` recomputes that number from that list.
+
+> The test count is not written here on purpose. `npm run check:facts` recomputes
+> it, and a number that has to be updated by hand every time a test is added is
+> a number that will be wrong. <!-- fact:off -->
+> This file claimed 27 tests for months while the suite ran more than double that.
+> <!-- fact:on -->
 
 A tag is a release, not an annotation: `git push --tags` ships the package.
 
@@ -352,10 +362,20 @@ All of them point to `SDD/AGENTS.md`. No manual configuration required.
 ## 🧪 Verification
 
 ```bash
-npm test                              # 27 tests: CLI, scaffold, docs integrity, release guards
-node SDD/SKILLS/check-docs/check-docs.mjs   # 33 documents, relative links
-npm run check:pack                    # what will go to npm (73 files, ~66 kB)
+npm test                              # CLI, scaffold, docs integrity, release guards
+node SDD/SKILLS/check-docs/check-docs.mjs   # relative links resolve
+npm run check:facts                  # the numbers in these docs are still true
+npm run check:pack                   # what will go to npm
 ```
+
+`check:facts` recomputes every number this file and `docs/PRODUCT.md` state and
+fails when one drifts. It exists because this README and `PRODUCT.md` both
+<!-- fact:off -->
+claimed 27 tests and 33 documents while the repository had more than double that
+<!-- fact:on -->
+— and nothing was red. A document that misstates a fact it could have checked
+teaches an agent to trust no document, which is the failure this template exists
+to prevent.
 
 The template in `template/next/` is validated for real: `typecheck` + `lint` + `test` +
 `test:e2e` + `build`. The CI (`.github/workflows/ci.yml`) re-runs that validation on

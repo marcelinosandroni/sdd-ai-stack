@@ -59,8 +59,20 @@ A package with three parts:
 ## 🧪 How we know it works
 
 The template in `template/next/` passes `typecheck`, `lint`, `test`, `test:e2e` and
-`build`. The CLI itself has 27 tests. Real bugs have already been found by that
-validation — see [`CHANGELOG.md`](./CHANGELOG.md) § 🐛.
+`build`. The CLI is covered by `npm test`, and real bugs have already been found by
+that validation — see [`CHANGELOG.md`](./CHANGELOG.md) § 🐛.
+
+> This section used to state a test count. The number was wrong for months, and
+> nothing was red, because a number in prose is not a check.
+> `npm run check:facts` recomputes the verifiable claims in this document and in
+> `README.md`, and fails when one drifts — because a template that misstates what
+> it can verify teaches an agent to distrust every document it reads, which is the
+> problem it exists to solve.
+>
+> The count is deliberately absent. It was here while this check was being built,
+> and it went stale four times in an afternoon — every new test to the guard made
+> it wrong. A number that has to be maintained by hand is a number that will be
+> wrong on the day nobody re-reads this file.
 
 ---
 
