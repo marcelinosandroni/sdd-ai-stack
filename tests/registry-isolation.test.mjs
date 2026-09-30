@@ -196,3 +196,64 @@ test("the gates publish-github skips are actually run by the verify job", () => 
     );
   }
 });
+
+/**
+ * A tag publishes both registries in parallel, and one succeeding does not undo
+ * the other. Tag v0.3.1 landed on npmjs while the GitHub Packages job died on
+ * ENEEDAUTH. Retrying the fix then failed the npm job with
+ * EPUBLISHCONFLICT, so the retry could not get past the registry that was
+ * already done — the release could not be resumed.
+ *
+ * Each publish now checks its own registry first and skips if the version is
+ * already there. That makes the release idempotent, which is the only property
+ * that lets you recover from a partial failure.
+ */
+test("each publish skips its registry when the version is already there", () => {
+  const workflow = fs.readFileSync(WORKFLOW, "utf8");
+
+  for (const name of ["publish", "publish-github"]) {
+    const job = jobBody(workflow, name);
+
+    // The check has to exist. Matched against the `run:` block, not the whole job,
+    // because one job builds the spec in a shell variable first.
+    assert.match(
+      job,
+      /npm view [^\n]*needs\.verify\.outputs\.version|npm view "\$SCOPED"/,
+      `${name} must look the version up in its own registry before publishing`,
+    );
+
+    // …and the publish has to respect it.
+    const publish = /- name: Publish\n {8}if: ([^\n]+)/.exec(job);
+    assert.ok(publish, `${name} has a Publish step with no condition`);
+
+    assert.match(
+      publish[1],
+      /steps\.exists\.outputs\.already == 'false'/,
+      `${name}'s Publish step ignores the exists check, so a retry after a ` +
+        `partial release fails with EPUBLISHCONFLICT on the registry that ` +
+        `already succeeded`,
+    );
+  }
+});
+
+test("no job reads the NPM_TOKEN secret that was removed", () => {
+  const workflow = fs.readFileSync(WORKFLOW, "utf8");
+
+  // The token branch always took the early exit once the secret was deleted:
+  // a step that only exists to announce that it is unnecessary.
+  //
+  // Excludes comments. A comment explaining why the branch is gone mentions
+  // the secret by name, and matching it would make this test unpassable — the
+  // same comment-versus-code trap as `needs: verify` above.
+  const code = workflow
+    .split(/\r?\n/)
+    .filter((line) => !/^\s*#/.test(line))
+    .join("\n");
+
+  assert.doesNotMatch(
+    code,
+    /secrets\.NPM_TOKEN/,
+    "the NPM_TOKEN secret is deleted; reading it leaves a dead branch that " +
+      "would silently take over if the secret were ever recreated",
+  );
+});
