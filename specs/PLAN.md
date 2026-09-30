@@ -21,14 +21,15 @@
 
 ---
 
-## Current phase: 4 — Site and responsive (DONE)
+## Current phase: 5 — First real publish (DONE)
 
-> Status: ✅ shipped, pending the first real publish of 0.3.x
+> Status: ✅ `create-sdd-ai-stack@0.3.1` live on npmjs **and** GitHub Packages
 > History: [0 Bootstrap](./history/phases/phase-0-bootstrap.md) ·
 > [1 English](./history/phases/phase-1-english.md) ·
 > [2 All stacks](./history/phases/phase-2-all-stacks.md) ·
 > [3 Rules that work](./history/phases/phase-3-rules-that-work.md) ·
-> [4 Site and responsive](./history/phases/phase-4-site-and-responsive.md) — all ✅
+> [4 Site and responsive](./history/phases/phase-4-site-and-responsive.md) ·
+> [5 First real publish](./history/phases/phase-5-first-real-publish.md) — all ✅
 
 > ⚠️ **This file is the template's own PLAN, not a fresh project.** A generated app
 > gets a clean phase 0; this repository has five closed phases. Do not confuse the
@@ -43,10 +44,19 @@
       letting an agent follow the rules, and the check that catches them
 [x] - [PR #18](./history/phases/phase-4-site-and-responsive.md) - The site, copy
       buttons, analytics, and a responsive rule with teeth
-[-] - Publish 0.3.1 for real. The npm registry still serves 0.1.17: every fix in
-      phases 3 and 4 exists only on GitHub. The release workflow has never run with
-      its three guards (CI green on the commit, template gates re-run, tarball
-      contents) in place.
+[x] - Publish 0.3.1 for real. The npm registry still served 0.1.17: every fix in
+      phases 3 and 4 existed only on GitHub. The release workflow had never run
+      with its three guards in place.
+[x] - [PR #23](./history/phases/phase-5-first-real-publish.md) - The publish jobs
+      ran on Node 22, below the coverage floor
+[x] - [PR #24](./history/phases/phase-5-first-real-publish.md) - The GitHub
+      Packages registry leaked into `prepublishOnly`
+[x] - [PR #25](./history/phases/phase-5-first-real-publish.md) - The job
+      invalidated its own gate by rescoping the name
+[x] - [PR #26](./history/phases/phase-5-first-real-publish.md) - Removing the
+      registry also removed the auth, and the dry run could not see it
+[x] - [PR #27](./history/phases/phase-5-first-real-publish.md) - A half-succeeded
+      release could not be resumed
 
 ### Phase exit criteria
 - [x] Every task `[x]` with the test evidence pasted
@@ -54,8 +64,8 @@
 - [x] template and site gates green
 - [x] `docs/CHANGELOG.md` updated
 - [x] `specs/history/phases/` written for every closed phase
-- [ ] `npm view create-sdd-ai-stack version` returns 0.3.1
-- [ ] SemVer tag pushed and the Release run concluded green
+- [x] `npm view create-sdd-ai-stack version` returns 0.3.1
+- [x] SemVer tag pushed and the Release run concluded green
 
 ### How to use this file
 

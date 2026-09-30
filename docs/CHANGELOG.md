@@ -8,8 +8,80 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ## [0.3.1] — 2026-09-30
 
-> The second place this repository's own state leaked into a generated app, and
-> the phase records that were missing for two closed phases.
+> **This is the first release where the package actually works.** Everything below
+> existed only on GitHub until now: `npm view` served `0.1.17` while the rules the
+> repository claims had never reached a single `npx` install.
+>
+> The release workflow had three guards in place and eight bugs behind them. All
+> eight were green on `main` when they were found. Every one was found by running
+> the release, none by reading it. Full record:
+> [`phase-5-first-real-publish.md`](../specs/history/phases/phase-5-first-real-publish.md).
+
+### 🐛 The publish jobs ran below their own coverage gate
+
+`prepublishOnly` runs `npm run check:coverage`, which refuses to run below Node 24
+because the test runner only aggregates coverage across its child processes from 24
+on. Both publish jobs were on Node 22:
+
+```
+##[error]check-coverage needs Node >= 24 (running 22.23.2)
+```
+
+The publish died in its own gate before it ever reached the registry. A number in a
+workflow is not a preference; it is a promise to every script that runs under it.
+
+### 🐛 The GitHub Packages registry leaked into the gate suite
+
+`setup-node` carried `registry-url: https://npm.pkg.github.com` and
+`scope: '@marcelinosandroni'`, so `prepublishOnly` resolved the repository's own
+dependencies from GitHub Packages. The suite died 0.3s into the first test file
+with an error naming neither the scope nor the registry. The publish now names its
+registry on the command instead of rewriting the job globally.
+
+### 🐛 The GitHub Packages job was failing on its own gate
+
+The job rewrites the name to a scope, because GitHub Packages only accepts scoped
+names. `prepublishOnly` then ran the gate suite, and a test asserted the npm name
+stays unscoped. Each half is correct; together they are a deadlock no unit test can
+see. `--ignore-scripts` on both publish steps, with `needs: verify` as the guarantee
+the skipped gates already ran on the same SHA.
+
+### 🐛 Removing the registry also removed the auth
+
+`registry-url` is what writes the `.npmrc` line that makes npm.pkg.github.com read
+`NODE_AUTH_TOKEN`. Removing it fixed the leak and created this. The dry run stayed
+green because `npm publish --dry-run` never touches the registry — a dry run is
+evidence about exactly as much as the dry run exercised.
+
+### 🐛 A half-succeeded release could not be resumed
+
+The two registries publish in parallel and one succeeding does not undo the other, so
+neither could assume the other failed. Retrying after the npm publish succeeded failed
+on the registry that was already done. Each publish now checks its own registry first
+and skips if the version is there.
+
+### 🔒 `NPM_TOKEN` is gone
+
+Trusted Publishing (OIDC) is the only path. The npm job injects no token at all —
+a `NODE_AUTH_TOKEN` in the env makes npm ignore the OIDC entirely.
+
+### ✅ Published
+
+```
+npm view create-sdd-ai-stack version     0.3.1
+dist-tag latest                          0.3.1
+fileCount                                103
+
+GitHub Packages
+  + @marcelinosandroni/create-sdd-ai-stack@0.3.1
+```
+
+`npm test` 64 → 79. The new tests cover the Node version, the registry isolation, the
+auth wiring, the resumability, and the coverage floor label.
+
+---
+
+## 0.3.1 (pre-publish fixes)
 
 ### 🐛 A generated app inherited this repository's PLAN
 
