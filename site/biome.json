@@ -8,7 +8,8 @@
       "!**/.next",
       "!**/out",
       "!**/test-results",
-      "!**/coverage"
+      "!**/coverage",
+      "!**/next-env.d.ts"
     ]
   },
   "formatter": {

@@ -10,7 +10,8 @@ const baseURL = `http://localhost:${port}`;
  * against a dev server would miss exactly the build-only failures this is here
  * to catch.
  */
-const server = target === "build" ? `npx --yes serve@latest out -l ${port}` : `npm run dev -- -p ${port}`;
+const server =
+  target === "build" ? `npx --yes serve@latest out -l ${port}` : `npm run dev -- -p ${port}`;
 
 export default defineConfig({
   testDir: "./tests/e2e",
