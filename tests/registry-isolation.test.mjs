@@ -24,8 +24,7 @@ test("the GitHub Packages publish does not repoint the whole job at its registry
   const workflow = fs.readFileSync(WORKFLOW, "utf8");
   const job = jobBody(workflow, "publish-github");
 
-  // `prepublishOnly` runs the full gate suite, and those gates resolve npm
-  // packages. With `scope: @marcelinosandroni` on setup-node, npm resolved the
+  // With `scope: @marcelinosandroni` on setup-node, npm resolved this
   // repository's OWN dependencies from npm.pkg.github.com, which needs a token
   // it does not have at that point. The suite died 0.3s into the first test
   // file, and the error named neither the scope nor the registry.
@@ -34,15 +33,50 @@ test("the GitHub Packages publish does not repoint the whole job at its registry
 
   assert.doesNotMatch(
     setupNode[0],
-    /registry-url:\s*https:\/\/npm\.pkg\.github\.com/,
-    "publish-github must not set registry-url: it repoints every npm command in " +
-      "the job, including prepublishOnly, at a registry that cannot serve the " +
-      "project's own dependencies",
+    /scope:/,
+    "publish-github must not set a scope on setup-node: it repoints every npm " +
+      "command in the job, including the gate suite, at a registry that cannot " +
+      "serve the project's own dependencies",
   );
+});
+
+/**
+ * The other half of the bug above, and the reason a dry run was not enough.
+ *
+ * `setup-node`'s `registry-url` is what writes the `.npmrc` line that makes
+ * npm.pkg.github.com read NODE_AUTH_TOKEN. I removed it to stop the leak, the
+ * dry run went green because `--dry-run` never authenticates, and the real
+ * publish failed with ENEEDAUTH.
+ *
+ * A green dry run is evidence about exactly as much as the dry run exercised.
+ */
+test("the GitHub Packages publish can still authenticate", () => {
+  const workflow = fs.readFileSync(WORKFLOW, "utf8");
+  const job = jobBody(workflow, "publish-github");
+
+  // `npm publish --dry-run` skips the registry entirely, so it cannot prove
+  // auth works. Assert the token is wired instead of trusting the dry run.
+  //
+  // Anchored to the line's own indentation. The workflow comment above it
+  // quotes this exact line to explain why it exists, and an unanchored match
+  // reads the comment instead of the command — the same trap as `needs: verify`
+  // below. Verified: with the `echo` deleted but the comment left in place, an
+  // unanchored match still passed.
+  assert.match(
+    job,
+    /^ {10}echo "\/\/npm\.pkg\.github\.com\/:_authToken=\$\{NODE_AUTH_TOKEN\}" >> ~\/\.npmrc$/m,
+    "publish-github must write an auth line for npm.pkg.github.com. Without " +
+      "registry-url on setup-node nothing provides it, and the real publish " +
+      "fails with ENEEDAUTH while the dry run stays green.",
+  );
+
+  // The token belongs to the step that has it, not to a global rewrite.
+  const setupNode = /- uses: actions\/setup-node@v\d+[\s\S]*?(?=\n {6}- name:|\n {2}\S|$)/.exec(job);
   assert.doesNotMatch(
     setupNode[0],
-    /scope:/,
-    "publish-github must not set a scope on setup-node for the same reason",
+    /registry-url:\s*https:\/\/npm\.pkg\.github\.com/,
+    "publish-github must not set registry-url: it adds a global auth line, and " +
+      "the auth line is now written explicitly for the publish alone",
   );
 });
 

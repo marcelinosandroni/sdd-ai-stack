@@ -269,21 +269,25 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      # Deliberately NO `registry-url` and NO `scope` here.
+      # No `scope` on setup-node: it maps @marcelinosandroni/* to a registry
+      # for EVERY npm command in the job, which is how the gate suite ended up
+      # resolving this repository's own dependencies from GitHub Packages.
       #
-      # `prepublishOnly` runs the full gate suite, and those gates resolve npm
-      # packages. With the scope pointed at npm.pkg.github.com and the package
-      # name already rewritten to @marcelinosandroni/…, npm tried to resolve the
-      # repository's OWN dependencies from GitHub Packages, which requires a
-      # token it does not have at that point. The suite died 0.3s into the first
-      # test file, with an error that names neither the scope nor the registry.
-      #
-      # The auth for the publish itself comes from NODE_AUTH_TOKEN on the
-      # publish step, which is the documented way to target GitHub Packages
-      # without a global registry rewrite.
+      # The auth mapping is written by hand instead, so it applies to the
+      # publish and to nothing else. `setup-node`'s `registry-url` would write a
+      # global `//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}`, and the
+      # dry run proved that removing it breaks auth (ENEEDAUTH) while keeping
+      # it breaks the gates. The scope mapping belongs in the repository's
+      # .npmrc; the token mapping belongs to the step that has the token.
       - uses: actions/setup-node@v7
         with:
           node-version: 24
+
+      - name: Authenticate against GitHub Packages
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Apply the dispatch version
         if: ${{ github.event_name == 'workflow_dispatch' }}
