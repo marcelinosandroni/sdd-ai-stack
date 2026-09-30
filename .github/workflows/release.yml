@@ -327,14 +327,28 @@ jobs:
       # registry rewrite. `--registry` says where to publish; the scope mapping
       # in .npmrc resolves @marcelinosandroni/* there without every unrelated
       # npm command in the job inheriting the same registry.
+      #
+      # `--ignore-scripts` is REQUIRED, and it is not an optimisation.
+      #
+      # This job rewrites the name to @marcelinosandroni/… first, because
+      # GitHub Packages only accepts scoped names. `prepublishOnly` then runs
+      # the gate suite — and tests/docs.test.mjs asserts the npm name stays
+      # unscoped. The job was invalidating its own gate, which is why it died
+      # 0.3s into the first test file with an error that named neither the job
+      # nor the cause.
+      #
+      # The `needs: verify` key above is the guarantee those skipped gates were
+      # already run: verify is a hard dependency, it checks out the same SHA, and
+      # it runs npm test, the coverage floor, the docs links and the template
+      # gates. Nothing is lost, and the contradiction is gone.
       - name: Publish
         if: ${{ !inputs.dry_run }}
-        run: npm publish --provenance=false --registry=https://npm.pkg.github.com
+        run: npm publish --provenance=false --ignore-scripts --registry=https://npm.pkg.github.com
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Simulate (dry run)
         if: ${{ inputs.dry_run }}
-        run: npm publish --dry-run --provenance=false --registry=https://npm.pkg.github.com
+        run: npm publish --dry-run --provenance=false --ignore-scripts --registry=https://npm.pkg.github.com
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -100,3 +100,65 @@ test("only the publish-github job knows about the GitHub Packages registry", () 
       `break an unrelated npm command.`,
   );
 });
+
+/**
+ * The bug this file exists for.
+ *
+ * publish-github rewrites the name to a scope, because GitHub Packages only
+ * accepts scoped names. `prepublishOnly` then runs the gate suite, and
+ * tests/docs.test.mjs asserts the npm name stays unscoped. The job was
+ * contradicting its own gate, and it died 0.3s into the first test file with an
+ * error that named neither the job nor the cause.
+ *
+ * Both halves of that were correct on their own. Together they were a deadlock
+ * that no unit test could see, because it only exists once a real publish runs
+ * the rewrite and the real suite in that order.
+ */
+test("a job that rewrites package.json cannot also run the gates that read it", () => {
+  const workflow = fs.readFileSync(WORKFLOW, "utf8");
+  const job = jobBody(workflow, "publish-github");
+
+  const rewritesName = /p\.name = '@' \+ owner \+ '\/' \+ p\.name/.test(job);
+  assert.ok(rewritesName, "expected the scope rewrite in publish-github");
+
+  // prepublishOnly runs `npm run test`, and the suite reads package.json. With
+  // the name already scoped, `npm name must stay unscoped` fails. So the
+  // publish must not run lifecycle scripts.
+  for (const command of [...job.matchAll(/run: (npm publish[^\n]*)/g)].map((m) => m[1])) {
+    assert.match(
+      command,
+      /--ignore-scripts/,
+      `"${command}" runs the gate suite AFTER this job rescoped the name. ` +
+        `tests/docs.test.mjs asserts the npm name stays unscoped, so the job ` +
+        `fails on its own gate. The gates already ran in the verify job on the ` +
+        `same SHA; pass --ignore-scripts.`,
+    );
+  }
+});
+
+test("the gates publish-github skips are actually run by the verify job", () => {
+  const workflow = fs.readFileSync(WORKFLOW, "utf8");
+  const job = jobBody(workflow, "publish-github");
+  const verify = jobBody(workflow, "verify");
+
+  // `--ignore-scripts` is only safe if the skipped work is done elsewhere. If
+  // the dependency is ever removed, the release would ship unchecked.
+  //
+  // Anchored to the key, not the bare string. A workflow comment that says
+  // "`needs: verify` is the guarantee" is prose; matching it would let the real
+  // key be deleted and leave this test green. Verified: with `needs: []` an
+  // unanchored match still passed, because the comment contains the text.
+  assert.match(
+    job,
+    /^ {4}needs: verify$/m,
+    "publish-github must depend on verify: that dependency is the only thing " +
+      "making --ignore-scripts safe",
+  );
+
+  for (const gate of ["npm test", "check:coverage", "check-docs"]) {
+    assert.ok(
+      verify.includes(gate),
+      `verify does not run "${gate}", so the publish would ship without it`,
+    );
+  }
+});
