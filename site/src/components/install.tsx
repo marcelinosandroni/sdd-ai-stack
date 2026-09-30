@@ -39,8 +39,16 @@ export function Install() {
       title="One command. No configuration, no account, no telemetry."
       lead="The CLI has zero runtime dependencies. It copies files, creates a directory, and gets out of the way."
     >
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div>
+      {/*
+        `min-w-0` on the children is not decoration. A grid item defaults to
+        `min-width: auto`, which resolves to its min-content width, and a
+        command with no spaces to break at is 594px wide. The track then refuses
+        to shrink below that and pushes the whole document sideways — and
+        `overflow-x-auto` on the code block cannot save it, because the track
+        never lets the box get small enough to scroll. DESIGN.md §4b.6.
+      */}
+      <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
+        <div className="min-w-0">
           <p className="label-mono">{"// Create a project"}</p>
           <div className="mt-4">
             <CodeBlock
@@ -63,7 +71,7 @@ export function Install() {
           </div>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <p className="label-mono">{"// Options"}</p>
           <div className="mt-4 flex flex-col gap-3">
             {OPTIONS.map((option) => (
