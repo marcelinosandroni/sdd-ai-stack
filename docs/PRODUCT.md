@@ -60,7 +60,9 @@ A package with three parts:
 
 The template in `template/next/` passes `typecheck`, `lint`, `test`, `test:e2e` and
 `build`. The CLI is covered by `npm test`, and real bugs have already been found by
-that validation — see [`CHANGELOG.md`](./CHANGELOG.md) § 🐛.
+that validation — and every bug it has found so far is listed in the template's own
+`CHANGELOG.md` § 🐛. That file is not copied into your project: it is the template's
+history, not yours. Start your own on your first release.
 
 > This section used to state a test count. The number was wrong for months, and
 > nothing was red, because a number in prose is not a check.

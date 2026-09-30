@@ -221,6 +221,62 @@ function checkCommandsExist(appRoot) {
 }
 
 /* ════════════════════════════════════════════════════════════
+   RULE 8 — PRODUCT.md §"What we deliberately do NOT deliver":
+   the app ships the gates it claims to ship, and says so.
+
+   This template deliberately does NOT deliver turnkey CI/CD. That is a
+   decision, not an omission, and a decision that is invisible in the generated
+   app is indistinguishable from forgetting.
+
+   So the generated app must:
+     • run every gate the rules tell an agent to run — a rule naming a command
+       that does not exist is a rule the agent cannot obey
+     • say in its own README that it has no CI, and where the rules for it are
+
+   The second half is the one that matters. The gates are in package.json
+   whether or not anyone runs them; the README is what makes the absence a
+   choice instead of a gap.
+   ════════════════════════════════════════════════════════════ */
+
+const REQUIRED_APP_SCRIPTS = ["typecheck", "lint", "test", "build"];
+
+function checkAppIsShippable(appRoot) {
+  const pkgPath = path.join(appRoot, "package.json");
+  if (!fs.existsSync(pkgPath)) return;
+
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+  const scripts = Object.keys(pkg.scripts ?? {});
+
+  for (const script of REQUIRED_APP_SCRIPTS) {
+    if (!scripts.includes(script)) {
+      report(
+        "PRODUCT.md §what we do NOT deliver",
+        rel(pkgPath),
+        `has no "${script}" script. The rules tell an agent to run it before ` +
+          `every commit, so without it the first instruction is already ` +
+          `unobeyable.`,
+      );
+    }
+  }
+
+  // The absence of CI must be stated, or it reads as an oversight.
+  const readme = path.join(appRoot, "README.md");
+  if (!fs.existsSync(readme)) return;
+
+  const text = fs.readFileSync(readme, "utf8");
+  const mentionsCI = /GitHub Actions|\.github\/workflows|workflow/i.test(text);
+  if (!mentionsCI) {
+    report(
+      "PRODUCT.md §what we do NOT deliver",
+      rel(readme),
+      "does not mention CI at all. This template ships no workflow on purpose; " +
+        "the generated app should say so and point at SDD/stacks/ci.md, or the " +
+        "absence reads like an oversight rather than a decision.",
+    );
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
    RULE 7 — DESIGN.md and the tokens must agree
    ════════════════════════════════════════════════════════════ */
 
@@ -280,6 +336,7 @@ if (isGeneratedApp) {
   checkInstallRule(target);
   checkTestLayout(target);
   checkCommandsExist(target);
+  checkAppIsShippable(target);
 } else {
   // This repository: the rules themselves must not carry the author's name.
   checkNoPersonalName(PKG_ROOT);

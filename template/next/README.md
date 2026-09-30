@@ -40,6 +40,27 @@ All the rules live in `SDD/`:
 | [`SDD/stacks/`](./SDD/stacks) | TypeScript, Tailwind, shadcn, tests, DB, AI, Git, CI |
 | [`SDD/specs/PLAN.md`](./SDD/specs/PLAN.md) | The current task |
 
+## No CI here — and that is the decision
+
+This template ships **no workflow**. The commands above run locally, and nothing
+runs them for you until you add CI.
+
+That is deliberate, not an oversight. A CI is a set of opinions about your
+repository — registry, secrets, branch protection, deploy targets — and every one
+of them would be wrong for your project on day one. Guessing them for you produces
+a workflow you delete, which costs more than writing the one you want.
+
+The rules for building the one you want are already here:
+
+| Document | Scope |
+| --- | --- |
+| [`SDD/stacks/ci.md`](./SDD/stacks/ci.md) | What a CI must gate, and how |
+| [`SDD/stacks/git.md`](./SDD/stacks/git.md) | Branches, commits, tags |
+
+The first thing to gate is the loop above — `typecheck`, `lint`, `test`, `build`
+— on every push. That is the same list this repository gates on itself, so the
+rules you are about to follow are the rules the template actually runs.
+
 ## Mandatory flow
 
 1. Take the next task from `SDD/specs/PLAN.md`
