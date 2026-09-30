@@ -26,6 +26,28 @@ npm run test:e2e    # playwright
 
 ## Project rules
 
+The rules live in **`SDD/AGENTS.md`** and every other file in `SDD/` is reachable
+from there. That one file is the only copy — everything else in your project root
+is a pointer to it.
+
+Your agent tool reads its own file at the project root, and each one points at the
+same place:
+
+| File | Read by |
+| --- | --- |
+| `AGENTS.md` | Codex, OpenCode, Copilot, Cursor |
+| `CLAUDE.md` | Claude Code |
+| `GEMINI.md` | Gemini CLI |
+| `.github/copilot-instructions.md` | GitHub Copilot |
+| `.clinerules` | Cline |
+| `.windsurfrules` | Windsurf |
+| `.cursorrules` | Cursor, **Chat mode only** — Agent mode ignores it; use the root `AGENTS.md` there |
+
+**Edit `SDD/`, never the pointer.** A pointer that grows is a second copy of the
+rules, and the second copy is always the stale one.
+
+## The other docs
+
 All the rules live in `SDD/`:
 
 | Document | Scope |
