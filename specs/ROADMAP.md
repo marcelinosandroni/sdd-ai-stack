@@ -29,12 +29,18 @@
 Each phase below exists because something is **broken or false today**, not because
 it sounds useful. The problem is named, not the solution.
 
-### Phase 6 — A template that does not age badly
+### Phase 6 — A template that does not age badly ✅
 
 **Problem.** `template/next` pins `next: ^16.3.7`, and CI broke on its own when
-`16.3.8` was unpublished from the registry mid-run. Dependabot covers the repository
-root but not the template inside it, so the template's dependencies are never
-updated, and when they break nothing is ready to fix them.
+`16.3.8` was unpublished from the registry mid-run. Dependabot covers the template
+but its `@types/node` ignore rule was **inverted** — it blocked the safe minor
+bumps and let every major through, so it offered types for a runtime that does not
+exist. The README documented no Node version at all, so the pin was a private
+detail nobody could check.
+
+**Delivered.** The ignore now blocks majors only. `@types/node`, the CI
+`node-version` and the README table are asserted equal, so changing one fails.
+The README states what the repository is verified on.
 
 **Scope out.** A lockfile in the template — the consumer commits their own, and
 shipping ours would fight them.
