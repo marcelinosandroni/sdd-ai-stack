@@ -45,14 +45,27 @@ The README states what the repository is verified on.
 **Scope out.** A lockfile in the template — the consumer commits their own, and
 shipping ours would fight them.
 
-### Phase 7 — The first ten minutes
+### Phase 7 — A project that belongs to you ✅
 
-**Problem.** `npx create-sdd-ai-stack my-app` produces an app that compiles, but
-nothing in it teaches the first release. The generated project inherits the rules
-and not the ritual, so the user's first tag is still a manual guess.
+**Problem.** `npx create-sdd-ai-stack my-app` produced an app that compiled but
+shipped **this repository's own documents**: 41 references to the owner's handle,
+9 dead links, and a 400-line `SDD/README.md` — the index an agent opens first —
+teaching it how to publish `create-sdd-ai-stack`, with the npm username and the
+OIDC dashboard URL. The template's release history was installed into someone
+else's project.
 
-**Scope out.** Making the template's release opinionated about the consumer's
-registry or package name.
+**Delivered.** Five leaks closed and asserted: `RULE_DOC_COPY_SKIP`, the
+repository README out of `RULE_FILES`, a fresh `ROADMAP.md`, a rewritten
+`AGENTS.md` provenance block, and a two-way link resolver in `check-docs`. Plus
+`check-rules` RULE 8, which asserts the generated app has the gates it promises
+and says its missing CI is a decision.
+
+**Result.** 41 references → 1 (the provenance line, on purpose). 9 dead links → 0.
+49 documents, all resolving, zero rules violations.
+
+**Scope out.** Turnkey CI in the generated app — `PRODUCT.md` deliberately does not
+deliver it, and a wrong guess at your registry costs more than writing the one you
+want.
 
 ### Phase 8 — Proving the rules in a generated project
 
