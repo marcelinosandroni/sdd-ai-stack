@@ -27,5 +27,6 @@ describe("site content", () => {
     expect(SITE.author.name).toBeTruthy();
     expect(SITE.author.email).toMatch(/@/);
     expect(SITE.author.github).toMatch(/^https:\/\/github\.com\//);
+    expect(SITE.author.linkedin).toMatch(/^https:\/\/www\.linkedin\.com\//);
   });
 });

@@ -283,6 +283,7 @@
   .chip {
     display: inline-flex;
     align-items: center;
+    min-height: 2.75rem;
     padding: 0.25rem 0.625rem;
     border: 1px solid var(--color-border-subtle);
     border-radius: 9999px;
@@ -343,6 +344,58 @@
       -webkit-mask-image: none;
       mask-image: none;
     }
+  }
+
+  /*
+   * 44x44 is the thumb minimum from DESIGN.md §4b.2. A 36px nav row is fine
+   * with a mouse and a coin-flip with a thumb, so every interactive element
+   * gets the floor rather than each one remembering it.
+   */
+  .tap-target {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+
+  .code-block {
+    position: relative;
+  }
+
+  .copy-button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    padding-inline: 0.625rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-raised);
+    font-family: var(--font-mono);
+    font-size: var(--text-label-mono);
+    line-height: 1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    transition:
+      color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .copy-button:hover {
+    border-color: var(--color-border-prominent);
+    color: var(--color-text-primary);
+  }
+
+  .copy-button[data-copied="true"] {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 }
 

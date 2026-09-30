@@ -1,38 +1,42 @@
 import { Section } from "@/components/section";
 import { SITE } from "@/content";
 
-const IMPACT = [
-  { value: "R$ 24M", unit: "/year", label: "protected revenue" },
-  { value: "100M", unit: "msgs/day", label: "throughput at p99 under 10ms" },
-  { value: "4h → 15min", unit: "deploy", label: "with rollback under 2 minutes" },
-  { value: "21", unit: "years", label: "governance plus engineering" },
-];
-
-const TRACK = [
-  {
-    role: "Senior Software Engineer & Tech Lead",
-    org: "DGT Tecnologia",
-    period: "2026 — present",
-    body: "Rescued a R$ 24M/year contract by taking license-plate recognition from under 60% to 100%. Multiplied throughput 10x on 100M messages/day moving MySQL to ClickHouse. Led 10 people and cut development time 40%.",
-    stack: ["Go", "ClickHouse", "Kafka", "Kubernetes", "Playwright"],
-  },
-  {
-    role: "Tech Lead & Strategic Consultant",
-    org: "Antlia",
-    period: "2024 — 2025",
-    body: "Grew assets under management 45% in one year, settlement from D+1 batch to real time, uptime from 95% to 100%. Led 8 developers onto Java and Angular with hexagonal architecture and 95%+ coverage.",
-    stack: ["Java", "Spring", "Kafka", "Angular", "K8s"],
-  },
-  {
-    role: "Full Software Engineer & Tech Lead",
-    org: "Banco Itaú",
-    period: "2022",
-    body: "Designed the asset-management platform operating over R$ 100 billion under custody, with B3 integration. Raised code quality 8x across three test layers on a 9-person team.",
-    stack: [".NET Core", "Flutter", "Angular", "AWS", "Messaging"],
-  },
-];
-
+/**
+ * The author section is a pointer, not a second resume.
+ *
+ * The numbers and the employers live at marcelinosandroni.com. Repeating them
+ * here makes the page stale the moment that site changes, and a stale number is
+ * worse than no number: it looks like a claim nobody checked. Four links, and
+ * the full track record one click away.
+ */
 export function Author() {
+  const links = [
+    {
+      label: "Full resume",
+      hint: "21 years, R$ 24M/year, 100M msgs/day",
+      href: SITE.resume,
+      primary: true,
+    },
+    {
+      label: "LinkedIn",
+      hint: "Professional profile",
+      href: SITE.author.linkedin,
+      primary: false,
+    },
+    {
+      label: "GitHub",
+      hint: "Code and issues",
+      href: SITE.author.github,
+      primary: false,
+    },
+    {
+      label: "Email",
+      hint: SITE.author.email,
+      href: `mailto:${SITE.author.email}`,
+      primary: false,
+    },
+  ];
+
   return (
     <Section
       id="author"
@@ -41,59 +45,41 @@ export function Author() {
       lead="Fifteen years of corporate financial governance taught me to price compute cost and operational risk as balance-sheet liability. That is why this project is about gates and evidence, not about generating more code."
       tone="raised"
     >
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border-subtle bg-border-subtle lg:grid-cols-4">
-        {IMPACT.map((item) => (
-          <div key={item.label} className="bg-surface-base p-6">
-            <dd className="text-metric-stat-mobile font-bold tracking-tight text-primary lg:text-metric-stat">
-              {item.value}
-              <span className="ml-2 text-body-sm font-medium text-text-muted">{item.unit}</span>
-            </dd>
-            <dt className="mt-2 text-body-sm text-text-secondary">{item.label}</dt>
+      <div className="card p-6 sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div>
+            <h3 className="text-headline-md text-text-primary">{SITE.author.name}</h3>
+            <p className="mt-2 text-body-md text-text-secondary">{SITE.author.title}</p>
+            <p className="mt-4 max-w-xl text-body-sm text-text-secondary">
+              21 years across financial governance and software engineering. Systems processing
+              100M messages a day, over R$ 100 billion under custody, and a deploy time that
+              went from four hours to fifteen minutes. The numbers and the track record are on
+              the resume.
+            </p>
           </div>
-        ))}
-      </dl>
+          <p className="label-mono shrink-0">Fortaleza, CE · remote worldwide</p>
+        </div>
 
-      <div className="mt-10 flex flex-col gap-4">
-        {TRACK.map((job) => (
-          <article key={job.org} className="card p-6">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="text-headline-sm text-text-primary">
-                {job.role} · {job.org}
-              </h3>
-              <p className="font-mono text-body-sm text-text-muted">{job.period}</p>
-            </div>
-            <p className="mt-3 text-body-sm text-text-secondary">{job.body}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {job.stack.map((tech) => (
-                <span key={tech} className="chip">
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <div className="mt-10 flex flex-wrap items-center gap-3">
-        <a
-          href={SITE.resume}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="button button-primary"
-        >
-          Full resume
-        </a>
-        <a
-          href={SITE.author.github}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="button button-quiet"
-        >
-          GitHub profile
-        </a>
-        <a href={`mailto:${SITE.author.email}`} className="button button-quiet">
-          Email
-        </a>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          {links.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              target={link.href.startsWith("mailto:") ? undefined : "_blank"}
+              rel={link.href.startsWith("mailto:") ? undefined : "noreferrer noopener"}
+              className={`card card-interactive flex flex-col gap-1 p-5 ${
+                link.primary ? "border-primary/40" : ""
+              }`}
+            >
+              <span
+                className={`text-body-md font-semibold ${link.primary ? "text-primary" : "text-text-primary"}`}
+              >
+                {link.label}
+              </span>
+              <span className="text-body-sm text-text-secondary">{link.hint}</span>
+            </a>
+          ))}
+        </div>
       </div>
     </Section>
   );

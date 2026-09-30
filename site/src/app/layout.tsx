@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { JetBrains_Mono, Manrope, Playfair_Display } from "next/font/google";
 import "./globals.css";
@@ -86,7 +87,16 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       lang="en"
       className={`${manrope.variable} ${jetbrains.variable} ${playfair.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {/*
+          Page views, and nothing else. The Analytics component renders a
+          script and no markup, so it does not change the layout, and it
+          collects no data unless the deployment has the Vercel Web Analytics
+          property enabled — which is a deliberate step, not a default.
+        */}
+        <Analytics />
+        {children}
+      </body>
     </html>
   );
 }

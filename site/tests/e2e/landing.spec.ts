@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { SITE } from "@/content";
 
 test.describe("Landing", () => {
   test("renders the hero and the primary call to action", async ({ page }) => {
@@ -46,14 +47,42 @@ test.describe("Landing", () => {
     await expect(page.getByText("npx create-sdd-ai-stack my-app").first()).toBeVisible();
   });
 
-  test("the author is credited and links to the resume", async ({ page }) => {
+  test("the author is credited and links out to every profile", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByRole("link", { name: "Full resume" })).toHaveAttribute(
+    const author = page.locator("#author");
+    await expect(author).toContainText("Marcelino Sandroni Dias");
+    await expect(author).toContainText("Senior Software Engineer & Tech Lead");
+
+    const links = {
+      "Full resume": "https://marcelinosandroni.com",
+      LinkedIn: "https://www.linkedin.com/in/marcelinosandroni",
+      GitHub: "https://github.com/marcelinosandroni",
+    };
+
+    for (const [label, href] of Object.entries(links)) {
+      await expect(author.getByRole("link", { name: label })).toHaveAttribute("href", href);
+    }
+
+    await expect(author.getByRole("link", { name: "Email" })).toHaveAttribute(
       "href",
-      "https://marcelinosandroni.com",
+      `mailto:${SITE.author.email}`,
     );
-    await expect(page.getByRole("contentinfo")).toContainText("Marcelino Sandroni Dias");
+  });
+
+  test("the author section is a pointer, not a second resume", async ({ page }) => {
+    await page.goto("/");
+    const author = page.locator("#author");
+
+    // The track record lives at marcelinosandroni.com. Duplicating it here
+    // would go stale the moment that page changes, and a stale metric is worse
+    // than no metric: it reads as a claim nobody checked.
+    for (const employer of ["DGT Tecnologia", "Antlia", "Banco Itaú"]) {
+      await expect(author).not.toContainText(employer);
+    }
+    for (const metric of ["4h → 15min", "-83%", "uptime from 95%"]) {
+      await expect(author).not.toContainText(metric);
+    }
   });
 
   test("all three themes of content are present", async ({ page }) => {

@@ -42,8 +42,15 @@ export function Ai() {
       lead="The failure mode of agentic development is not a model that is wrong. It is a model that is confidently, fluently, unaccountably wrong — and nobody can tell from the diff which parts were invented."
       tone="raised"
     >
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse text-left">
+      {/*
+        On a phone this table becomes stacked cards instead of a sideways
+        scroll. A three-column comparison of prose in a 640px scroller is a
+        table nobody reads on a phone; a stacked list is read the same way the
+        same content reads on a desktop column. The `hidden`/`md:table` pair
+        means neither version costs the other a download.
+      */}
+      <div className="hidden md:block">
+        <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-border-subtle">
               <th className="pb-3 pr-6 text-label-mono text-text-muted">Layer</th>
@@ -66,6 +73,24 @@ export function Ai() {
           </tbody>
         </table>
       </div>
+
+      <ul className="flex flex-col gap-4 md:hidden">
+        {LAYERS.map((row) => (
+          <li key={row.layer} className="card p-5">
+            <p className="text-body-sm font-semibold text-primary">{row.layer}</p>
+            <div className="mt-3 flex flex-col gap-2">
+              <div>
+                <p className="text-label-mono text-text-muted">The human</p>
+                <p className="mt-1 text-body-sm text-text-secondary">{row.human}</p>
+              </div>
+              <div>
+                <p className="text-label-mono text-text-muted">The agent</p>
+                <p className="mt-1 text-body-sm text-text-secondary">{row.agent}</p>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
 
       <div className="mt-8 card border-error/30 p-6">
         <p className="label-mono text-error">{"// What the laws forbid"}</p>

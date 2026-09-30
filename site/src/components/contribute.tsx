@@ -40,7 +40,7 @@ export function Contribute() {
               href={way.href}
               target="_blank"
               rel="noreferrer noopener"
-              className="mt-5 font-mono text-body-sm text-primary hover:underline"
+              className="tap-target mt-5 font-mono text-body-sm text-primary hover:underline"
             >
               {way.cta} →
             </a>
@@ -48,8 +48,11 @@ export function Contribute() {
         ))}
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div>
+      {/* `min-w-0` on the children: a grid item defaults to min-width:auto, so
+          a long unbreakable line sets the track width and pushes the document
+          sideways. DESIGN.md §4b.6. */}
+      <div className="mt-8 grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
+        <div className="min-w-0">
           <p className="label-mono">{"// Local development"}</p>
           <div className="mt-4">
             <CodeBlock
@@ -70,7 +73,7 @@ export function Contribute() {
           </div>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <p className="label-mono">{"// House rules for a pull request"}</p>
           <ul className="mt-4 flex flex-col gap-3">
             {[
@@ -79,9 +82,14 @@ export function Contribute() {
               "Editing anything under stacks/ or DESIGN.md is forbidden without asking first — those are the law of the template.",
               "Green output pasted, with the real counts.",
             ].map((rule) => (
+              /*
+                `min-w-0` on the text child: a flex item defaults to
+                min-width:auto, so a long sentence sets the track width and
+                pushes the document sideways instead of wrapping.
+              */
               <li key={rule} className="flex gap-3 text-body-sm text-text-secondary">
                 <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
-                {rule}
+                <span className="min-w-0">{rule}</span>
               </li>
             ))}
           </ul>

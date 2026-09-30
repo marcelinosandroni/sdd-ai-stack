@@ -18,7 +18,7 @@ export function SiteFooter() {
               href={SITE.resume}
               target="_blank"
               rel="noreferrer noopener"
-              className="text-text-secondary transition-colors hover:text-primary"
+              className="tap-target text-text-secondary transition-colors hover:text-primary"
             >
               {SITE.author.name}
             </a>
@@ -32,7 +32,7 @@ export function SiteFooter() {
               <li>
                 <a
                   href="#what"
-                  className="text-body-sm text-text-secondary hover:text-text-primary"
+                  className="tap-target text-body-sm text-text-secondary hover:text-primary"
                 >
                   What is SDD
                 </a>
@@ -40,7 +40,7 @@ export function SiteFooter() {
               <li>
                 <a
                   href="#install"
-                  className="text-body-sm text-text-secondary hover:text-text-primary"
+                  className="tap-target text-body-sm text-text-secondary hover:text-primary"
                 >
                   Install
                 </a>
@@ -48,7 +48,7 @@ export function SiteFooter() {
               <li>
                 <a
                   href="#contribute"
-                  className="text-body-sm text-text-secondary hover:text-text-primary"
+                  className="tap-target text-body-sm text-text-secondary hover:text-primary"
                 >
                   Contribute
                 </a>
@@ -64,7 +64,7 @@ export function SiteFooter() {
                   href={SITE.repo}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="text-body-sm text-text-secondary hover:text-text-primary"
+                  className="tap-target text-body-sm text-text-secondary hover:text-primary"
                 >
                   GitHub
                 </a>
@@ -74,7 +74,7 @@ export function SiteFooter() {
                   href={SITE.issues}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="text-body-sm text-text-secondary hover:text-text-primary"
+                  className="tap-target text-body-sm text-text-secondary hover:text-primary"
                 >
                   Issues
                 </a>
@@ -84,7 +84,7 @@ export function SiteFooter() {
                   href={SITE.npm}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="text-body-sm text-text-secondary hover:text-text-primary"
+                  className="tap-target text-body-sm text-text-secondary hover:text-primary"
                 >
                   npm
                 </a>
@@ -100,7 +100,7 @@ export function SiteFooter() {
                   href={SITE.resume}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="text-body-sm text-text-secondary hover:text-text-primary"
+                  className="tap-target text-body-sm text-text-secondary hover:text-primary"
                 >
                   Resume
                 </a>
@@ -110,7 +110,7 @@ export function SiteFooter() {
                   href={SITE.author.github}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="text-body-sm text-text-secondary hover:text-text-primary"
+                  className="tap-target text-body-sm text-text-secondary hover:text-primary"
                 >
                   Profile
                 </a>
@@ -118,7 +118,7 @@ export function SiteFooter() {
               <li>
                 <a
                   href={`mailto:${SITE.author.email}`}
-                  className="text-body-sm text-text-secondary hover:text-text-primary"
+                  className="tap-target text-body-sm text-text-secondary hover:text-primary"
                 >
                   Email
                 </a>

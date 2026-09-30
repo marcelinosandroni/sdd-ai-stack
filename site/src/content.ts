@@ -11,6 +11,7 @@ export const SITE = {
     title: "Senior Software Engineer & Tech Lead",
     email: "marcelino.sandroni@gmail.com",
     github: "https://github.com/marcelinosandroni",
+    linkedin: "https://www.linkedin.com/in/marcelinosandroni",
   },
 } as const;
 

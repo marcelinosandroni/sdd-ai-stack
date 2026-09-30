@@ -13,6 +13,7 @@
 | Picking a colour/space/font | §2 Tokens    |
 | Writing/copying CSS         | §2 Tokens    |
 | Building a layout/grid      | §5 Layout    |
+| **Shipping anything UI**    | **§4b Responsive — required, and it has a test** |
 | Button, card, chip, input   | §6 Components |
 | Thinking about feedback/UX  | §7 UX        |
 
@@ -225,6 +226,137 @@ All via `next/font/google` (zero layout shift, zero external request). See
 
 ---
 
+## 📱 4b. RESPONSIVE IS NOT OPTIONAL
+
+> **A layout that only works at 1440px is a broken layout.** The viewport is not a
+> design decision the visitor makes for you. This section is the law; §4b.1 is
+> how you prove you obeyed it.
+
+### 4b.1 The three viewports, named
+
+Not "responsive" in the abstract. Three widths, three contracts:
+
+| Name | Width | Why this one |
+| --- | --- | --- |
+| `mobile` | **390px** | iPhone 14/15/16. The most common phone width there is. A phone narrower than this is a rarity, not a target. |
+| `tablet` | **768px** | iPad portrait. The width where a two-column layout starts to hurt. |
+| `desktop` | **1440px** | The width the design was drawn at. |
+
+Testing 320px tests a device nobody buys. Testing 1920px tests a monitor. The
+three above are where a real visitor actually is.
+
+### 4b.2 The four hard rules
+
+1. **No horizontal scroll, ever.** `document.documentElement.scrollWidth` must be
+   ≤ the viewport width. A single overflowing element pushes the whole page
+   sideways and there is no way to get back.
+2. **No tap target below 44×44px.** Thumb, not mouse. A 32px row of links is
+   unusable on a phone and perfectly fine on a desktop.
+3. **No body text below 13px.** The body floor is `body-sm` (13px). A `label-mono`
+   chrome (section eyebrows, table headers, tags) is 11px by design and is not
+   body copy — the exception is deliberate and pre-existing. Anything that a
+   reader has to *read as a sentence* is 13px or larger.
+4. **No content that only exists above 768px.** A `hidden md:flex` hero is a
+   blank screen on the majority of devices. Reflow it; do not hide it.
+
+### 4b.3 Prove it, do not assume it
+
+A responsive claim without evidence is a hope. For any UI change:
+
+```bash
+# the suite runs the three viewports, not one
+npm run test:e2e
+```
+
+**Every one of these must pass at `mobile` before the task is `[x]`:**
+
+| Check | Assertion |
+| --- | --- |
+| No horizontal overflow | `scrollWidth <= clientWidth` at 390px |
+| Nav is reachable | every `href="#..."` target exists **and** is reachable at 390px |
+| Tap targets | every `a` and `button` has a box ≥ 44×44 |
+| Text floor | no rendered text node below 13px |
+| Nothing hidden | no visible-on-desktop element with `display: none` at 390px |
+| The primary action | the main CTA is visible and tappable without horizontal scroll |
+
+The last one is the one people skip. A page can pass every geometric check and
+still bury its only call to action below a fold that requires a scroll gesture
+the visitor does not know to try.
+
+### 4b.4 Playwright setup, copy-paste
+
+```ts
+import { defineConfig, devices } from "@playwright/test";
+
+export default defineConfig({
+  // 390 is the iPhone width, not an arbitrary small number
+  projects: [
+    { name: "mobile", use: { ...devices["iPhone 14"] } },
+    { name: "desktop", use: { ...devices["Desktop Chrome"] } },
+  ],
+});
+```
+
+`devices["iPhone 14"]` sets the viewport **and** `hasTouch`, so the suite
+exercises tap instead of click where the device would.
+
+### 4b.5 The geometric audit, as code
+
+Copy this into a spec. It catches the class of bug that screenshots hide.
+
+```ts
+test("has no horizontal scroll on a phone", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  const overflow = await page.evaluate(() => {
+    const doc = document.documentElement;
+    // Which element is the culprit? A width alone is not a diagnosis.
+    const offenders = [...document.querySelectorAll("*")]
+      .filter((el) => el.getBoundingClientRect().right > doc.clientWidth + 1)
+      .map((el) => `${el.tagName}.${el.className}`.slice(0, 80))
+      .slice(0, 5);
+    return { scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth, offenders };
+  });
+
+  expect(overflow.offenders, `overflowing: ${overflow.offenders.join(", ")}`).toHaveLength(0);
+  expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth);
+});
+
+test("every tap target is at least 44px", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  const small = await page.evaluate(() =>
+    [...document.querySelectorAll("a, button")]
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && (r.width < 44 || r.height < 44);
+      })
+      .map((el) => `${el.tagName} "${(el.textContent ?? "").trim().slice(0, 30)}"`),
+  );
+
+  expect(small, `too small: ${small.join(", ")}`).toHaveLength(0);
+});
+```
+
+### 4b.6 Responsive is a design constraint, not a post-process
+
+- **Design mobile-first, widen second.** A desktop layout that "collapses" was
+  not designed; it was truncated.
+- **Content decides the breakpoint.** A 4-column KPI grid becomes 2×2, not
+  "3 and a widow". Check what the grid looks like at 390px before you ship it.
+- **Never hide content to save space.** Reflow it. If it does not fit, the copy
+  is too long, not the screen too small.
+- **Decorative backdrops get `overflow-x-clip`.** A blurred circle anchored to a
+  viewport edge lands at `25% + 384px` on a 390px phone and pushes the document
+  92px wider than the screen. Clip rather than hide, so `position: sticky`
+  keeps working.
+- **Long unbroken strings get `overflow-wrap`.** A URL or an email in a flex row
+  is the single most common cause of horizontal scroll on mobile.
+
+---
+
 ## 🧠 6. UX (Interaction rules)
 
 1. **Immediate feedback (dopamine):** clicked? loading IMMEDIATELY. Worked? success
@@ -249,3 +381,7 @@ All via `next/font/google` (zero layout shift, zero external request). See
 - ❌ More than one accent competing on the same screen.
 - ❌ Missing `focus-visible` on anything interactive.
 - ❌ Any grid that isn't 12 columns / 1320px max-width.
+- ❌ A layout that was only checked at one width. See §4b.
+- ❌ `display: none` to make a mobile layout "fit".
+- ❌ A tap target under 44×44px.
+- ❌ Text below 13px.
