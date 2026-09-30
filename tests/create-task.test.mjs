@@ -133,9 +133,26 @@ test("a generated app starts with an EMPTY phase history", () => {
   assert.ok(fs.existsSync(path.join(root, "SDD", "specs", "history", "README.md")));
 });
 
-test("this repository keeps its own phase history", () => {
+test("a generated app's PLAN is fresh, not this repository's", () => {
+  const root = generatedApp();
+  const plan = fs.readFileSync(path.join(root, "SDD", "specs", "PLAN.md"), "utf8");
+
+  // The second place this repo's state leaks. The copied file names the phase
+  // this repo is on and links its own history; an agent would read that as
+  // "this project is already built".
+  assert.match(plan, /^## Current phase: 0 — Bootstrap$/m);
+  assert.doesNotMatch(plan, /Current phase: [1-9]/);
+  assert.doesNotMatch(plan, /phase-0-bootstrap\.md/);
+  assert.doesNotMatch(plan, /this repository's own PLAN/i);
+  assert.doesNotMatch(plan, /PR #1[0-9]/);
+});
+
+test("this repository keeps its own PLAN and its own phase files", () => {
   const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+  const plan = fs.readFileSync(path.join(repoRoot, "specs", "PLAN.md"), "utf8");
+
+  assert.match(plan, /^## Current phase: /m);
   const phases = path.join(repoRoot, "specs", "history", "phases");
   const files = fs.readdirSync(phases).filter((f) => f.endsWith(".md"));
-  assert.ok(files.length > 0, "the RULE_COPY_SKIP logic must not touch this repository");
+  assert.ok(files.length >= 5, `expected a file per closed phase, found ${files.length}`);
 });
