@@ -6,6 +6,36 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
+## [0.3.1] — 2026-09-30
+
+> The second place this repository's own state leaked into a generated app, and
+> the phase records that were missing for two closed phases.
+
+### 🐛 A generated app inherited this repository's PLAN
+
+`RULE_COPY_SKIP` already stopped `specs/history/` from being copied, but `specs/PLAN.md`
+is a loose file and it was copied whole. A brand-new app received:
+
+```
+## Current phase: 4 — Site and responsive (DONE)
+> This file is the template's own PLAN, not a fresh project
+```
+
+An agent would read that as *this project is already built* and skip straight to phase 5.
+The scaffold now writes a fresh PLAN for a new project and logs that it did. A submodule
+keeps the real one, because there it is the real one.
+
+Two tests hold it: one asserts a generated app gets phase 0 and no reference to this
+repository, the other asserts this repository keeps its own PLAN and a file per phase.
+
+### 📋 The phase history had two gaps
+
+`AGENTS.md` §7 archives every closed phase. Five phases had shipped and three had files:
+the thirteen-finding audit and the site had none. Both are written now, and this repository's
+PLAN points at all five instead of pretending to be a fresh project.
+
+---
+
 ## [0.3.0] — 2026-09-30
 
 > An agent was let loose on this repository, followed the rules in the documented
