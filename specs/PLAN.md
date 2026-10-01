@@ -21,17 +21,18 @@
 
 ---
 
-## Current phase: 6 — A template that does not age badly (DONE)
+## Current phase: 8 — Proving the rules where they land (DONE)
 
-> Status: ✅ the Dependabot ignore is no longer inverted, and the runtime pin is
-> asserted equal in three places
+> Status: ✅ 6 bugs found by generating an app, all fixed, all guarded in CI
 > History: [0 Bootstrap](./history/phases/phase-0-bootstrap.md) ·
 > [1 English](./history/phases/phase-1-english.md) ·
 > [2 All stacks](./history/phases/phase-2-all-stacks.md) ·
 > [3 Rules that work](./history/phases/phase-3-rules-that-work.md) ·
 > [4 Site and responsive](./history/phases/phase-4-site-and-responsive.md) ·
 > [5 First real publish](./history/phases/phase-5-first-real-publish.md) ·
-> [6 A template that does not age badly](./history/phases/phase-6-no-age-badly.md)
+> [6 No age badly](./history/phases/phase-6-no-age-badly.md) ·
+> [7 A project that belongs to you](./history/phases/phase-7-your-project.md) ·
+> [8 Proving the rules](./history/phases/phase-8-proving-the-rules.md)
 
 > ⚠️ **This file is the template's own PLAN, not a fresh project.** A generated app
 > gets a clean phase 0; this repository has five closed phases. Do not confuse the
@@ -64,6 +65,8 @@
 [-] - [Phase 6](./history/phases/phase-6-no-age-badly.md) - Dependabot's
       `@types/node` ignore blocked the safe bumps and let every major through. The
       runtime pin lives in three files that must agree, and nothing enforced it.
+[x] - [PR #34](./history/phases/phase-8-proving-the-rules.md) - Six bugs that only
+      exist in a generated app, and the CI job that now finds them in 5 seconds
 
 ### Phase exit criteria
 - [x] Every task `[x]` with the test evidence pasted
