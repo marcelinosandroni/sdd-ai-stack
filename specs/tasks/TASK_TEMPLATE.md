@@ -75,6 +75,7 @@
       is the equivalent)
 - [ ] Zero `any` in the new code
 - [ ] No dead code: every new export is imported somewhere (`grep` it)
-- [ ] Colours/styles use the [DESIGN.md](../../DESIGN.md) tokens (if you touched UI)
+- [ ] Colours/styles use the `DESIGN.md` tokens (if you touched UI) — the one in
+      the same `SDD/` folder as this task's parent
 - [ ] Green evidence pasted into the reply
 - [ ] `specs/PLAN.md` updated to `[x]`

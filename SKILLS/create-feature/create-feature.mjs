@@ -31,6 +31,9 @@ const Pascal = name
   .join("");
 
 const dir = path.resolve(process.cwd(), "src", "features", name);
+// The unit tests live beside the slice, not beside this script: the skill runs
+// from the app's root, so `src/features/<name>` and `tests/unit` share it.
+const testDir = path.resolve(process.cwd(), "tests", "unit");
 if (fs.existsSync(dir)) {
   console.error(`✖ Already exists: ${dir}`);
   process.exit(1);
@@ -255,7 +258,12 @@ import { z } from "zod";
 import { ${Pascal}UseCases } from "./container";
 import { ${Pascal}Error } from "./application/create-${name}.usecase";
 import { Create${Pascal}Schema } from "./domain/${name}.schema";
-import { ForbiddenError, UnauthorizedError, requireUser } from "@/shared/server/auth";
+// Sorted the way biome's organizeImports sorts them: capitalised identifiers
+// first, then lowercase ones, alphabetically within each. Writing
+// { ForbiddenError, UnauthorizedError, requireUser } produced a file the
+// project's own lint rejected — the skill shipped code that failed the gate the
+// skill tells the agent to run.
+import { ForbiddenError, requireUser, UnauthorizedError } from "@/shared/server/auth";
 
 export type ${Pascal}ActionState = {
   ok: boolean;
@@ -322,15 +330,92 @@ export async function create${Pascal}Action(
 `,
 );
 
+/* ── the test ─────────────────────────────────────────────── */
+
+// A slice that compiles and cannot be tested is a slice nobody will test.
+//
+// The skill already told the agent to write this file by hand, and every project
+// that used the skill therefore started with a red suite or, worse, no suite at
+// all. The dogfood run found this: create-feature produced 7 files and zero
+// tests. Writing the failing-but-honest test here costs one template and makes
+// the first `npm run test` show the agent exactly what to fill in.
+const testDirPath = testDir;
+fs.mkdirSync(testDirPath, { recursive: true });
+fs.writeFileSync(
+  path.join(testDirPath, `${name}.test.ts`),
+  `import { describe, expect, it } from "vitest";
+import {
+  Create${Pascal}UseCase,
+  ${Pascal}Error,
+} from "@/features/${name}/application/create-${name}.usecase";
+import type {
+  Create${Pascal}Data,
+  I${Pascal}Repository,
+  ${Pascal}Entity,
+} from "@/features/${name}/domain/I${Pascal}Repository";
+
+/**
+ * An in-memory repository. The generated infrastructure is a stand-in anyway —
+ * see infrastructure/${name}.repository.ts.
+ */
+function makeRepo() {
+  const created: Create${Pascal}Data[] = [];
+  const repo: I${Pascal}Repository = {
+    create: async (input) => {
+      created.push(input);
+      return { id: "id-1", createdAt: new Date(), ...input } as ${Pascal}Entity;
+    },
+    findById: async () => null,
+    listByOwner: async (ownerId) =>
+      created
+        .filter((row) => row.ownerId === ownerId)
+        .map((row, index) => ({ id: \`id-\${index}\`, createdAt: new Date(), ...row })),
+  };
+  return { repo, created };
+}
+
+describe("Create${Pascal}UseCase", () => {
+  it("creates a record for a valid input", async () => {
+    const { repo, created } = makeRepo();
+    const result = await new Create${Pascal}UseCase(repo).execute({
+      title: "A title",
+      ownerId: "owner-1",
+    });
+
+    expect(result.title).toBe("A title");
+    expect(created).toHaveLength(1);
+  });
+
+  it("refuses a missing owner, because a record with no owner cannot be listed", async () => {
+    const { repo } = makeRepo();
+    const useCase = new Create${Pascal}UseCase(repo);
+
+    await expect(useCase.execute({ title: "A title" } as never)).rejects.toThrow(${Pascal}Error);
+  });
+
+  it("rejects a title that violates the schema", async () => {
+    const { repo } = makeRepo();
+    const useCase = new Create${Pascal}UseCase(repo);
+
+    // TODO: the generated schema accepts any title. Replace this with the real
+    // invariant of your domain — this is the test that will fail when you add it.
+    await expect(useCase.execute({ title: "" } as never)).rejects.toThrow();
+  });
+});
+`,
+  "utf8",
+);
+console.log(`✓ Test created at tests/unit/${name}.test.ts`);
+
 /* ── guidance ─────────────────────────────────────────────── */
 
 console.log(`✓ Slice created at ${path.relative(process.cwd(), dir)}`);
 console.log("");
-console.log("The slice COMPILES. It does nothing yet. Next:");
+console.log("The slice COMPILES and HAS A TEST. Both are placeholders. Next:");
 console.log(`  1. domain/${name}.schema.ts      add the real fields`);
 console.log(`  2. application/create-${name}.usecase.ts   the business rules`);
 console.log(`  3. infrastructure/${name}.repository.ts     swap in Prisma`);
-console.log(`  4. tests/unit/${name}.test.ts     the use case test`);
+console.log(`  4. tests/unit/${name}.test.ts     replace the TODO with your invariant`);
 console.log("  5. wire the route in src/app/ (routing only)");
 console.log("");
 console.log("Then run: npm run typecheck && npm run lint && npm run test");

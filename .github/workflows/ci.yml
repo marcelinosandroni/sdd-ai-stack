@@ -45,6 +45,37 @@ jobs:
       - name: Check the package contents
         run: npm pack --dry-run
 
+  # The only job that tests what the template EMITS rather than the template.
+  #
+  # Every other job validates this repository, which has the three files a
+  # generated app lacks: `tests/cli-flags.test.mjs`, its own `package.json`, and
+  # `.github/workflows/release.yml`. Six bugs reached main green because of that
+  # gap — three skills that crash on ENOENT where they land, a dead link in the
+  # task template, this repository's test counts shipped in someone else's
+  # PREFLIGHT, and `create-feature` generating a slice with no test.
+  #
+  # Fast path only (~1s): no install, no browser. The Template job already proves
+  # the generated app builds and passes E2E; this proves the RULES and the SKILLS
+  # work in it, which is the part nothing else covers.
+  dogfood:
+    name: Dogfood
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Generate an app and walk the cycle the rules describe
+        run: node SKILLS/dogfood/dogfood.mjs
+
+      # The slow path, weekly rather than per-PR: it installs ~100 packages and
+      # downloads browsers, which is a lot of minutes to re-prove on every commit.
+      # `--full` is what a release runs.
+      - name: Full dogfood (install + build)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: node SKILLS/dogfood/dogfood.mjs --full
+
   template:
     name: Template
     runs-on: ubuntu-24.04
