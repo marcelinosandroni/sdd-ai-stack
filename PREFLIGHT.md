@@ -73,14 +73,33 @@ Paste this at the end of every task. Full command, full result, real counts.
 **Evidence:**
 - `npm run typecheck` → 0 errors
 - `npm run lint` → 0 errors, 0 warnings
-- `npm run test` → 6 passed (6)
+- `npm run test` → N passed (N)          ← your real count
 - `npm run build` → ✓ Compiled successfully
-- `npm run test:e2e` → 20 passed (Chromium + Firefox)
+- `npm run test:e2e` → N passed (N)      ← your real count
 ```
 
 **Never** compress the evidence. A token-saving tool may shorten your prose; it
-may never shorten the numbers. "Tests pass" is not evidence — `20 passed (20)`
-is.
+may never shorten the numbers. "Tests pass" is not evidence — a count with its
+total beside it is.
+
+> **The counts are yours to fill.** A template that shipped concrete numbers would
+> be shipping *its* counts into your project, and they would be wrong from the
+> first test you write. Read them off the run you just did.
+
+---
+
+## 🧩 Skills you can run
+
+| Skill | Checks |
+| --- | --- |
+| [`SKILLS/check-docs`](./SKILLS/check-docs) | every relative link in your documentation resolves |
+| [`SKILLS/create-task`](./SKILLS/create-task) | a task file, registered in the PLAN |
+| [`SKILLS/create-feature`](./SKILLS/create-feature) | a compiling, tested vertical slice |
+
+Coverage, rules and fact checks are **not** here — those verify the template
+itself, against its own test files and its own release workflow. Your app has
+neither, and a gate that reads files you do not have is a gate that crashes
+where it lands.
 
 ---
 
