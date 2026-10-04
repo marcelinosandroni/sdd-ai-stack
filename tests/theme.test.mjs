@@ -21,7 +21,7 @@ const CANONICAL = path.join(REPO_ROOT, THEME_DIR, DEFAULT_THEME, "tokens.css");
  * The copy inside each template is not a stylistic preference. Turbopack refuses an
  * `@import` that leaves the project root:
  *
- *   FileSystemPath("").join("../../themes/executive/tokens.css") leaves the filesystem root
+ *   FileSystemPath("").join("../../themes/matrix/tokens.css") leaves the filesystem root
  *
  * So the tokens must physically live inside the app, and the only way to keep one
  * source of truth is to copy them and watch the copies.

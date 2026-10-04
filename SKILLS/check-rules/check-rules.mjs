@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 /**
  * check-rules — makes the written rules executable.
  *
@@ -16,6 +16,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+// This skill is repo-only (`RULE_SKILL_COPY_SKIP`), so it can read the package's own
+// constants. That is what lets RULE 7 follow a theme rename instead of hardcoding a
+// path that silently stops existing — which is the exact failure it was written to
+// catch, one directory level up.
+import { DEFAULT_THEME } from "../../lib/constants.mjs";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -363,7 +369,7 @@ const HEX = /#[0-9a-fA-F]{6}/g;
  * RULE 7 — DESIGN.md and the tokens must agree.
  *
  * The token file moved out of `template/next/src/app/globals.css` and into
- * `themes/executive/tokens.css`, so every template imports one design instead of
+ * `themes/matrix/tokens.css`, so every template imports one design instead of
  * each carrying its own copy.
  *
  * That move nearly made this rule vacuous, and that is the part worth recording:
@@ -377,7 +383,7 @@ const HEX = /#[0-9a-fA-F]{6}/g;
  */
 function checkTokensAgree(repoRoot) {
   const designPath = path.join(repoRoot, "DESIGN.md");
-  const cssPath = path.join(repoRoot, "themes", "executive", "tokens.css");
+  const cssPath = path.join(repoRoot, "themes", DEFAULT_THEME, "tokens.css");
 
   if (!fs.existsSync(designPath)) return;
   if (!fs.existsSync(cssPath)) {

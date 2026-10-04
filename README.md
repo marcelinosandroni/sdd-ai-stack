@@ -122,7 +122,7 @@ npx create-sdd-ai-stack my-app --shortcuts stub      # no symlink (Windows witho
 `spa` is not a smaller Next. It has no App Router, no server components, no
 `proxy.ts`, no `shadcn` — what is left is the part that was always supposed to be
 framework-independent: the SDD rules, the design tokens and the gates. Both templates
-ship the **same** `themes/executive/tokens.css`, byte for byte, and both are gated on
+ship the **same** `themes/matrix/tokens.css`, byte for byte, and both are gated on
 every push by a matrix that reads the template list from `lib/constants.mjs` — so a
 third template gets its own CI leg without anyone editing a workflow.
 
@@ -262,16 +262,26 @@ The full rule, the reasoning, and the exceptions:
 
 ## 🎨 Design System
 
-`DESIGN.md` implements **Executive Engineering**: deep obsidian-tinted slates (never
-pure black), 1px micro-borders, accents in neon lime `#BAF336` and mint `#34D399`, a
-triple-font system (**Manrope** structural + **JetBrains Mono** technical +
-**Playfair Display** editorial), a 12-column grid capped at 1320px.
+**Matrix** — a portable, **domain-neutral** design system. Obsidian-tinted slates
+(never pure black), 1px micro-borders, one acid accent used as signal rather than
+decoration, a triple-font system (**Manrope** structural + **JetBrains Mono**
+instrumentation + **Playfair Display** editorial), a 12-column grid capped at 1320px,
+and a dark-only theme with a responsive law that has a test.
 
-The tokens live in `src/app/globals.css` (Tailwind v4 `@theme`) and become utilities
-(`bg-surface-raised`, `text-text-secondary`, `text-label-mono`, `border-border-subtle`…)
-plus primitives (`btn-primary`, `btn-secondary`, `card`, `card-metric`, `chip`, `field`).
+It describes **surfaces, not products**. No token, rule or primitive names a domain,
+so reusing it never requires editing it — and a rule that named one could not leave
+the project it came from.
 
-**One place.** Change the design in `@theme`, never in a component.
+The canonical tokens live in **`themes/matrix/tokens.css`**, published in the package
+and exported at `./themes/*`. Each template carries a byte-identical copy and imports
+it, so two different stacks present the same design.
+
+The copy in your app is `src/app/theme.css`, which `src/app/globals.css` imports, and
+it becomes utilities (`bg-surface-raised`, `text-text-secondary`, `text-label-mono`,
+`border-border-subtle`…) plus primitives (`btn-primary`, `btn-secondary`, `card`,
+`card-metric`, `chip`, `field`).
+
+**One place.** Change the design in the token file, never in a component.
 
 ---
 

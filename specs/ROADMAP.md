@@ -46,7 +46,7 @@ sounded useful. The problem is named, not the solution.
 The design system was therefore inseparable from one framework, and "the design is
 mine" was a property of the Next template rather than of this package.
 
-**Delivered.** `themes/executive/tokens.css` is the canonical source, shipped in the
+**Delivered.** `themes/matrix/tokens.css` is the canonical source, shipped in the
 package and exported at `./themes/*`. Each template keeps a byte-identical copy at
 `src/app/theme.css` and imports it — because Turbopack refuses an `@import` that leaves
 the project root, which is a bundler constraint and not a design decision. The copies
@@ -225,7 +225,7 @@ rule sets ship with no `npx` path at all: a Go or Python user gets rules and no
 project.
 
 **Delivered.** `template/spa` — Vite 7 + React 19, no App Router, no server
-components, no `proxy.ts`, no `shadcn` — carrying the same `themes/executive/tokens.css`
+components, no `proxy.ts`, no `shadcn` — carrying the same `themes/matrix/tokens.css`
 byte for byte. `SKILLS/dogfood` walks *N* templates, the CI template job is a matrix
 over `TEMPLATES`, and the release guard loops. All of them read the same constant, and
 the hardcoded `next` in `dogfood` is now asserted **absent**.

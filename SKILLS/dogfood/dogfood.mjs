@@ -55,7 +55,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { scaffold } from "../../lib/scaffold.mjs";
-import { TEMPLATES } from "../../lib/constants.mjs";
+import { TEMPLATES, DEFAULT_THEME } from "../../lib/constants.mjs";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -396,7 +396,7 @@ function walkTemplate(template) {
   // A second template is only worth having if the design system is genuinely
   // portable. Without this check, "the theme is an asset" stays a claim about a file
   // in this repository while every generated app quietly carries its own copy.
-  const canonical = path.join(PKG_ROOT, "themes", "executive", "tokens.css");
+  const canonical = path.join(PKG_ROOT, "themes", DEFAULT_THEME, "tokens.css");
   const copy = path.join(root, "src", "app", "theme.css");
   if (fs.existsSync(canonical) && fs.existsSync(copy)) {
     const same =
@@ -406,9 +406,9 @@ function walkTemplate(template) {
     } else {
       fail(
         `[${template}] the generated app carries the canonical theme`,
-        "src/app/theme.css differs from themes/executive/tokens.css. Two templates " +
+        "src/app/theme.css differs from themes/matrix/tokens.css. Two templates " +
           "sharing one design is the claim; two token files is the counterexample.",
-        { expected: "byte-identical to themes/executive/tokens.css" },
+        { expected: "byte-identical to themes/matrix/tokens.css" },
       );
     }
   }

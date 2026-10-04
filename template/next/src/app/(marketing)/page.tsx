@@ -1,22 +1,22 @@
 export default function HomePage() {
   return (
     <main className="container-grid py-16 lg:py-24">
-      <p className="label-mono">Executive Engineering</p>
+      <p className="label-mono">[NOME DO PRODUTO]</p>
 
       <h1 className="mt-4 text-display-hero-mobile font-extrabold tracking-tight text-balance lg:text-display-hero">
         [HERO HEADLINE AQUI]
       </h1>
 
       <p className="mt-6 max-w-2xl text-body-lg text-text-secondary">
-        [Subtítulo de uma linha explicando o impacto operacional e financeiro do produto.]
+        [Subtítulo de uma linha explicando o que o produto faz.]
       </p>
 
       <div className="mt-10 flex flex-wrap gap-3">
         <a href="#principal" className="btn-primary">
-          Ação Executiva
+          Ação principal
         </a>
         <a href="#detalhe" className="btn-secondary">
-          Deep Dive
+          Ver detalhes
         </a>
       </div>
 
@@ -24,10 +24,10 @@ export default function HomePage() {
         id="principal"
         className="mt-24 grid grid-cols-4 gap-4 md:grid-cols-8 lg:mt-36 lg:grid-cols-12"
       >
-        <KpiCard label="Economia anual" value="R$ 24M" sub="12 serviços migrados" />
-        <KpiCard label="Throughput" value="100M/dia" sub="msgs processadas" />
+        <KpiCard label="Usuários ativos" value="12,4 mil" sub="últimos 30 dias" />
+        <KpiCard label="Throughput" value="100M/dia" sub="requisições processadas" />
         <KpiCard label="Latência p99" value="42ms" sub="região São Paulo" />
-        <KpiCard label="Assets sob custódia" value="R$ 100bi" sub="auditoria ok" />
+        <KpiCard label="Disponibilidade" value="99,98%" sub="últimos 90 dias" />
       </section>
 
       <section id="detalhe" className="mt-20">

@@ -42,6 +42,18 @@ function fakeRepoRoot() {
   const dir = path.join(root, "SKILLS", "check-rules");
   fs.mkdirSync(dir, { recursive: true });
   fs.copyFileSync(CHECK_RULES, path.join(dir, "check-rules.mjs"));
+
+  // `lib/constants.mjs` travels with the checker. The skill reads DEFAULT_THEME from
+  // there rather than hardcoding a theme path — so a theme rename cannot leave the
+  // rule pointing at a file that no longer exists, which is the precise failure RULE
+  // 7 exists to catch. A fixture that copied the script without its dependency would
+  // have hidden that, so the fixture mirrors the real layout.
+  fs.mkdirSync(path.join(root, "lib"), { recursive: true });
+  fs.copyFileSync(
+    path.join(REPO_ROOT, "lib", "constants.mjs"),
+    path.join(root, "lib", "constants.mjs"),
+  );
+
   fs.mkdirSync(path.join(root, "template", "next", "src", "app"), { recursive: true });
   fs.writeFileSync(path.join(root, "package.json"), '{"name":"fixture"}\n', "utf8");
   return root;

@@ -4,10 +4,12 @@
    THE THEME IS AN ASSET, NOT A LINE IN THIS FILE.
 
    Every token — surface, text, border, accent, font, size, radius,
-   space — lives in `themes/executive/tokens.css`, one level above the
-   template, so a second stack imports the same design instead of
-   copying it. Copying a token file is how two design systems end up
-   sharing a name.
+   space — lives in `./theme.css`, which is a verbatim copy of
+   `themes/matrix/tokens.css` at the root of this package. The
+   copy has to live here because Turbopack refuses an `@import`
+   that leaves the project root, so the canonical file is copied in
+   at scaffold time and `tests/theme.test.mjs` asserts the two are
+   byte-identical.
 
    Everything below this line is the app layer: base styles,
    primitives and utilities, which are free to be app-specific.
