@@ -1,11 +1,17 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Public landing", () => {
-  test("renders hero, KPIs and stack chips", async ({ page }) => {
+  test("renders hero, stat cards and stack chips", async ({ page }) => {
     await page.goto("/");
 
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByText("R$ 24M")).toBeVisible();
+
+    // Asserted by the card's *label*, not its value. A value like "R$ 24M" was here
+    // once, and it made this test a second source of truth for the sample content:
+    // editing the page copy broke a test that was supposed to be about layout. The
+    // layout is what E2E is good at.
+    await expect(page.getByText("Usuários ativos")).toBeVisible();
+    await expect(page.getByText("99,98%")).toBeVisible();
     await expect(page.getByText("Next.js 16")).toBeVisible();
     await expect(page.getByText("Tecnologia em produção")).toBeVisible();
   });
