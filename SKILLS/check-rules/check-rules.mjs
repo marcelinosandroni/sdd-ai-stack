@@ -359,10 +359,36 @@ function checkAppIsShippable(appRoot) {
 
 const HEX = /#[0-9a-fA-F]{6}/g;
 
+/**
+ * RULE 7 — DESIGN.md and the tokens must agree.
+ *
+ * The token file moved out of `template/next/src/app/globals.css` and into
+ * `themes/executive/tokens.css`, so every template imports one design instead of
+ * each carrying its own copy.
+ *
+ * That move nearly made this rule vacuous, and that is the part worth recording:
+ * the rule compares two files by looking for tokens in one of them, so pointing it
+ * at a file with no tokens produces **zero findings and a green run**. It would
+ * have kept passing while proving nothing — the exact failure phase 10 called out
+ * about a fact check with no target.
+ *
+ * So it now refuses to pass without having read something. A guard that cannot
+ * report "I checked nothing" is a guard that cannot lie by omission.
+ */
 function checkTokensAgree(repoRoot) {
   const designPath = path.join(repoRoot, "DESIGN.md");
-  const cssPath = path.join(repoRoot, "template", "next", "src", "app", "globals.css");
-  if (!fs.existsSync(designPath) || !fs.existsSync(cssPath)) return;
+  const cssPath = path.join(repoRoot, "themes", "executive", "tokens.css");
+
+  if (!fs.existsSync(designPath)) return;
+  if (!fs.existsSync(cssPath)) {
+    report(
+      "DESIGN.md §2",
+      rel(cssPath),
+      "the token file does not exist. Every template imports it; without it the design " +
+        "system is prose with nothing behind it.",
+    );
+    return;
+  }
 
   const design = new Map();
   for (const line of fs.readFileSync(designPath, "utf8").split("\n")) {
@@ -374,6 +400,25 @@ function checkTokensAgree(repoRoot) {
   const fromCss = new Map();
   for (const match of css.matchAll(/--color-([a-z-]+):\s*(#[0-9a-f]{6})/g)) {
     fromCss.set(match[1], match[2].toLowerCase());
+  }
+
+  // The degenerate state, refused: no tokens read means nothing was compared.
+  if (fromCss.size === 0) {
+    report(
+      "DESIGN.md §2",
+      rel(cssPath),
+      `read zero colour tokens, so this rule compared nothing and would pass forever. ` +
+        `The token file is expected to declare --color-* inside an @theme block.`,
+    );
+    return;
+  }
+  if (design.size === 0) {
+    report(
+      "DESIGN.md §2",
+      rel(designPath),
+      "read zero documented tokens, so this rule compared nothing and would pass forever.",
+    );
+    return;
   }
 
   // The token names are not identical between the two files by design, so only
@@ -388,6 +433,8 @@ function checkTokensAgree(repoRoot) {
       );
     }
   }
+
+  console.log(`  (RULE 7 compared ${fromCss.size} tokens against ${design.size} documented)`);
 }
 
 
