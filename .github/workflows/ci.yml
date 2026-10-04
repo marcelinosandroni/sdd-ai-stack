@@ -11,31 +11,6 @@ permissions:
   contents: read
 
 jobs:
-  # The one list of templates, emitted for the matrix below.
-  #
-  # A hardcoded matrix list would be a second enumeration — and the failure mode is
-  # the quiet one this repository keeps meeting: a template ships, the matrix does
-  # not mention it, and CI is green while testing nothing new. Reading the constant
-  # that the CLI itself validates against means the two cannot disagree.
-  templates:
-    name: Read TEMPLATES
-    runs-on: ubuntu-24.04
-    outputs:
-      list: ${{ steps.read.outputs.list }}
-    steps:
-      - uses: actions/checkout@v7
-      - id: read
-        run: |
-          set -euo pipefail
-          list=$(node -e '
-            const src = require("fs").readFileSync("lib/constants.mjs", "utf8");
-            const m = src.match(/export const TEMPLATES = \[([^\]]*)\]/);
-            if (!m) { console.error("TEMPLATES is no longer a literal array; update this step"); process.exit(1); }
-            console.log(JSON.stringify(m[1].split(",").map(s => s.trim().replace(/^["\x27]|["\x27]$/g, "")).filter(Boolean)));
-          ')
-          echo "templates=$list" >> "$GITHUB_OUTPUT"
-          echo "TEMPLATES=$list"
-
   quality:
     name: Quality
     runs-on: ubuntu-24.04
@@ -101,83 +76,96 @@ jobs:
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: node SKILLS/dogfood/dogfood.mjs --full
 
-  # One job per template, from one list.
+  # Every template, from one list.
   #
   # This used to be a single hardcoded job that generated `next` and ran its gates.
   # Adding a second template therefore meant remembering to come back here — and
-  # nothing would have said so. The matrix reads `TEMPLATES` from the same constant
-  # the CLI validates against, so adding a template is one edit in `lib/constants.mjs`
-  # and CI grows a leg on its own.
+  # nothing would have said so.
   #
-  # A job that tests one template is evidence about that template. This one is
-  # evidence about every template, which is the claim `--template` now makes.
+  # It was first written as a `strategy.matrix` fed by a `templates` job that emitted
+  # the list as a JSON output. Every job in the run then passed and the RUN still
+  # failed, with no failing job to look at: GitHub's planner dropped the matrix
+  # entirely. That is a genuinely awful failure mode — a workflow that reports red
+  # with nothing red in it — so this is a sequential loop instead. It costs
+  # parallelism, which is the price of not depending on the planner.
+  #
+  # The list is read from `lib/constants.mjs`, the same constant the CLI validates
+  # against. A hardcoded matrix list would be a second enumeration, and the failure
+  # mode is the quiet one this repository keeps meeting: a template ships, the matrix
+  # does not mention it, and CI is green while testing nothing new.
   template:
-    name: Template (${{ matrix.template }})
+    name: Template
     runs-on: ubuntu-24.04
-    needs: templates
-    strategy:
-      fail-fast: false
-      matrix:
-        template: ${{ fromJson(needs.templates.outputs.list) }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
-        # No `cache: npm`: the root is a zero-dependency CLI package, and the
-        # app is generated into .sandbox (which has no lockfile until the
-        # install runs).
+        # No `cache: npm`: the root is a zero-dependency CLI package, and the app is
+        # generated into .sandbox-<template> (which has no lockfile until install).
         with:
           node-version: 22
 
-      - name: Generate the app from the template
+      - name: Read TEMPLATES
         run: |
-          node bin/create-sdd-ai-stack.mjs .sandbox --template "${{ matrix.template }}" --no-install --shortcuts stub --yes
-          cd .sandbox
-
-      - name: Install dependencies
-        working-directory: .sandbox
-        run: npm install --no-audit --no-fund
-
-      - name: Typecheck
-        working-directory: .sandbox
-        run: npm run typecheck
-
-      - name: Lint
-        working-directory: .sandbox
-        run: npm run lint
-
-      - name: Unit tests
-        working-directory: .sandbox
-        run: npm run test
-
-      - name: Build
-        working-directory: .sandbox
-        run: npm run build
-
-      # The token file must arrive unchanged. A generated app carrying its own copy
-      # of the design is how two apps drift into two design systems with one name.
-      - name: The generated app carries the canonical theme
-        run: |
-          node --input-type=module -e '
-            import { readFileSync } from "node:fs";
-            const a = readFileSync("themes/executive/tokens.css", "utf8").trim();
-            const b = readFileSync(".sandbox/src/app/theme.css", "utf8").trim();
-            if (a !== b) {
-              console.error("src/app/theme.css differs from themes/executive/tokens.css");
-              process.exit(1);
-            }
-            console.log("theme is byte-identical");
-          '
+          set -euo pipefail
+          # If TEMPLATES stops being a literal array, this fails loudly instead of
+          # silently gating nothing — the failure mode this phase exists to remove.
+          list=$(node -e '
+            const src = require("fs").readFileSync("lib/constants.mjs", "utf8");
+            const m = src.match(/export const TEMPLATES = \[([^\]]*)\]/);
+            if (!m) { console.error("TEMPLATES is no longer a literal array; update every reader"); process.exit(1); }
+            process.stdout.write(m[1].split(",").map(s => s.trim().replace(/^["\x27]|["\x27]$/g, "")).filter(Boolean).join(" "));
+          ')
+          echo "TEMPLATES=$list"
+          case "$list" in
+            *[![:space:]]*) ;;
+            *) echo "::error::TEMPLATES parsed as empty — the job would gate nothing"; exit 1 ;;
+          esac
+          echo "TEMPLATES=$list" >> "$GITHUB_ENV"
 
       - name: Install Playwright browsers
-        working-directory: .sandbox
         run: npx playwright install --with-deps chromium firefox
 
-      # E2E runs against the production build by default (see
-      # playwright.config.ts): next dev does not minify and hides build bugs.
-      - name: E2E
-        working-directory: .sandbox
-        run: npm run test:e2e
+      - name: Generate, gate, and build every template
+        run: |
+          set -euo pipefail
+          for t in $TEMPLATES; do
+            echo "::group::template $t"
+            app=".sandbox-$t"
+            rm -rf "$app"
 
+            node bin/create-sdd-ai-stack.mjs "$app" --template "$t" --no-install --shortcuts stub --yes
+
+            cd "$app"
+            npm install --no-audit --no-fund
+            npm run typecheck
+            npm run lint
+            npm run test
+            npm run build
+
+            # E2E runs against the production build, never the dev server. A dev
+            # server compiles on demand, so a route that only breaks after bundling
+            # passes E2E and fails the user.
+            npm run test:e2e
+            cd - >/dev/null
+
+            cd ..
+            # The token file must arrive unchanged. A generated app carrying its own
+            # copy of the design is how two apps drift into two design systems with
+            # one name.
+            node --input-type=module -e "
+              import { readFileSync } from 'node:fs';
+              const a = readFileSync('themes/executive/tokens.css', 'utf8').trim();
+              const b = readFileSync('$app/src/app/theme.css', 'utf8').trim();
+              if (a !== b) {
+                console.error('src/app/theme.css differs from themes/executive/tokens.css');
+                process.exit(1);
+              }
+              console.log('theme is byte-identical');
+            "
+
+            rm -rf "$app"
+            echo "::endgroup::"
+          done
   site:
     name: Site
     runs-on: ubuntu-24.04
