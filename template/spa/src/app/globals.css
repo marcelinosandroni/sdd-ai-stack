@@ -5,7 +5,7 @@
 
    Every token — surface, text, border, accent, font, size, radius,
    space — lives in `./theme.css`, which is a verbatim copy of
-   `themes/executive/tokens.css` at the root of the package that
+   `themes/matrix/tokens.css` at the root of the package that
    generated this app. The copy has to live here because a bundler
    refuses an `@import` that leaves the project root, so the
    canonical file is copied in at scaffold time and

@@ -158,10 +158,10 @@ jobs:
             # one name.
             node --input-type=module -e "
               import { readFileSync } from 'node:fs';
-              const a = readFileSync('themes/executive/tokens.css', 'utf8').trim();
+              const a = readFileSync('themes/matrix/tokens.css', 'utf8').trim();
               const b = readFileSync('$app/src/app/theme.css', 'utf8').trim();
               if (a !== b) {
-                console.error('src/app/theme.css differs from themes/executive/tokens.css');
+                console.error('src/app/theme.css differs from themes/matrix/tokens.css');
                 process.exit(1);
               }
               console.log('theme is byte-identical');

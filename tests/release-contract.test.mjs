@@ -46,7 +46,7 @@ export const ESSENTIAL_FILES = [
   "stacks/README.md",
   "stacks/clean-code.md",
   "stacks/language.md",
-  "themes/executive/tokens.css",
+  "themes/matrix/tokens.css",
   "SKILLS/create-feature/SKILL.md",
   "SKILLS/create-task/SKILL.md",
   "SKILLS/check-rules/check-rules.mjs",

@@ -111,7 +111,7 @@ A heavier, more ceremonious SDD than this core: `specify` → `plan` → `tasks`
 | Setup | one `npx`, no extra tooling | `uvx`/`uv`, `.specify/` tree, agent command files |
 | Ceremony | light — one task `[-]` at a time | full spec → plan → task chain with gates |
 | Ships a working app | ✅ (Next.js 16 template) | ❌ rules only |
-| Design system | ✅ Executive Engineering, pre-wired | ❌ you supply it |
+| Design system | ✅ Matrix, pre-wired | ❌ you supply it |
 | Language | English by default | preset-configurable (including localization) |
 | Best for | a solo dev shipping a real product | a team that wants heavy, auditable gates |
 

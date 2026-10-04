@@ -6,6 +6,88 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
+## [0.5.0] — 2026-10-04
+
+> **O design system não é mais um portfolio. É um sistema de design.**
+>
+> A fase 11 colocou um nome no fim: um documento que se apresenta como design system
+> e ensina, no mesmo fôlego, a positioning de carreira de quem o escreveu. Isso é
+> reaproveitável em exatamente zero projetos — cada projeto é uma coisa diferente. O
+> que se reaproveita é o **design**: regras, tokens, cores, grid, responsivo, UX. Foi
+> só isso que ficou.
+
+### 🔤 `executive` → `matrix`
+
+O nome do tema **era** a persona, e a persona era portfolio. `Executive` é
+posicionamento de carreira; `Matrix` é a referência estética que dá origem ao visual —
+obsidiana, lima ácido como *sinal* em vez de decoração, monoespaçada como
+instrumentação, densidade no lugar de respiro.
+
+É a única coisa aqui que **quebrava** um caminho publicado, então foi feita com
+cuidado:
+
+```
+themes/executive/tokens.css   →   themes/matrix/tokens.css
+```
+
+`DEFAULT_THEME` em `lib/constants.mjs` virou a fonte única, e `check-rules` (RULE 7) e
+`dogfood` agora **leem a constante** em vez de escrever o caminho. Um caminho
+hardcoded é exatamente o que sobrevive a uma renomeação e continua apontando para o
+arquivo que deixou de existir — a falha que a RULE 7 existe para pegar, um diretório
+acima.
+
+> **O histórico não foi reescrito.** `specs/history/phases/*.md` e as entradas
+> antigas deste arquivo continuam dizendo `themes/executive/`, porque foi isso que
+> aconteceu em 0.4.0. Reescrever um arquivo de registro para o caminho de hoje é
+> falsificar a própria evidência. Quem documenta a renomeação é esta entrada.
+
+### ✂️ O que saiu do `DESIGN.md`
+
+| Antes | Agora | Por quê |
+| --- | --- | --- |
+| §1 "high-tier distributed systems **and senior executive fiscal stewardship**" | **§1 Style & Reference**, com uma **matriz de referência** | A persona não viaja. A referência estética viaja. |
+| §5 "**Executive** KPI Metric Card" — `R$ 24M/ano`, `R$ 100bi sob custódia` | **Stat card** — qualquer contagem, duração, delta | Um componente com substantivo de domínio não é reutilizável. |
+| §5 "Project Showcase & **Technical Recruiter Drawer**" — Role, Team Size, Direct Fiscal Impact | **Detail drawer / expandable row** — o que é, por quê, o que faz, o que mediu | Era 100% portfolio. |
+| §5 "Architecture Diagrams & Interactive System Flow" | **Node & link diagram** | O padrão é genérico e útil; o nome e o enquadramento é que não eram. |
+| §5 "Chips & **Technology Taxonomy** Badges" | **Badges & tags** | Idem. |
+| §4 "large modules (Hero, **Metrics Matrix, Case Studies**)… museum-grade **portfolio** presence" | regra de ritmo, neutra | A frase mais explicitamente de portfolio do documento. |
+| §4 "information density that engineering leaders and **recruiters** appreciate" | densidade é propriedade do conteúdo, não uma configuração global | O "appreciate" era o objetivo, não a regra. |
+| §2 cores: 3 tabelas misturando superfície, texto e **significado de negócio** (`ROI`, `SLA up`, `pipeline stages`) | **3 rampas separadas**: *surfaces* (profundidade) · *text* (contraste) · *signals* (significado) | A separação é o que torna a paleta reutilizável. Uma cor que significa "ROI" não serve em outro domínio. |
+
+### ➕ O que entrou
+
+- **Matriz de referência** (§1): Matrix, Linear/Vercel, Swiss publishing, Stripe Press —
+  cada um com *o que se toma* e *o que não se toma*. A entrada do Matrix diz, sem
+  rodeios, que o lime é status e não enfeite: um borrão verde piscando não é referência
+  Matrix; um número que importa é.
+- **§REUSABILITY**, a meta-regra: ❌ substantivo de domínio no nome de uma regra,
+  ❌ valor de um projeto como exemplo, ❌ editar o `DESIGN.md` para descrever um projeto
+  (isso vai no `APP.md`), ❌ segunda fonte da verdade para um token.
+- **§6 UX** ganhou três itens que faltavam e não dependem de domínio: estado vazio é
+  um estado; ação destrutiva é reversível ou confirmada; ninguém fica preso em loading.
+- **Testes na §2** que dizem *quando* uma cor de acento é erro, não só *quando não pode*.
+
+### 🐛 O router do `DESIGN.md` apontava para seções erradas
+
+`§5 Layout` e `§7 UX`. As seções são **§4** e **§6**. Quem seguia o roteiro lia
+componentes quando queria layout, e caía no fim do arquivo procurando UX.
+
+Corrigido ao reorganizar, e agora o router lista §1 — que antes não tinha entrada
+mesmo sendo a seção que decide o resto.
+
+### 📄 A página de marketing do template
+
+`template/next/src/app/(marketing)/page.tsx` é o que **todo consumidor recebe** como
+primeira tela, e vinha com `Executive Engineering`, `Ação Executiva`, `R$ 24M` e
+`Assets sob custódia`. Conteúdo neutro agora: produto, throughput, latência,
+disponibilidade.
+
+> A página continua em português — é dívida já registrada (a `check-rules` não varre
+> `.md`, e por isso o `CHANGELOG` também escapou). Esta entrada é sobre conteúdo de
+> portfolio, não sobre idioma.
+
+---
+
 ## [0.4.0] — 2026-10-04
 
 > **Um `--template` com uma opção só, e três suposições que só o segundo template

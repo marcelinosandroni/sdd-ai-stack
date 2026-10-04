@@ -142,7 +142,7 @@ jobs:
           for f in "bin/create-sdd-ai-stack.mjs" "lib/scaffold.mjs" "AGENTS.md" \
                    "PREFLIGHT.md" "DESIGN.md" "APP-STACK.md" "stacks/README.md" \
                    "stacks/clean-code.md" "stacks/language.md" \
-                   "themes/executive/tokens.css" \
+                   "themes/matrix/tokens.css" \
                    "SKILLS/create-feature/SKILL.md" "SKILLS/create-task/SKILL.md" \
                    "SKILLS/check-rules/check-rules.mjs" "SKILLS/check-docs/SKILL.md"; do
             grep -q "$f" pack.txt || { echo "::error::missing from the package: $f"; exit 1; }

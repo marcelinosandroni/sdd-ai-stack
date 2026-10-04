@@ -49,7 +49,7 @@ asks
 [x] - `template/spa`: Vite 7 + React 19 + TypeScript. No App Router, no server
       components, no `proxy.ts`, no `shadcn`. One vertical slice in
       domain/application/infrastructure/ui, unit tests, E2E against the production
-      build, and the **same** `themes/executive/tokens.css` byte for byte.
+      build, and the **same** `themes/matrix/tokens.css` byte for byte.
 [x] - `create-feature` detects the app's stack instead of assuming Next. It emitted
       `import "server-only"`, `next/cache` and `@/shared/server/auth`
       unconditionally, so every slice it generated outside a Next app could not
