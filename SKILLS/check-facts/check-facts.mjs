@@ -144,22 +144,22 @@ for (const file of DOCS) {
 }
 
 if (stale.length) {
-  console.error(`\n✖ ${stale.length} afirmação(ões) verificável(is) fora de data:\n`);
+  console.error(`\n✖ ${stale.length} verifiable claim(s) out of date:\n`);
   for (const f of stale) {
-    console.error(`  ${f.file}: diz "${f.claimed} ${f.kind}", o repositório tem ${f.actual}`);
-    console.error(`    corrija com o número real — rode \`${f.how}\`\n`);
+    console.error(`  ${f.file}: says "${f.claimed} ${f.kind}", the repository has ${f.actual}`);
+    console.error(`    fix it with the real number — run \`${f.how}\`\n`);
   }
   console.error(
-    "Um documento que erra um número que poderia conferir ensina o agente a\n" +
-      "desconfiar de todos os documentos. É o problema que este template existe\n" +
-      "para resolver.\n",
+    "A document that gets a number wrong when it could have checked it teaches the\n" +
+      "agent to distrust every document. That is the problem this template exists\n" +
+      "to solve.\n",
   );
   process.exit(1);
 }
 
 if (checked === 0) {
-  console.log("⚠ check-facts: nenhuma afirmação verificável encontrada para conferir.");
+  console.log("⚠ check-facts: no verifiable claim found to check.");
   process.exit(0);
 }
 
-console.log(`✓ ${checked} afirmação(ões) conferem (${testCount()} testes, ${docCount()} documentos).`);
+console.log(`✓ ${checked} claim(s) verified (${testCount()} tests, ${docCount()} documents).`);

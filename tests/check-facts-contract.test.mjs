@@ -61,7 +61,7 @@ test("the check sees the claims it claims to see", () => {
   // A guard that reports "0 assertions verified" is indistinguishable from one
   // that works, from the outside. Assert it found something.
   const result = runCheck();
-  const m = /✓ (\d+) afirmação/.exec(result.out);
+  const m = /✓ (\d+) claim/.exec(result.out);
   assert.ok(m, `could not read the count from: ${result.out}`);
   assert.ok(Number(m[1]) > 0, "check-facts verified nothing, so it cannot fail");
 });
@@ -83,7 +83,7 @@ test("a wrong number in a document turns the check red", () => {
     const result = runCheck();
     assert.equal(result.code, 1, `a stale number did not fail the check:\n${result.out}`);
     assert.match(result.out, /12 tests/, "the failure does not name the stale claim");
-    assert.match(result.out, /fora de data/, "the failure does not say it is out of date");
+    assert.match(result.out, /out of date/, "the failure does not say it is out of date");
   } finally {
     fs.writeFileSync(readme, original);
   }
@@ -136,11 +136,11 @@ test("check-facts and check-docs agree on how many documents there are", () => {
     [path.join(REPO_ROOT, "SKILLS", "check-docs", "check-docs.mjs")],
     { cwd: REPO_ROOT, encoding: "utf8" },
   );
-  const docs = /✓ (\d+) documentos/.exec(out);
+  const docs = /✓ (\d+) documents/.exec(out);
   assert.ok(docs, `could not read the document count from: ${out}`);
 
   const facts = runCheck();
-  const reported = /✓ \d+ afirmação\(ões\) conferem \(\d+ testes, (\d+) documentos\)/.exec(
+  const reported = /✓ \d+ claim\(s\) verified \(\d+ tests, (\d+) documents\)/.exec(
     facts.out,
   );
   assert.ok(reported, `could not read the check's own report: ${facts.out}`);
@@ -158,7 +158,7 @@ test("the check reports its own numbers so a drift is visible in CI output", () 
   assert.equal(result.code, 0, `check-facts failed on a clean tree:\n${result.out}`);
   assert.match(
     result.out,
-    /✓ \d+ afirmação\(ões\) conferem \(\d+ testes, \d+ documentos\)/,
+    /✓ \d+ claim\(s\) verified \(\d+ tests, \d+ documents\)/,
     `the check must print both counts; a bare "ok" hides a drift it cannot see: ${result.out}`,
   );
 });

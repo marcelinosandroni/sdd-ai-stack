@@ -24,8 +24,8 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: { default: "[NOME DO APP]", template: "%s | [NOME DO APP]" },
-  description: "[DESCRIÇÃO DE UMA LINHA]",
+  title: { default: "[APP NAME]", template: "%s | [APP NAME]" },
+  description: "[ONE-LINE DESCRIPTION]",
   metadataBase: new URL("https://example.com"),
 };
 
