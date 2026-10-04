@@ -1,145 +1,19 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════
-   EXECUTIVE ENGINEERING — DESIGN TOKENS
-   Lei: SDD/DESIGN.md. NUNCA edite token fora daqui.
+   THE THEME IS AN ASSET, NOT A LINE IN THIS FILE.
+
+   Every token — surface, text, border, accent, font, size, radius,
+   space — lives in `themes/executive/tokens.css`, one level above the
+   template, so a second stack imports the same design instead of
+   copying it. Copying a token file is how two design systems end up
+   sharing a name.
+
+   Everything below this line is the app layer: base styles,
+   primitives and utilities, which are free to be app-specific.
    ═══════════════════════════════════════════════════════════════ */
 
-@theme {
-  /* ── Superfícies ── */
-  --color-surface: #111319;
-  --color-surface-base: #0a0d12;
-  --color-surface-raised: #11151c;
-  --color-surface-overlay: #181e27;
-  --color-surface-container-low: #191c21;
-  --color-surface-container: #1d2025;
-  --color-surface-container-high: #272a30;
-  --color-surface-container-highest: #32353b;
-  --color-surface-bright: #36393f;
-
-  /* ── Texto ── */
-  --color-on-surface: #e1e2ea;
-  --color-text-primary: #f4f1ea;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #56657a;
-
-  /* ── Bordas ── */
-  --color-border-subtle: #1e2633;
-  --color-border-prominent: #2d384b;
-  --color-outline: #8d937b;
-  --color-outline-variant: #434935;
-
-  /* ── Acentos ── */
-  --color-primary: #baf336;
-  --color-primary-dim: #a1d811;
-  --color-on-primary: #0a0d12;
-  --color-primary-container: #baf336;
-  --color-on-primary-container: #253600;
-  --color-secondary: #45dfa4;
-  --color-secondary-dim: #34d399;
-  --color-on-secondary: #003825;
-  --color-secondary-container: #00bd85;
-  --color-on-secondary-container: #00452e;
-  --color-tertiary: #93c5fd;
-  --color-on-tertiary: #003257;
-  --color-tertiary-container: #cce2ff;
-  --color-on-tertiary-container: #306698;
-  --color-error: #ffb4ab;
-  --color-on-error: #690005;
-  --color-error-container: #93000a;
-  --color-on-error-container: #ffdad6;
-
-  /* ── Glows ── */
-  --kpi-accent-glow: rgba(186, 243, 54, 0.12);
-  --mint-accent-glow: rgba(52, 211, 153, 0.12);
-
-  /* ── Tipografia: famílias ── */
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
-  --font-editorial: var(--font-playfair), ui-serif, Georgia, serif;
-
-  /* ── Tipografia: escala ── */
-  --text-display-hero: 64px;
-  --text-display-hero--line-height: 72px;
-  --text-display-hero--letter-spacing: -0.035em;
-  --text-display-hero--font-weight: 800;
-
-  --text-display-hero-mobile: 38px;
-  --text-display-hero-mobile--line-height: 44px;
-  --text-display-hero-mobile--letter-spacing: -0.025em;
-  --text-display-hero-mobile--font-weight: 800;
-
-  --text-metric-stat: 48px;
-  --text-metric-stat--line-height: 52px;
-  --text-metric-stat--letter-spacing: -0.03em;
-  --text-metric-stat--font-weight: 700;
-
-  --text-metric-stat-mobile: 32px;
-  --text-metric-stat-mobile--line-height: 36px;
-  --text-metric-stat-mobile--letter-spacing: -0.02em;
-  --text-metric-stat-mobile--font-weight: 700;
-
-  --text-headline-lg: 32px;
-  --text-headline-lg--line-height: 40px;
-  --text-headline-lg--letter-spacing: -0.02em;
-  --text-headline-lg--font-weight: 700;
-
-  --text-headline-md: 24px;
-  --text-headline-md--line-height: 32px;
-  --text-headline-md--letter-spacing: -0.015em;
-  --text-headline-md--font-weight: 600;
-
-  --text-headline-sm: 18px;
-  --text-headline-sm--line-height: 26px;
-  --text-headline-sm--letter-spacing: -0.01em;
-  --text-headline-sm--font-weight: 600;
-
-  --text-body-lg: 17px;
-  --text-body-lg--line-height: 28px;
-
-  --text-body-md: 15px;
-  --text-body-md--line-height: 24px;
-
-  --text-body-sm: 13px;
-  --text-body-sm--line-height: 20px;
-
-  --text-editorial-quote: 26px;
-  --text-editorial-quote--line-height: 36px;
-  --text-editorial-quote--letter-spacing: -0.01em;
-  --text-editorial-quote--font-weight: 500;
-
-  --text-code-inline: 13px;
-  --text-code-inline--line-height: 18px;
-  --text-code-inline--letter-spacing: -0.01em;
-  --text-code-inline--font-weight: 500;
-
-  --text-label-mono: 11px;
-  --text-label-mono--line-height: 16px;
-  --text-label-mono--letter-spacing: 0.06em;
-  --text-label-mono--font-weight: 600;
-
-  /* ── Raios ── */
-  --radius-sm: 0.125rem;
-  --radius-DEFAULT: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-
-  /* ── Espaçamento ── */
-  --spacing-gutter: 1.5rem;
-  --spacing-gutter-desktop: 2rem;
-  --spacing-margin: 1rem;
-  --spacing-margin-tablet: 2rem;
-  --spacing-margin-desktop: 3rem;
-  --spacing-space-xs: 0.25rem;
-  --spacing-space-sm: 0.5rem;
-  --spacing-space-md: 1rem;
-  --spacing-space-lg: 1.5rem;
-  --spacing-space-xl: 2.5rem;
-  --spacing-space-2xl: 4rem;
-  --spacing-space-3xl: 6rem;
-}
-
+@import "./theme.css";
 /* ═══════════════════════════════════════════════════════════════
    BASE
    ═══════════════════════════════════════════════════════════════ */
@@ -191,7 +65,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   COMPONENTES (próximo de shadcn — edite aqui, não em componente)
+   COMPONENTS (shadcn-adjacent — edit here, never in a component)
    ═══════════════════════════════════════════════════════════════ */
 
 @layer components {
@@ -420,10 +294,10 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   A11Y — respeitar preferências do usuário
+   A11Y — respect the user's preferences
    ═══════════════════════════════════════════════════════════════ */
 
-/* biome-ignore-start lint/complexity/noImportantStyles: !important é o único jeito de respeitar prefers-reduced-motion sobre transition inline */
+/* biome-ignore-start lint/complexity/noImportantStyles: !important is the only way to honour prefers-reduced-motion over an inline transition */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -434,4 +308,4 @@
     scroll-behavior: auto !important;
   }
 }
-/* biome-ignore-end lint/complexity/noImportantStyles: fim do bloco prefers-reduced-motion */
+/* biome-ignore-end lint/complexity/noImportantStyles: end of the prefers-reduced-motion block */

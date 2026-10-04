@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * SDD SKILL: check-docs
- * Valida que todo link relativo entre documentos markdown resolve.
+ * Validates that every relative link between markdown documents resolves.
  *
- * Uso: node SDD/SKILLS/check-docs/check-docs.mjs [raiz]
+ * Usage: node SDD/SKILLS/check-docs/check-docs.mjs [root]
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -17,8 +17,8 @@ function stripCodeFences(md) {
 }
 
 /**
- * `template/` é excluído de propósito: o README dele aponta para `./SDD/...`,
- * que só existe DEPOIS do scaffold. Validar aqui daria falso positivo.
+ * `template/` is excluded on purpose: its README points at `./SDD/...`, which
+ * only exists AFTER the scaffold. Validating it here would be a false positive.
  */
 function collectMarkdown(dir) {
   const files = [];
@@ -63,7 +63,8 @@ for (const file of files) {
 }
 
 if (broken.length) {
-  console.error(`\n✖ ${broken.length} link(s) quebrado(s):\n${broken.join("\n")}\n`);
+  console.error(`\n✖ ${broken.length} broken link(s):\n${broken.join("\n")}\n`);
   process.exit(1);
 }
-console.log(`✓ ${files.length} documentos, todos os links relativos resolvem.`);
+console.log(`✓ ${files.length} documents, every relative link resolves.`);
+

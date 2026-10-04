@@ -21,13 +21,66 @@
 | [3](./history/phases/phase-3-rules-that-work.md) | Rules that work | 13 findings from letting an agent follow the rules, and the check that catches them |
 | [4](./history/phases/phase-4-site-and-responsive.md) | Site and responsive | The site, copy buttons, analytics, and a responsive rule with teeth |
 | [5](./history/phases/phase-5-first-real-publish.md) | First real publish | `0.3.1` live on npmjs and GitHub Packages, OIDC, and eight release bugs found by running the release |
+| [6](./history/phases/phase-6-no-age-badly.md) | No age badly | Dependabot's ignore was inverted, and three files that had to agree on the Node version did not |
+| [7](./history/phases/phase-7-your-project.md) | A project that belongs to you | Five leaks that shipped this repository's own documents into someone else's app |
+| [8](./history/phases/phase-8-proving-the-rules.md) | Proving the rules | Six bugs that only exist in a generated app, and the CI job that finds them in 5 seconds |
+| [9](./history/phases/phase-9-other-tools.md) | The rules in other tools | `.cursorrules` is Chat-only in Cursor; the other six shortcuts named a file that was not themselves |
+| [10](./history/phases/phase-10-a-template-that-does-not-lie.md) | A template that does not lie | `check-facts` made the numbers in prose falsifiable |
+| [11](./history/phases/phase-11-the-audit.md) | The audit | Four defects that were green on `main`, and one rule that structurally could not fail |
+| [13](./history/phases/phase-13-a-theme-that-is-an-asset.md) | A theme that is an asset | The design system extracted out of one template into a portable artifact |
 
 ---
 
-## 🧭 Planned
+## 📚 Closed phases in detail
 
-Each phase below exists because something is **broken or false today**, not because
-it sounds useful. The problem is named, not the solution.
+Each phase below exists because something **was broken or false**, not because it
+sounded useful. The problem is named, not the solution.
+
+### Phase 13 — A theme that is an asset ✅
+
+> Delivered inside phase 11. The full reasoning is in
+> [the phase 11 archive](./history/phases/phase-11-the-audit.md#2-2-the-theme-was-a-feature-of-one-template-not-an-asset-of-the-package).
+
+**Problem.** Every token lived inside `@theme` in `template/next/src/app/globals.css`.
+The design system was therefore inseparable from one framework, and "the design is
+mine" was a property of the Next template rather than of this package.
+
+**Delivered.** `themes/executive/tokens.css` is the canonical source, shipped in the
+package and exported at `./themes/*`. Each template keeps a byte-identical copy at
+`src/app/theme.css` and imports it — because Turbopack refuses an `@import` that leaves
+the project root, which is a bundler constraint and not a design decision. The copies
+are asserted byte-identical, and `check-rules` RULE 7 now **fails when it reads zero
+tokens** so it cannot pass by comparing nothing.
+
+**Scope out.** A second theme. One portable theme proves the mechanism.
+
+### Phase 11 — The audit ✅
+
+**Problem.** Phases 3 to 10 found bugs by *running* something: the release, the
+scaffold, the generated app. Nobody re-read the repository asking a different
+question — not "does it work" but "does it obey its own rules". This phase was that
+re-read, and it found four defects, three gaps, and one guard that could not fail.
+
+| # | Defect | Why every gate was green |
+| --- | --- | --- |
+| 1 | `SKILLS/create-feature.sh` generates no test | the CI check exercises the `.mjs`; `SKILL.md` told the agent to run the `.sh` |
+| 2 | The design system is documented in Portuguese | RULE 1's pattern list was built from one string, was case-sensitive, and never walked `template/next/src` |
+| 3 | `ROADMAP.md` had two "Planned" sections, and phases 9 and 10 were never archived | `check:facts` verifies numbers, not structure |
+| 4 | The README lists 3 of 8 skills | same blind spot: enumeration drift is invisible to a fact check |
+
+**Delivered.** The `.sh` deleted and its absence asserted. RULE 1 rebuilt around a
+curated word list, made case-insensitive, extended to the template source, and proven
+by planting the failure. Every distributed file is English. The ROADMAP has one
+`Planned` section and the missing archives. The README lists all eight skills, and
+structural claims — enumerations, archive symmetry, one `[-]` — now live in
+`tests/docs-structure.test.mjs`, because a fact checker recomputes numbers and has no
+opinion about a table that lists 3 of 8. Plus phase 13, the portable theme.
+
+Full account: [phase-11-the-audit.md](./history/phases/phase-11-the-audit.md).
+
+**Scope out.** Fixing the rules the audit surfaced *as rules*, and writing the five
+stack documents the router promises. Phase 8 measured and declined to tune; this one
+tunes only what it can prove.
 
 ### Phase 6 — A template that does not age badly ✅
 
@@ -146,8 +199,18 @@ Wired into CI and `prepublishOnly`.
 
 ## 🧭 Planned
 
-_Nothing yet. A phase appears here when something is broken or missing, and the
-entry names the problem rather than the solution._
+### Phase 12 — More than one template
+
+**Problem.** `--template <next|none>` accepts a list of one. `TEMPLATES` is
+`["next"]`, and `none` is what `--rules-only` already does. Meanwhile seven backend
+rule sets ship with no `npx` path at all: a Go or Python user gets rules and no
+project.
+
+**Delivered.** A second template that proves the pipeline is not hardcoded to
+Next.js, and `SKILLS/dogfood` generalized to walk *N* templates — today it assumes
+`next` in its gate list and its assertions.
+
+**Scope out.** Seven templates. Two is the number that proves the seam is real.
 
 ---
 

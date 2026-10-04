@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * SDD SKILL: installs the rules core (SDD/) into an EXISTING project
- * como git submodule, e cria os atalhos na raiz apontando para ./SDD/AGENTS.md
+ * SDD SKILL: installs the rules core (SDD/) into an EXISTING project as a git
+ * submodule, and creates the root shortcuts pointing at ./SDD/AGENTS.md
  *
- * Uso:
+ * Usage:
  *   node SDD/SKILLS/install-submodule/install-submodule.mjs [project-path]
- *   node SDD/SKILLS/install-submodule/install-submodule.mjs            # usa cwd
- *   node SDD/SKILLS/install-submodule/install-submodule.mjs . --copy   # copia em vez de submodule
+ *   node SDD/SKILLS/install-submodule/install-submodule.mjs            # uses cwd
+ *   node SDD/SKILLS/install-submodule/install-submodule.mjs . --copy   # copies instead of a submodule
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -35,8 +35,8 @@ cat SDD/specs/PLAN.md      # the task RIGHT NOW
 cat SDD/stacks/next.md            # the stack rules
 \`\`\`
 
-> **Não edite \`SDD/\`** sem pedir ao humano.
-> Atualize com: \`git submodule update --remote --merge SDD\`
+> **Do not edit \`SDD/\`** without asking the human.
+> To update: \`git submodule update --remote --merge SDD\`
 `;
 
 const log = (m) => console.log(m);
@@ -56,7 +56,7 @@ function copyDir(from, to) {
 function installShortcuts(root) {
   for (const rel of SHORTCUTS) {
     const p = path.join(root, rel);
-    if (fs.existsSync(p)) { log(`  = ${rel} (já existe, preservado)`); continue; }
+    if (fs.existsSync(p)) { log(`  = ${rel} (already exists, preserved)`); continue; }
     fs.mkdirSync(path.dirname(p), { recursive: true });
     try {
       fs.symlinkSync("SDD/AGENTS.md", p, "file");

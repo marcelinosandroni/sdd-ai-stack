@@ -47,35 +47,112 @@ const rel = (p) => path.relative(PKG_ROOT, p).split(path.sep).join("/");
 
 /* ════════════════════════════════════════════════════════════
    RULE 1 — language.md §1: English in the repository
-   Code, error strings, test names. Not identifiers, not UI copy
-   shown to a Brazilian user.
+   Code, CSS, comments, error strings. Not identifiers, and not
+   UI copy meant to be shown to a Brazilian user in Brazil.
    ════════════════════════════════════════════════════════════ */
 
-// High-signal Portuguese words that never appear in English code. Deliberately
-// conservative: a false positive costs more than a missed noun.
+// High-signal Portuguese that never appears in English code.
+//
+// The first version of this list was built from ONE remembered error string plus
+// three obvious nouns, and it was green for months over a design system
+// documented entirely in Portuguese — while CI cited it as proof the repository
+// obeyed its own language law. A guard that only catches what it was written
+// against is worse than no guard, because it gets quoted as evidence.
+//
+// So the list is deliberately broad and deliberately boring: words with a
+// diacritic that no English word has, plus a handful of unaccented ones that are
+// ordinary Portuguese and never English. The bias is conservative on purpose — a
+// rule that cries wolf gets deleted, and deleting it loses the guarantee entirely.
+//
+// Every pattern is case-insensitive, because the real offenders are section
+// headers, which are capitalized — and a case-sensitive list missed every one of
+// them. That is how a rule with fifteen Portuguese patterns still passed over a
+// Portuguese token file: the words it should have caught were capitalized, and the
+// two it did catch were lowercase sentences further down the same file.
+//
+// Case-insensitivity costs nothing here. The accented forms cannot collide with
+// English at all, and the unaccented ones are Portuguese spellings that English
+// does not have — a language never abbreviates its own words into another
+// language's vocabulary, so the two lists stay disjoint.
+//
+// Note that none of these words is ever spelled out in this file. A checker that
+// quotes what it forbids fails on itself, which is its own kind of lesson.
 const PT_IN_CODE = [
-  /\bN[ãa]o foi possível\b/,
-  /\bTente novamente\b/,
-  /\bVoc[êe]\b/,
-  /\bRecurso n[ãa]o encontrado\b/,
-  /\bVoltar ao in[íi]cio\b/,
-  /\bseu usu[áa]rio\b/,
-  /\bn[ãa]o commit/i,
-  /\balterar\b/,
-  /\barquivo\b/,
-  /\bc[óo]digo\b/,
-  /\bconfigura[çc][ãa]o\b/,
-  /\bvalida[çc][ãa]o\b/,
-  /\bimplementa[çc][ãa]o\b/,
+  // Accented words. English has no ã, õ, ç in code identifiers or prose.
+  /\bn[ãa]o\b/i,
+  /\bvoc[êe]\b/i,
+  /\bc[óo]digo\b/i,
+  /\bconfigura[çc][ãa]o\b/i,
+  /\bvalida[çc][ãa]o\b/i,
+  /\bimplementa[çc][ãa]o\b/i,
+  /\bvers[ãa]o\b/i,
+  /\breposit[óo]rio\b/i,
+  /\bsuperf[íi]cie/i,
+  /\btipografia\b/i,
+  /\bespa[çc]amento\b/i,
+  /\bsubt[íi]tulo\b/i,
+  /\bc[óo]pias\b/i,
+  /\bpalavras\b/i,
+  /\bdefini[çc][õo]es\b/i,
+  /\bt[íi]tulo\b/i,
+  // Unaccented, but ordinary Portuguese and never English.
+  /\bnunca\b/i,
+  /\bedite\b/i,
+  /\bignorado\b/i,
+  /\bcomandos\b/i,
+  /\bconcluir\b/i,
+  /\brecurso\b/i,
+  /\bTente novamente\b/i,
+  /\bseu usu[áa]rio\b/i,
+  /\balterar\b/i,
+  /\barquivo\b/i,
+  /\barquivos\b/i,
+  // Words this repository's own tooling used to print, and therefore could regress to.
+  /\bdocumentos\b/i,
+  /\bn[úu]meros?\b/i,
+  /\bafirma[çc][ãa]o/i,
+  /\bquebrado\b/i,
+  /\bfora de data\b/i,
+  // The single most common word in the language, and the tail of check-docs' own
+  // old success line. Both are things this repository actually printed.
+  /\bque\b/i,
+  /\brelativos\b/i,
+  /\bresolvem\b/i,
 ];
 
 const CODE_EXTENSIONS = [".ts", ".tsx", ".mjs", ".js", ".css"];
+
+/**
+ * Files whose Portuguese is the product, not a slip.
+ *
+ * The marketing page is sample copy for a Brazilian product: real BRL figures, a
+ * São Paulo region label, and `<html lang="pt-BR">` in the root layout. Translating
+ * it would change the theme's own showcase and desynchronise the lang attribute —
+ * and RULE 1 has never governed UI copy shown to a Brazilian user, only the code,
+ * the comments and the error strings around it.
+ *
+ * It is listed rather than assumed, because a general that silently exempts "the
+ * pages that happen to be Portuguese" is not a rule.
+ */
+const DELIBERATELY_NOT_ENGLISH = ["src/app/(marketing)/page.tsx"];
+
+/**
+ * Matched on the tail of the path, not the whole of it, so one entry covers this
+ * repository's `template/next/…`, a generated app's `…/src/…`, and a sandbox
+ * copy of either. A prefix-sensitive list would silently stop applying the moment
+ * the file was generated instead of authored — which is exactly where it matters.
+ */
+function isDeliberatelyNotEnglish(relativePath) {
+  const normalized = relativePath.split(path.sep).join("/");
+  return DELIBERATELY_NOT_ENGLISH.some((tail) => normalized.endsWith(tail));
+}
 
 function checkEnglish(root, { includeMarkdown = false } = {}) {
   const extensions = includeMarkdown ? [...CODE_EXTENSIONS, ".md"] : CODE_EXTENSIONS;
   walk(root, {
     extensions,
     onFile(file) {
+      if (isDeliberatelyNotEnglish(rel(file))) return;
       const text = fs.readFileSync(file, "utf8");
       for (const pattern of PT_IN_CODE) {
         const match = pattern.exec(text);
@@ -282,10 +359,36 @@ function checkAppIsShippable(appRoot) {
 
 const HEX = /#[0-9a-fA-F]{6}/g;
 
+/**
+ * RULE 7 — DESIGN.md and the tokens must agree.
+ *
+ * The token file moved out of `template/next/src/app/globals.css` and into
+ * `themes/executive/tokens.css`, so every template imports one design instead of
+ * each carrying its own copy.
+ *
+ * That move nearly made this rule vacuous, and that is the part worth recording:
+ * the rule compares two files by looking for tokens in one of them, so pointing it
+ * at a file with no tokens produces **zero findings and a green run**. It would
+ * have kept passing while proving nothing — the exact failure phase 10 called out
+ * about a fact check with no target.
+ *
+ * So it now refuses to pass without having read something. A guard that cannot
+ * report "I checked nothing" is a guard that cannot lie by omission.
+ */
 function checkTokensAgree(repoRoot) {
   const designPath = path.join(repoRoot, "DESIGN.md");
-  const cssPath = path.join(repoRoot, "template", "next", "src", "app", "globals.css");
-  if (!fs.existsSync(designPath) || !fs.existsSync(cssPath)) return;
+  const cssPath = path.join(repoRoot, "themes", "executive", "tokens.css");
+
+  if (!fs.existsSync(designPath)) return;
+  if (!fs.existsSync(cssPath)) {
+    report(
+      "DESIGN.md §2",
+      rel(cssPath),
+      "the token file does not exist. Every template imports it; without it the design " +
+        "system is prose with nothing behind it.",
+    );
+    return;
+  }
 
   const design = new Map();
   for (const line of fs.readFileSync(designPath, "utf8").split("\n")) {
@@ -297,6 +400,25 @@ function checkTokensAgree(repoRoot) {
   const fromCss = new Map();
   for (const match of css.matchAll(/--color-([a-z-]+):\s*(#[0-9a-f]{6})/g)) {
     fromCss.set(match[1], match[2].toLowerCase());
+  }
+
+  // The degenerate state, refused: no tokens read means nothing was compared.
+  if (fromCss.size === 0) {
+    report(
+      "DESIGN.md §2",
+      rel(cssPath),
+      `read zero colour tokens, so this rule compared nothing and would pass forever. ` +
+        `The token file is expected to declare --color-* inside an @theme block.`,
+    );
+    return;
+  }
+  if (design.size === 0) {
+    report(
+      "DESIGN.md §2",
+      rel(designPath),
+      "read zero documented tokens, so this rule compared nothing and would pass forever.",
+    );
+    return;
   }
 
   // The token names are not identical between the two files by design, so only
@@ -311,6 +433,8 @@ function checkTokensAgree(repoRoot) {
       );
     }
   }
+
+  console.log(`  (RULE 7 compared ${fromCss.size} tokens against ${design.size} documented)`);
 }
 
 
@@ -322,9 +446,17 @@ const target = process.argv[2] ? path.resolve(process.argv[2]) : PKG_ROOT;
 const isGeneratedApp = fs.existsSync(path.join(target, "SDD", "AGENTS.md"));
 
 // The library and its template source: English, no personal identity.
+//
+// `template/next/src` is walked HERE, unconditionally, and that line is the whole
+// point. RULE 1 used to run only inside the `isGeneratedApp` branch, so the only
+// code a consumer ever receives — the template — was the one place the English law
+// was never applied. CI invokes this script with no argument, so the branch that
+// skipped it was the branch that always ran.
 checkEnglish(path.join(PKG_ROOT, "lib"));
 checkEnglish(path.join(PKG_ROOT, "bin"));
 checkEnglish(path.join(PKG_ROOT, "SKILLS"), { includeMarkdown: false });
+checkEnglish(path.join(PKG_ROOT, "template", "next", "src"));
+checkEnglish(path.join(PKG_ROOT, "template", "next", "tests"), { includeMarkdown: false });
 checkIdentity(PKG_ROOT);
 checkTokensAgree(PKG_ROOT);
 

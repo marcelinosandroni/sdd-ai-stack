@@ -6,6 +6,112 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
+## [Não publicado]
+
+> **A primeira fase deste repositório que começou reendere o código em vez de
+> rodá-lo.** As fases 3 a 10 acharam bugs *executando* alguma coisa. Esta fase viu
+> viu quatro defeitos, três lacunas de produto e **uma regra que estruturalmente
+> não podia falhar** — todos verdes em `main`. Registro completo:
+> [`phase-11-the-audit.md`](../specs/history/phases/phase-11-the-audit.md) e
+> [`phase-13-a-theme-that-is-an-asset.md`](../specs/history/phases/phase-13-a-theme-that-is-an-asset.md).
+
+### 🐛 O `.sh` que o doc mandava rodar e a CI nunca testava
+
+`SKILLS/create-feature/SKILL.md` documentava `bash create-feature.sh`, e esse script
+**não gerava teste** — só o `.mjs` gerava. Todo agente em Linux ou macOS caía no
+caminho sem cobertura: exatamente o bug que a fase 8 declarara fechado.
+
+**Entregue:** o espelho foi apagado, o doc aponta para a entrada única, e
+`tests/skill-entrypoints.test.mjs` impede que ele volte.
+
+### 🐛 A regra de inglês que nunca disparou
+
+`check-rules` RULE 1 existe, está no CI, e passou sobre um design system inteiro
+documentado em português. Três motivos independentes — e foi preciso corrigir os três:
+
+1. A lista de padrões nasceu de **uma string lembrada**. Quinze padrões depois, seguia
+   verde: padrão que ninguém pensou não captura nada.
+2. Ela **nunca olhava `template/next/src`** — só rodava quando o argumento era um app
+   *gerado*, e o CI não passa argumento. O código que o consumidor recebe era
+   justamente o único lugar onde a lei de idioma nunca fora aplicada.
+3. Os padrões eram **case-sensitive**, e os culpados reais são cabeçalhos
+   capitalizados (`/* ── Superfícies ── */`). Isso só apareceu porque o guard foi
+   plantado à mão.
+
+**Entregue:** lista curada e case-insensitive, template percorrido sempre, uma única
+exceção deliberada nomeada no checker e verificada como existente. `check-facts` e
+`check-docs` também deixaram de imprimir português.
+
+### 🐛 O ROADMAP mentindo sobre si mesmo
+
+Duas seções `## 🧭 Planned`, fases 6–10 fechadas fora da tabela de fechadas, fases 9 e
+10 nunca arquivadas — e um `[-]` da fase 6 no PLAN **desde a fase 8**, apontando para
+trabalho concluído, num arquivo cuja própria regra diz que existe exatamente um `[-]`.
+
+**Entregue:** uma seção `Planned`, uma seção de fases fechadas em detalhe, os dois
+arquivos de histórico que faltavam e o `[-]` obsoleto removido.
+
+### 🐛 O README listava 3 de 8 skills
+
+Dois lugares, duas listas erradas: 3 de 8 na tabela, 6 de 8 no esboço da árvore.
+
+O conserto óbvio — ensinar `check:facts` um novo tipo de claim — é o lugar errado, e o
+motivo vale registrar: `check-facts` **recalcula um número**. Uma tabela com 3 de 8, um
+título duplicado e uma fase fechada sem arquivo são claims **estruturais** — propriedades
+que o documento precisa ter. Juntar os dois tipos num script só daria um exit code para
+dois tipos de falha, com mensagens misturadas.
+
+**Entregue:** o README lista as 8 (com uma coluna "ships to you?"), e os claims
+estruturais vivem em `tests/docs-structure.test.mjs`.
+
+### ✨ O tema virou um artefato, não uma linha dentro de um template
+
+Os tokens saíram de `template/next/src/app/globals.css` para
+**`themes/executive/tokens.css`** — fonte canônica, publicada no pacote e exportada em
+`./themes/*`.
+
+A primeira tentativa importava o arquivo de fora e o **Turbopack recusou o build**:
+
+```
+FileSystemPath("").join("../../themes/executive/tokens.css") leaves the filesystem root
+```
+
+Então os tokens precisam viver dentro do app, e isso dita a forma final: uma fonte de
+verdade, uma cópia byte-a-byte por template, e um guard que falha quando as cópias
+divergem. Verificado com **build real**: o bundle emitido contém
+`--color-primary:#baf336` e `bg-surface-raised` — utilitário que só existe se o token
+foi registrado via `@theme` no arquivo importado.
+
+E o RULE 7 quase ficou **vacuoso** na mudança: ele compara dois arquivos procurando
+tokens em um deles, então apontá-lo para um arquivo sem nenhum daria *zero achados e run
+verde*. Agora ele **falha quando lê zero tokens** e imprime quanto comparou:
+
+```
+(RULE 7 compared 35 tokens against 27 documented)
+```
+
+### 📖 ROADMAP, PLAN e histórico
+
+Fase 11 e fase 13 fechadas e arquivadas. A fase 12 (um segundo template, com `dogfood`
+generalizado para N templates) segue aberta — ela **continua no ROADMAP** em vez de ter
+sido descartada em silêncio, porque "o pipeline funciona para mais de um template" só é
+verdade quando existe um segundo template para percorrer.
+
+**Nota de dívida:** este CHANGELOG está em português, e as entradas acima seguem o
+dialeto do arquivo. `check-rules` não varre `.md` em modo de repositório, então ninguém
+percebeu. É a próxima coerção de idioma.
+
+**Correção de última hora:** a auditoria desta fase reportou um terceiro gap — "cinco
+stacks documentados pelo nome e sem conteúdo (`api.md`, `observability.md`,
+`security.md`, `docker.md`, `rust.md`)". **Era falso.** O roteiro em `stacks/README.md`
+lista exatamente os arquivos que existem; um `grep` por esses cinco nomes só encontra
+duas ocorrências, ambas escritas nesta mesma fase. Não se escreveu nenhum dos cinco
+arquivos: isso seria adicionar ~1.000 linhas de regras para satisfazer um achado que nunca
+existiu. O roteiro agora tem um guard (`tests/docs-structure.test.mjs`) que exige que
+todo arquivo nele nomeado exista — que é a superfície real de promessa de um roteiro.
+
+---
+
 ## [0.3.1] — 2026-09-30
 
 > **This is the first release where the package actually works.** Everything below

@@ -40,8 +40,18 @@ fiscal stewardship**.
 
 ## 🎨 2. TOKENS (SOURCE OF TRUTH)
 
-> Tokens live in `src/app/globals.css` in the `@theme` block (Tailwind v4).
+> Tokens live in **`themes/executive/tokens.css`** in the `@theme` block (Tailwind v4).
+> In your app, that file is `src/app/theme.css`, which `src/app/globals.css`
+> imports. Edit the tokens in **that** file and nowhere else.
 > **Never** write a hex literal in a component.
+
+The copy in your app is not the master: it is a verbatim copy of this package's
+`themes/executive/tokens.css`, written at scaffold time. The copy has to live inside
+the app because Turbopack refuses an `@import` that leaves the project root — which is
+a bundler constraint, not a design decision, and it is why a second stack imports this
+design instead of reinventing it. `check-rules` RULE 7 compares this section against
+the token file on every run and **fails if it reads zero tokens**, so the comparison
+can never pass by finding nothing.
 
 ### Colours
 
