@@ -171,12 +171,18 @@ guard**, because it is cited as proof. RULE 1 exists, is named in CI, and had ne
 fired.
 
 **Delivered.** The `.sh` deleted and its absence asserted. RULE 1 rebuilt around
-high-signal words instead of one remembered string, and extended to the template
-source — which nothing had ever checked, because `check-rules` only walked
-`src/` when its argument was a *generated* app, and CI passes no argument. Every
-distributed file is English. `check-facts` gained a structural claim so the
-ROADMAP and the README cannot drift into two "Planned" sections or a partial table
-again.
+high-signal words instead of one remembered string, made case-insensitive, and
+extended to the template source — which nothing had ever checked, because it only
+walked `src/` when its argument was a *generated* app and CI passes none. Every
+distributed file is English, and the one deliberate exception is named in the
+checker and asserted to exist.
+
+On the structure: the guards live in `tests/docs-structure.test.mjs` rather than
+inside `check-facts`, on purpose. `check-facts` recomputes a **number** a document
+claims; a fact checker has no opinion about a table that lists 3 of 8, a duplicated
+heading, or a closed phase with no archive. Those are **structural** claims —
+properties a document must have — and folding both kinds into one script would mean
+one exit code for two different failures, with messages that blur together.
 
 **Then the two structural gaps.** `--template` offers a choice of one while seven
 backend rule sets ship with no template, and the design system — the part that is

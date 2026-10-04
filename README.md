@@ -146,7 +146,7 @@ SDD/
 │   ├── tasks/TASK_TEMPLATE.md
 │   └── history/phases/
 ├── docs/                PRODUCT.md  CHANGELOG.md  PLANNING.md  RELEASE.md  EVIDENCE.md
-└── SKILLS/              automations (create-feature, create-task, install-submodule, check-docs, check-coverage, check-rules)
+└── SKILLS/              automations (see the table below — all 8)
 ```
 
 ### The site
@@ -402,11 +402,23 @@ every push, **generating the app from the template itself**.
 
 ## 📚 SKILLS
 
-| SKILL | What it does |
-| --- | --- |
-| `create-feature` | Creates a new vertical slice with domain/application/container/queries/actions |
-| `install-submodule` | Installs the rules into an existing project + creates the shortcuts |
-| `check-docs` | Validates that every relative link between documents resolves |
+| SKILL | What it does | Ships to you? |
+| --- | --- | --- |
+| `create-feature` | Creates a new vertical slice with domain/application/container/queries/actions, **and its test** | ✅ |
+| `create-task` | Registers a task in `specs/PLAN.md` from the task template | ✅ |
+| `install-submodule` | Installs the rules into an existing project + creates the shortcuts | ✅ |
+| `check-docs` | Validates that every relative link between documents resolves | ✅ |
+| `check-rules` | Makes the written rules executable — English, identity, token agreement | ❌ |
+| `check-coverage` | Fails when line, branch or function coverage drops below the floor | ❌ |
+| `check-facts` | Recomputes every number these docs claim, and fails when one is stale | ❌ |
+| `dogfood` | Generates an app and walks the cycle the rules describe | ❌ |
+
+The four marked ❌ verify **this repository** — its own tokens, its own coverage
+floor, its own documented numbers — and they crash with `ENOENT` in a project that
+has none of those. They run in CI, against the thing they were written for, and
+`RULE_SKILL_COPY_SKIP` in `lib/constants.mjs` keeps them out of your `SDD/`. A
+check that breaks where it lands is worse than no check, because it looks like
+coverage and it is not.
 
 ---
 
