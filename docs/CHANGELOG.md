@@ -99,9 +99,16 @@ verdade quando existe um segundo template para percorrer.
 
 **Nota de dívida:** este CHANGELOG está em português, e as entradas acima seguem o
 dialeto do arquivo. `check-rules` não varre `.md` em modo de repositório, então ninguém
-percebeu. É a próxima coerção de idioma, junto dos cinco documentos de stack que o
-roteiro promete e não existem (`api.md`, `observability.md`, `security.md`,
-`docker.md`, `rust.md`).
+percebeu. É a próxima coerção de idioma.
+
+**Correção de última hora:** a auditoria desta fase reportou um terceiro gap — "cinco
+stacks documentados pelo nome e sem conteúdo (`api.md`, `observability.md`,
+`security.md`, `docker.md`, `rust.md`)". **Era falso.** O roteiro em `stacks/README.md`
+lista exatamente os arquivos que existem; um `grep` por esses cinco nomes só encontra
+duas ocorrências, ambas escritas nesta mesma fase. Não se escreveu nenhum dos cinco
+arquivos: isso seria adicionar ~1.000 linhas de regras para satisfazer um achado que nunca
+existiu. O roteiro agora tem um guard (`tests/docs-structure.test.mjs`) que exige que
+todo arquivo nele nomeado exista — que é a superfície real de promessa de um roteiro.
 
 ---
 

@@ -158,14 +158,39 @@ it reads zero tokens**, printing how many it compared:
 
 A guard that cannot report "I checked nothing" is a guard that cannot lie by omission.
 
-### 2.3 Five stacks documented by name and not by content
+### 2.3 A gap this phase invented, and then caught in itself
 
-`stacks/` indexes `api.md`, `observability.md`, `security.md`, `docker.md`, `rust.md`.
-None exists. A router that promises a destination that is not there costs an agent the
-same as a false claim anywhere else: it learns to stop trusting the router.
+The audit originally reported a third product gap: *"five stacks documented by name
+and not by content — `stacks/` indexes `api.md`, `observability.md`, `security.md`,
+`docker.md`, `rust.md`, and none exists."*
 
-**Deferred.** Adding five rule files is content work, not a defect, and doing it inside
-an audit phase would repeat the mistake this phase exists to correct.
+**That was false.** The router in `stacks/README.md` lists exactly the files that
+exist. Grepping the repository for those five names finds them in **two places, both
+written during this phase** — this archive and `docs/CHANGELOG.md`. Nowhere else. The
+claim was not discovered in the code; it was manufactured while writing the report, and
+then filed as a finding.
+
+So the third gap is not a gap, and no five rule files were written. Writing them would
+have been the worst possible outcome: five documents nobody asked for, created to
+satisfy a finding that never existed, adding roughly a thousand lines of rules to a
+repository whose stated problem is too much rule text.
+
+**Why it happened, and why it is worth more than the other three findings.** A claim
+about what a file *contains* feels verifiable while you are writing it, and nothing
+re-reads a report. The three real defects were each caught by a command; this one was
+caught by a single `grep` run *after* the report was already committed.
+
+That is the same failure this phase exists to correct, committed by the auditor. So
+the correction is enforced, not just written down:
+
+- `tests/docs-structure.test.mjs` asserts that **every file the stacks router names
+  exists**. That is the actual promise surface of a router, and it is now checkable.
+- The rule applied here is the one worth generalising: **before filing a finding,
+  prove the thing does not exist — with a command, not with a recollection.** A defect
+  report is itself a document, and this repository has a history of documents that lie.
+
+Five real stack documents may still be worth writing someday. Not as the repayment of
+a finding that never was, and not in an audit phase.
 
 ---
 

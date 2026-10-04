@@ -154,6 +154,52 @@ test("the PLAN works the lowest phase the ROADMAP has not closed", () => {
   );
 });
 
+test("every file the stacks router names exists", () => {
+  // A router's entire value is that its entries resolve. An agent that follows one
+  // to a missing file learns to stop following the router, and it costs the same as
+  // a false claim anywhere else.
+  //
+  // This test exists because phase 11 filed a finding against this router that was
+  // false: it reported five missing stack documents that the router never promised,
+  // and the only evidence for the claim was the sentence writing it. So the router's
+  // promise surface is now asserted rather than trusted — and the lesson generalises
+  // past this file: prove the absence with a command before filing it as a defect.
+  const router = fs.readFileSync(path.join(REPO_ROOT, "stacks", "README.md"), "utf8");
+  const named = [...router.matchAll(/\]\(\.\/([a-z0-9-]+\.md)\)/g)].map((m) => m[1]);
+
+  assert.ok(named.length > 8, `the router names only ${named.length} files; it was probably restructured`);
+
+  const missing = named.filter((file) => !fs.existsSync(path.join(REPO_ROOT, "stacks", file)));
+  assert.deepEqual(
+    missing,
+    [],
+    `stacks/README.md names ${missing.join(", ")}, which do not exist. ` +
+      `Either write them or stop promising them — a dead entry in a router is a lie ` +
+      `with a table around it.`,
+  );
+});
+
+test("every stack file on disk is reachable from the stacks router", () => {
+  // The other direction, and the one that bit: a file that exists but is never named
+  // is a rule no agent will ever open. Both directions have to hold for the router to
+  // be a map rather than a list.
+  const router = fs.readFileSync(path.join(REPO_ROOT, "stacks", "README.md"), "utf8");
+  const named = new Set([...router.matchAll(/\]\(\.\/([a-z0-9-]+\.md)\)/g)].map((m) => m[1]));
+
+  const orphans = fs
+    .readdirSync(path.join(REPO_ROOT, "stacks"))
+    // The router does not link to itself; that is what a router is.
+    .filter((f) => f.endsWith(".md") && f !== "README.md" && !named.has(f))
+    .sort();
+
+  assert.deepEqual(
+    orphans,
+    [],
+    `stacks/ has ${orphans.join(", ")}, which the router never names. ` +
+      `An unlinked rule file is a rule no agent opens.`,
+  );
+});
+
 test("the PLAN has at most one task in progress", () => {
   const plan = fs.readFileSync(PLAN, "utf8");
   const inProgress = [...plan.matchAll(/^\s*\[-\]\s/gm)];
