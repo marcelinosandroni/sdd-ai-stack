@@ -75,15 +75,26 @@ function docCount() {
  * `npx create-sdd-ai-stack` to work at all, it is written down in exactly one
  * place, and it changes only when the package's shape changes — not every time
  * someone adds a test. A fact that churns is a fact people stop reading.
+ *
+ * EVERY `for f in` loop is counted, not just the first. This function read a single
+ * match for months, and adding the per-template guards turned it silently wrong: the
+ * shared list still counted, the two new lists did not, and the reported number went
+ * *down* while the actual requirement went up. A checker that reads part of the thing
+ * it checks reports a smaller number with the same confidence as a correct one.
  */
 function essentialCount() {
   const workflow = fs.readFileSync(
     path.join(ROOT, ".github", "workflows", "release.yml"),
     "utf8",
   );
-  const m = /for f in ((?:"[^"]+"\s*\\?\s*)+); do/.exec(workflow);
-  if (m === null) return null;
-  return (m[1].match(/"[^"]+"/g) ?? []).length;
+  const loops = [...workflow.matchAll(/for f in ((?:"[^"]+"\s*\\?\s*)+); do/g)];
+  if (loops.length === 0) return null;
+
+  let total = 0;
+  for (const loop of loops) {
+    total += (loop[1].match(/"[^"]+"/g) ?? []).length;
+  }
+  return total;
 }
 
 function read(rel) {

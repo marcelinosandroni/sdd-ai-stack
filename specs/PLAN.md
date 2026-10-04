@@ -21,9 +21,9 @@
 
 ---
 
-## Current phase: 11 — The audit
+## Current phase: 12 — More than one template
 
-> Status: ✅ closed — 4 defects, 3 gaps, and one rule that could not fail
+> Status: ✅ closed — `--template` had a choice of one; it has two, and CI proves both
 > History: [0 Bootstrap](./history/phases/phase-0-bootstrap.md) ·
 > [1 English](./history/phases/phase-1-english.md) ·
 > [2 All stacks](./history/phases/phase-2-all-stacks.md) ·
@@ -34,59 +34,47 @@
 > [7 A project that belongs to you](./history/phases/phase-7-your-project.md) ·
 > [8 Proving the rules](./history/phases/phase-8-proving-the-rules.md) ·
 > [9 The rules in other tools](./history/phases/phase-9-other-tools.md) ·
-> [10 A template that does not lie](./history/phases/phase-10-a-template-that-does-not-lie.md)
+> [10 A template that does not lie](./history/phases/phase-10-a-template-that-does-not-lie.md) ·
+> [11 The audit](./history/phases/phase-11-the-audit.md) ·
+> [12 More than one template](./history/phases/phase-12-more-than-one-template.md) ·
+> [13 A theme that is an asset](./history/phases/phase-13-a-theme-that-is-an-asset.md)
 
 > ⚠️ **This file is the template's own PLAN, not a fresh project.** A generated app
 > gets a clean phase 0; this repository has eleven phases. Do not confuse the
 > two — that mistake is exactly what `RULE_COPY_SKIP` in `lib/constants.mjs` exists
 > to prevent in the other direction.
 
-### Tasks
+asks
 
-[x] - The `create-feature.sh` mirror: `SKILL.md` documented the bash entry point,
-      the bash script generated no test, and the CI guard exercised only the
-      `.mjs`. Every agent on Linux or macOS landed on the unfixed path — the exact
-      bug phase 8 declared closed. Mirror deleted, doc pointed at the one entry
-      point, absence asserted by `tests/skill-entrypoints.test.mjs`.
-[x] - The English rule that never fired. `check-rules` RULE 1 exists, is named in
-      CI, and passed over a design system documented entirely in Portuguese: its
-      pattern list was built from one remembered string, and `template/next/src`
-      was never walked at all, because RULE 1 only ran when the argument was a
-      generated app and CI passes none. Rebuilt around a curated word list, made
-      case-insensitive (the offenders were capitalised headers), extended to the
-      template source, and proven by planting the failure in
-      `tests/rules-contract.test.mjs`.
-[x] - Every distributed file in English: the tokens' comments and placeholders,
-      the two skills that print user-facing Portuguese, the library comments, and
-      the package description.
-[x] - The ROADMAP's two "Planned" sections, the phases 9 and 10 that were closed
-      but never archived, and the stale `[-]` phase 6 task this file carried since
-      phase 8 — the rule says exactly one, and it was pointing at finished work.
-[x] - The README's SKILLS table: 3 of 8 listed in one place, 6 of 8 in another,
-      while `check:facts` — the guard built to stop this repository lying about
-      itself — verified numbers only and had no opinion about enumerations. The
-      README now lists all 8 with a "ships to you?" column, and
-      `tests/docs-structure.test.mjs` asserts enumerations, archive symmetry and
-      one-`[-]` from now on.
-[x] - A portable theme: the tokens extracted out of `template/next/` into an
-      artifact another stack can import, so the design is an asset of the package
-      rather than a feature of one template.
+[x] - `template/spa`: Vite 7 + React 19 + TypeScript. No App Router, no server
+      components, no `proxy.ts`, no `shadcn`. One vertical slice in
+      domain/application/infrastructure/ui, unit tests, E2E against the production
+      build, and the **same** `themes/executive/tokens.css` byte for byte.
+[x] - `create-feature` detects the app's stack instead of assuming Next. It emitted
+      `import "server-only"`, `next/cache` and `@/shared/server/auth`
+      unconditionally, so every slice it generated outside a Next app could not
+      typecheck — and no gate could see it, because there was no second app.
+[x] - `dogfood` walks N templates, reading that list from `TEMPLATES` rather than
+      repeating it, and the hardcoded `next` is asserted against.
+[x] - CI's template job became a matrix over `TEMPLATES`, and the release guard and
+      its dry run loop over every template too.
+[x] - The Biome configuration that made `npm run lint` impossible inside a template
+      folder. It had been broken for months and CI never saw it, because CI lints the
+      generated app. Both templates now lint in their own checkout.
 
-> **Moved to phase 12, not dropped:** a second template with `dogfood` generalized
-> to N templates. It stays in the ROADMAP as its own phase, because "the pipeline
-> works for more than one template" is a claim that only becomes true when there
-> *is* a second template to walk.
+> **Not in this phase, and recorded rather than dropped:** the backend stacks (Go,
+> Python, Java, .NET) still ship rules with no `npx` path. A second template proves the
+> seam is real; seven would prove the same thing more slowly.
 
 ### Phase exit criteria
 - [x] Every task `[x]` with the test evidence pasted
 - [x] `npm test && npm run check:coverage && npm run check:rules && npm run check:docs` green
 - [x] `npm run check:facts` green
-- [x] `node SKILLS/dogfood/dogfood.mjs` green
-- [x] `specs/history/phases/phase-11-the-audit.md` written
+- [x] `node SKILLS/dogfood/dogfood.mjs` green across both templates
+- [x] `specs/history/phases/phase-12-more-than-one-template.md` written
 - [x] `docs/CHANGELOG.md` updated
 
 ### How to use this file
-
 1. Create the phase block when the phase changes: `## Current phase: N — NAME`.
 2. Tasks live under `### Tasks`, one per line, `[ ]` / `[-]` / `[x]`.
 3. Mark `[-]` **before** starting. Mark `[x]` **after** you paste the green output.

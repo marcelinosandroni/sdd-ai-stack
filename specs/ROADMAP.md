@@ -27,6 +27,7 @@
 | [9](./history/phases/phase-9-other-tools.md) | The rules in other tools | `.cursorrules` is Chat-only in Cursor; the other six shortcuts named a file that was not themselves |
 | [10](./history/phases/phase-10-a-template-that-does-not-lie.md) | A template that does not lie | `check-facts` made the numbers in prose falsifiable |
 | [11](./history/phases/phase-11-the-audit.md) | The audit | Four defects that were green on `main`, and one rule that structurally could not fail |
+| [12](./history/phases/phase-12-more-than-one-template.md) | More than one template | A `--template` with one option, and three Next-only assumptions the second template exposed |
 | [13](./history/phases/phase-13-a-theme-that-is-an-asset.md) | A theme that is an asset | The design system extracted out of one template into a portable artifact |
 
 ---
@@ -184,7 +185,7 @@ Wired into CI and `prepublishOnly`.
 
 1. The test count does not belong in a document. It went stale four times in an
    afternoon — every test added to the guard invalidated the claim the guard
-   protected. The tracked claim is now "17 essential files", which changes only
+   protected. The tracked claim is now "19 essential files", which changes only
    when the package changes shape.
 2. `node --test` refuses to recurse inside a test file, so the check cannot run the
    suite from a test that invokes it. The count is a static scan — which can drift
@@ -192,6 +193,11 @@ Wired into CI and `prepublishOnly`.
 3. The check has a degenerate state: correcting a document by deleting the number
    left it green with nothing to verify. It now warns, and a test asserts it always
    finds at least one claim.
+4. It counted the **first** `for f in …` loop in the release workflow and no others,
+   so when phase 12 made that guard per-template it reported a number 5 too low —
+   going *down* while the requirement went *up*. A checker that reads part of the
+   thing it checks is as wrong as one that reads none of it, and it is not more
+   honest about it.
 
 **Scope out.** Checking prose quality, style or grammar. Verifiable claims only.
 
@@ -199,18 +205,42 @@ Wired into CI and `prepublishOnly`.
 
 ## 🧭 Planned
 
-### Phase 12 — More than one template
+Nothing is scheduled. The open problems below are known, recorded, and not yet
+claimed by a phase — deliberately, because a phase is a promise to finish something
+and this repository does not make those promises lightly.
 
-**Problem.** `--template <next|none>` accepts a list of one. `TEMPLATES` is
-`["next"]`, and `none` is what `--rules-only` already does. Meanwhile seven backend
+### Known and unscheduled
+
+| Problem | Why it is not a phase yet |
+| --- | --- |
+| Seven backend rule sets (Go, Python, Java, .NET, …) ship rules with **no `npx` path**. A Python user gets rules and no project. | Each needs its own gate matrix, install path, and an answer to what "the rules apply" means for a server-rendered app. That is a phase of its own, not an appendage to phase 12 — which is why phase 12 shipped a frontend template and said so. |
+| `docs/CHANGELOG.md` is written in Portuguese | `check-rules` does not scan `.md` in repository mode, so the language law stops one directory layer above where the drift is. Phase 11 fixed the rule for code and left the documents. Coercing them means deciding what "English by default" is *for*, not just *where*. |
+| No second theme | Phase 13 proved the mechanism with one theme. A second theme would test whether the mechanism survives being used twice — a different question, and only worth asking once something else depends on it. |
+
+### Phase 12 — More than one template ✅
+
+**Problem.** `--template <next|none>` accepted a list of one. `TEMPLATES` was
+`["next"]`, and `none` is what `--rules-only` already did. Meanwhile seven backend
 rule sets ship with no `npx` path at all: a Go or Python user gets rules and no
 project.
 
-**Delivered.** A second template that proves the pipeline is not hardcoded to
-Next.js, and `SKILLS/dogfood` generalized to walk *N* templates — today it assumes
-`next` in its gate list and its assertions.
+**Delivered.** `template/spa` — Vite 7 + React 19, no App Router, no server
+components, no `proxy.ts`, no `shadcn` — carrying the same `themes/executive/tokens.css`
+byte for byte. `SKILLS/dogfood` walks *N* templates, the CI template job is a matrix
+over `TEMPLATES`, and the release guard loops. All of them read the same constant, and
+the hardcoded `next` in `dogfood` is now asserted **absent**.
 
-**Scope out.** Seven templates. Two is the number that proves the seam is real.
+**And three defects the second template exposed**, none of which was visible with only
+one: `create-feature` was a Next-only skill that emitted `next/cache` and
+`@/shared/server/auth` into every app it ran in; `npm run lint` had **never worked**
+inside a template folder because Biome refused to start without a `.gitignore` that npm
+pack drops; and `check-facts` counted only the first of three guard loops in the
+release workflow, reporting a number 5 too low.
+
+Full account: [phase-12-more-than-one-template.md](./history/phases/phase-12-more-than-one-template.md).
+
+**Scope out.** Seven templates. Two is the number that proves the seam is real — and
+the backend gap is listed above, unscheduled, rather than quietly claimed.
 
 ---
 

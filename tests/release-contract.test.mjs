@@ -4,7 +4,26 @@ import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
+import { TEMPLATES } from "../lib/constants.mjs";
+
 const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+/**
+ * The per-template essentials, by suffix.
+ *
+ * `release.yml` cannot import from the test suite, so it rebuilds this list from
+ * `TEMPLATES` and greps `npm pack` output with `template/$t/<suffix>`. These two
+ * representations have to agree, and the test below is what makes them.
+ *
+ * The suffixes are the files without which a generated app is broken. `gitignore` is
+ * the one that matters most: npm pack drops a literal `.gitignore`, so an app that
+ * does not get it back ships `.env.local` to git, and nothing about that is visible
+ * at pack time.
+ */
+export const TEMPLATED_SUFFIXES = ["gitignore", "package.json", "src/app/theme.css"];
+
+/** Next-only, because these files only mean something in a Next app. */
+export const NEXT_ONLY_FILES = ["template/next/src/proxy.ts", "template/next/components.json"];
 
 /**
  * The files the release workflow asserts are in the tarball.
@@ -27,10 +46,7 @@ export const ESSENTIAL_FILES = [
   "stacks/README.md",
   "stacks/clean-code.md",
   "stacks/language.md",
-  "template/next/gitignore",
-  "template/next/package.json",
-  "template/next/src/proxy.ts",
-  "template/next/components.json",
+  "themes/executive/tokens.css",
   "SKILLS/create-feature/SKILL.md",
   "SKILLS/create-task/SKILL.md",
   "SKILLS/check-rules/check-rules.mjs",
@@ -110,9 +126,50 @@ test("the release workflow lists exactly the files this test requires", () => {
   }
 });
 
+test("the release workflow checks every template's essentials, without naming one", () => {
+  // The per-template list is built from `TEMPLATES` rather than written out, so a
+  // second template is covered without editing this file. That only holds if the
+  // workflow really does interpolate — so the assertion is on the loop's shape, not
+  // on a path, because a path spelled out for `next` is the bug.
+  const workflow = fs.readFileSync(
+    path.join(REPO_ROOT, ".github", "workflows", "release.yml"),
+    "utf8",
+  );
+
+  assert.match(
+    workflow,
+    /for t in \$TEMPLATES/,
+    "release.yml does not loop over the templates, so a second template is unguarded",
+  );
+
+  for (const suffix of TEMPLATED_SUFFIXES) {
+    assert.ok(
+      workflow.includes(`"template/$t/${suffix}"`),
+      `release.yml does not assert template/$t/${suffix}, so a generated app could ship ` +
+        `without it. An app with no .gitignore commits its secrets.`,
+    );
+  }
+
+  for (const file of NEXT_ONLY_FILES) {
+    assert.ok(
+      workflow.includes(file),
+      `release.yml does not assert ${file}`,
+    );
+  }
+});
+
 test("the essential files exist on disk, so the guard tests the real thing", () => {
   // A path that does not exist cannot appear in the pack, so the first test
   // would pass for the wrong reason if these were typo'd.
   const missing = ESSENTIAL_FILES.filter((file) => !fs.existsSync(path.join(REPO_ROOT, file)));
   assert.deepEqual(missing, [], `these do not exist: ${missing.join(", ")}`);
+
+  const missingTemplates = TEMPLATES.flatMap((t) =>
+    TEMPLATED_SUFFIXES.map((s) => `template/${t}/${s}`),
+  ).filter((file) => !fs.existsSync(path.join(REPO_ROOT, file)));
+  assert.deepEqual(
+    missingTemplates,
+    [],
+    `these do not exist: ${missingTemplates.join(", ")}`,
+  );
 });

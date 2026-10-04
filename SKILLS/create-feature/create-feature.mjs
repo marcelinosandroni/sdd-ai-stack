@@ -34,6 +34,84 @@ const dir = path.resolve(process.cwd(), "src", "features", name);
 // The unit tests live beside the slice, not beside this script: the skill runs
 // from the app's root, so `src/features/<name>` and `tests/unit` share it.
 const testDir = path.resolve(process.cwd(), "tests", "unit");
+
+/**
+ * Which stack is this app, read from the app rather than assumed by the skill.
+ *
+ * A Server Action is a Next.js invention, and `server-only` plus `next/cache` are
+ * Next packages. Emitting them unconditionally means the skill produces a slice that
+ * cannot typecheck in every template that is not Next — which is the same class of
+ * bug as the stale `create-feature.sh` this skill used to mirror: the file that
+ * nobody exercised was the file that was wrong.
+ *
+ * Detection is a file on disk rather than a flag, because the app already declares
+ * its stack and there is no reason to ask it a second time. `next.config.ts` is the
+ * marker; the dependency is the fallback for an app that has not added it yet.
+ */
+function detectStack(root) {
+  if (fs.existsSync(path.join(root, "next.config.ts"))) return "next";
+
+  const pkgPath = path.join(root, "package.json");
+  if (fs.existsSync(pkgPath)) {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+    if (pkg.dependencies?.next || pkg.devDependencies?.next) return "next";
+  }
+  return "client";
+}
+
+const STACK = detectStack(process.cwd());
+const IS_NEXT = STACK === "next";
+const STACK_DOC = IS_NEXT ? "next.md" : "react.md";
+
+/**
+ * The five steps of a write are the same everywhere. What changes is the machinery
+ * around them: Next has a server boundary, a cache to invalidate and a session to
+ * read; a browser-only template has none of those, and importing them anyway is how
+ * a slice ends up referencing a package the project does not depend on.
+ *
+ * So the differences are precomputed here rather than interleaved through the
+ * template. The alternative — two near-identical 70-line templates — guarantees they
+ * drift apart the first time someone fixes a typo in one of them.
+ */
+const SERVER_DIRECTIVE = IS_NEXT ? `"use server";\n` : "";
+const CACHE_IMPORTS = IS_NEXT ? 'import { revalidatePath, updateTag } from "next/cache";' : "";
+const AUTH_IMPORT = IS_NEXT
+  ? 'import { ForbiddenError, requireUser, UnauthorizedError } from "@/shared/server/auth";'
+  : "";
+const AUTH_STEPS = IS_NEXT
+  ? `    // 1. AUTHENTICATION
+    const user = await requireUser();
+
+    // 2. AUTHORIZATION
+    if (user.role === "banned") {
+      throw new ForbiddenError("FORBIDDEN");
+    }
+
+`
+  : `    // 1. AUTHENTICATION and 2. AUTHORIZATION happen wherever this app does
+    // them. There is no session to read in a browser-only template, and inventing
+    // one here would be the skill deciding the app's security model for it.
+`;
+const OWNER_ID = IS_NEXT ? "user.id" : '""';
+const CACHE_STEP = IS_NEXT
+  ? `
+    // 5. CACHE — read-your-writes for interactive UI
+    updateTag("${name}");
+    revalidatePath("/app");
+`
+  : "";
+const AUTH_CATCH = IS_NEXT
+  ? `    if (cause instanceof UnauthorizedError) {
+      return { ok: false, error: "Sign in to continue." };
+    }
+    if (cause instanceof ForbiddenError || cause instanceof ${Pascal}Error) {
+      return { ok: false, error: "Access denied." };
+    }
+`
+  : `    if (cause instanceof ${Pascal}Error) {
+      return { ok: false, error: "Access denied." };
+    }
+`;
 if (fs.existsSync(dir)) {
   console.error(`✖ Already exists: ${dir}`);
   process.exit(1);
@@ -56,7 +134,7 @@ write(
   `/**
  * The port for the ${Pascal} slice. Lives INSIDE the slice, next to the
  * implementation — a global src/types/ for domain types is forbidden.
- * See SDD/ARCHITECTURE.md §2 and SDD/stacks/next.md §2.
+ * See SDD/ARCHITECTURE.md §2 and SDD/stacks/${STACK_DOC} §2.
  *
  * Domain code imports NOTHING external. No Prisma, no fetch, no Next.
  */
@@ -86,7 +164,7 @@ write(
 
 /**
  * Zod is the ONLY source of truth for input. The client check is a courtesy.
- * See SDD/stacks/next.md §5.
+ * See SDD/stacks/${STACK_DOC} §5.
  *
  * TODO: replace this with the real fields.
  */
@@ -143,8 +221,7 @@ export class Create${Pascal}UseCase {
 
 write(
   `infrastructure/${name}.repository.ts`,
-  `import "server-only";
-import { randomUUID } from "node:crypto";
+  `${IS_NEXT ? 'import "server-only";\n' : ""}import { randomUUID } from "node:crypto";
 import type {
   ${Pascal}Entity,
   Create${Pascal}Data,
@@ -204,8 +281,7 @@ export class ${Pascal}Repository implements I${Pascal}Repository {
 
 write(
   "container.ts",
-  `import "server-only";
-import { Create${Pascal}UseCase } from "./application/create-${name}.usecase";
+  `${IS_NEXT ? 'import "server-only";\n' : ""}import { Create${Pascal}UseCase } from "./application/create-${name}.usecase";
 import type { I${Pascal}Repository } from "./domain/I${Pascal}Repository";
 import { ${Pascal}Repository } from "./infrastructure/${name}.repository";
 
@@ -234,13 +310,27 @@ export const ${Pascal}RepositoryInstance = repository;
 
 write(
   "queries.ts",
-  `import "server-only";
+  STACK === "next"
+    ? `import "server-only";
 import { ${Pascal}RepositoryInstance } from "./container";
 
 /**
  * Reads. Mark a function 'use cache' + cacheLife when the result can be shared
  * between users; leave it dynamic when it depends on the request.
- * See SDD/stacks/next.md §4 and §6.
+ * See SDD/stacks/${STACK_DOC} §4.
+ */
+export async function list${Pascal}(ownerId: string) {
+  return ${Pascal}RepositoryInstance.listByOwner(ownerId);
+}
+`
+    : `import { ${Pascal}RepositoryInstance } from "./container";
+
+/**
+ * Reads. No 'use server' and no 'server-only' here: this template has no server
+ * boundary, so claiming one would be a lie the bundler cannot keep.
+ *
+ * When this app grows a server, move this file behind it and add the boundary
+ * back deliberately — not by copying the Next template.
  */
 export async function list${Pascal}(ownerId: string) {
   return ${Pascal}RepositoryInstance.listByOwner(ownerId);
@@ -252,18 +342,12 @@ export async function list${Pascal}(ownerId: string) {
 
 write(
   "actions.ts",
-  `"use server";
-import { revalidatePath, updateTag } from "next/cache";
+  `${SERVER_DIRECTIVE}${CACHE_IMPORTS}
 import { z } from "zod";
 import { ${Pascal}UseCases } from "./container";
 import { ${Pascal}Error } from "./application/create-${name}.usecase";
 import { Create${Pascal}Schema } from "./domain/${name}.schema";
-// Sorted the way biome's organizeImports sorts them: capitalised identifiers
-// first, then lowercase ones, alphabetically within each. Writing
-// { ForbiddenError, UnauthorizedError, requireUser } produced a file the
-// project's own lint rejected — the skill shipped code that failed the gate the
-// skill tells the agent to run.
-import { ForbiddenError, requireUser, UnauthorizedError } from "@/shared/server/auth";
+${AUTH_IMPORT}
 
 export type ${Pascal}ActionState = {
   ok: boolean;
@@ -272,16 +356,16 @@ export type ${Pascal}ActionState = {
 };
 
 /**
- * A Server Action is a PUBLIC HTTP endpoint. The client is untrusted, so the
+ * ${IS_NEXT ? "A Server Action is a PUBLIC HTTP endpoint. The client is untrusted, so the" : "This runs in the browser, where the input is still untrusted, so the"}
  * order is fixed:
  *
  *   1. authentication    who is calling
  *   2. authorization     may they do this
  *   3. validation        is the input well-formed
  *   4. mutation          through a use case, never raw infra
- *   5. cache             invalidate what just changed
+ *   5. cache             invalidate what just changed${IS_NEXT ? "" : " (no cache to invalidate yet)"}
  *
- * Errors return state, they do not throw: throwing sends the user to
+ * Errors return state, they do not throw:${IS_NEXT ? " throwing sends the user to" : " a thrown error loses what the user was told and gives"}
  * error.tsx instead of showing them what went wrong.
  */
 export async function create${Pascal}Action(
@@ -289,14 +373,7 @@ export async function create${Pascal}Action(
   formData: FormData,
 ): Promise<${Pascal}ActionState> {
   try {
-    // 1. AUTHENTICATION
-    const user = await requireUser();
-
-    // 2. AUTHORIZATION
-    if (user.role === "banned") {
-      throw new ForbiddenError("FORBIDDEN");
-    }
-
+${AUTH_STEPS}
     // 3. VALIDATION
     const parsed = Create${Pascal}Schema.safeParse({
       title: formData.get("title"),
@@ -310,21 +387,11 @@ export async function create${Pascal}Action(
 
     // 4. MUTATION
     const { create${Pascal} } = ${Pascal}UseCases;
-    await create${Pascal}.execute({ ...parsed.data, ownerId: user.id });
-
-    // 5. CACHE — read-your-writes for interactive UI
-    updateTag("${name}");
-    revalidatePath("/app");
-
+    await create${Pascal}.execute({ ...parsed.data, ownerId: ${OWNER_ID} });
+${CACHE_STEP}
     return { ok: true };
   } catch (cause) {
-    if (cause instanceof UnauthorizedError) {
-      return { ok: false, error: "Sign in to continue." };
-    }
-    if (cause instanceof ForbiddenError || cause instanceof ${Pascal}Error) {
-      return { ok: false, error: "Access denied." };
-    }
-    return { ok: false, error: "Could not complete the request. Try again." };
+${AUTH_CATCH}    ${AUTH_CATCH}    return { ok: false, error: "Could not complete the request. Try again." };
   }
 }
 `,
@@ -416,7 +483,11 @@ console.log(`  1. domain/${name}.schema.ts      add the real fields`);
 console.log(`  2. application/create-${name}.usecase.ts   the business rules`);
 console.log(`  3. infrastructure/${name}.repository.ts     swap in Prisma`);
 console.log(`  4. tests/unit/${name}.test.ts     replace the TODO with your invariant`);
-console.log("  5. wire the route in src/app/ (routing only)");
+console.log(
+  IS_NEXT
+    ? "  5. wire the route in src/app/ (routing only)"
+    : `  5. render it from a component in src/features/${name}/ui/`,
+);
 console.log("");
 console.log("Then run: npm run typecheck && npm run lint && npm run test");
 console.log("");

@@ -55,6 +55,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { scaffold } from "../../lib/scaffold.mjs";
+import { TEMPLATES } from "../../lib/constants.mjs";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -131,10 +132,10 @@ function consoleSkipped(name, why) {
    The walk
    ──────────────────────────────────────────────────────────── */
 
-function generateApp(root) {
+function generateApp(root, template) {
   const result = scaffold({
     target: root,
-    template: "next",
+    template,
     install: false,
     git: false,
     shortcutMode: "stub",
@@ -158,7 +159,16 @@ function preflightGates(appRoot) {
 
 function checkLinks(appRoot) {
   const broken = [];
-  const skip = new Set(["node_modules", ".next", ".git", "test-results", "playwright-report"]);
+  const skip = new Set([
+    "node_modules",
+    ".next",
+    ".vite",
+    "dist",
+    ".git",
+    "test-results",
+    "playwright-report",
+    "blob-report",
+  ]);
 
   (function walk(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -238,24 +248,6 @@ function checkNoBorrowedCounts(appRoot) {
    Main
    ──────────────────────────────────────────────────────────── */
 
-const root = fs.mkdtempSync(path.join(os.tmpdir(), "sdd-dogfood-"));
-const started = Date.now();
-
-console.log(`🐕 dogfood — generating an app in ${root}\n`);
-
-generateApp(root);
-console.log(`   generated. walking the cycle PREFLIGHT.md describes.\n`);
-
-if (full) {
-  const install = run("npm", ["install", "--no-audit", "--no-fund"], root, {
-    timeout: 900_000,
-  });
-  if (install.code === 0) pass("npm install");
-  else fail("npm install", "failed");
-}
-
-const hasNodeModules = fs.existsSync(path.join(root, "node_modules"));
-
 /**
  * Playwright reports a browser it cannot start as a test failure, so a missing
  * browser is indistinguishable from a broken app. `browserType.launch: spawn
@@ -271,99 +263,185 @@ function unavailableBrowsers(out) {
   return launches > 0 && launches === failures;
 }
 
-// ── 1. the gates PREFLIGHT.md names ──────────────────────────────────────────
-if (hasNodeModules) {
-  for (const gate of preflightGates(root)) {
-    const result = npm(root, gate);
-    if (result.code === 0) {
-      pass(`npm run ${gate}`);
-    } else if (gate.startsWith("test:e2e") && unavailableBrowsers(result.out)) {
-      consoleSkipped(
-        "npm run test:e2e",
-        "the host cannot start a Playwright browser — environment, not app",
+/**
+ * Walk one template's whole cycle.
+ *
+ * Extracted from the top level because the loop below has to run it more than once.
+ * A `dogfood` that hardcoded `next` was not "the pipeline, verified" — it was "Next,
+ * verified", while the CLI advertised a `--template` flag. Two templates is the
+ * number that makes the difference visible.
+ */
+function walkTemplate(template) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), `sdd-dogfood-${template}-`));
+
+  console.log(`\n🐕 dogfood [${template}] — generating an app in ${root}\n`);
+
+  generateApp(root, template);
+  console.log("   generated. walking the cycle PREFLIGHT.md describes.\n");
+
+  if (full) {
+    const install = run("npm", ["install", "--no-audit", "--no-fund"], root, {
+      timeout: 900_000,
+    });
+    if (install.code === 0) pass(`[${template}] npm install`);
+    else fail(`[${template}] npm install`, "failed");
+  }
+
+  const hasNodeModules = fs.existsSync(path.join(root, "node_modules"));
+
+  // ── 1. the gates PREFLIGHT.md names ────────────────────────────────────────
+  if (hasNodeModules) {
+    for (const gate of preflightGates(root)) {
+      const result = npm(root, gate);
+      if (result.code === 0) {
+        pass(`[${template}] npm run ${gate}`);
+      } else if (gate.startsWith("test:e2e") && unavailableBrowsers(result.out)) {
+        consoleSkipped(
+          `[${template}] npm run test:e2e`,
+          "the host cannot start a Playwright browser — environment, not app",
+        );
+      } else {
+        fail(`[${template}] npm run ${gate}`, firstMeaningfulLine(result.out));
+      }
+    }
+  } else {
+    console.log("   (skipping the gates: --full is needed to install dependencies)\n");
+  }
+
+  // ── 2. the automations an agent calls ──────────────────────────────────────
+  const createTask = node(
+    root,
+    path.join(root, "SDD", "SKILLS", "create-task", "create-task.mjs"),
+    ["0", "1", "Dogfood slice"],
+  );
+  if (createTask.code === 0) pass(`[${template}] create-task`);
+  else fail(`[${template}] create-task`, firstMeaningfulLine(createTask.out));
+
+  const createFeature = node(
+    root,
+    path.join(root, "SDD", "SKILLS", "create-feature", "create-feature.mjs"),
+    ["dogfood-slice", "Dogfood slice"],
+  );
+  if (createFeature.code === 0) pass(`[${template}] create-feature`);
+  else fail(`[${template}] create-feature`, firstMeaningfulLine(createFeature.out));
+
+  // ── 3. the slice the skill says "COMPILES" ─────────────────────────────────
+  //
+  // This is the check that exposed the skill as Next-shaped. It only became
+  // interesting once a second template existed: `create-feature` emitted a Server
+  // Action importing `next/cache` into a Vite app, and this check is what said so.
+  if (createFeature.code === 0 && hasNodeModules) {
+    const sliceTest = path.join(root, "tests", "unit", "dogfood-slice.test.ts");
+    if (!fs.existsSync(sliceTest)) {
+      fail(
+        `[${template}] create-feature ships a test for the slice it generates`,
+        "create-feature produced no tests/unit/dogfood-slice.test.ts, and its own " +
+          "output tells the agent to write one. A slice that compiles and cannot be " +
+          "tested is a slice nobody will test.",
+        { expected: "tests/unit/<slice>.test.ts" },
       );
     } else {
-      fail(`npm run ${gate}`, firstMeaningfulLine(result.out));
+      pass(`[${template}] create-feature ships a test`);
     }
+
+    const typecheck = npm(root, "typecheck");
+    if (typecheck.code === 0) pass(`[${template}] the generated slice typechecks`);
+    else {
+      fail(`[${template}] the generated slice typechecks`, firstMeaningfulLine(typecheck.out));
+    }
+
+    const lint = npm(root, "lint");
+    if (lint.code === 0) pass(`[${template}] the generated slice lints`);
+    else fail(`[${template}] the generated slice lints`, firstMeaningfulLine(lint.out));
   }
-} else {
-  console.log("   (skipping the gates: --full is needed to install dependencies)\n");
-}
 
-// ── 2. the automations an agent calls ───────────────────────────────────────
-const createTask = node(root, path.join(root, "SDD", "SKILLS", "create-task", "create-task.mjs"), [
-  "0",
-  "1",
-  "Dogfood slice",
-]);
-if (createTask.code === 0) pass("create-task");
-else fail("create-task", firstMeaningfulLine(createTask.out));
-
-const createFeature = node(root, path.join(root, "SDD", "SKILLS", "create-feature", "create-feature.mjs"), [
-  "dogfood-slice",
-  "Dogfood slice",
-]);
-if (createFeature.code === 0) pass("create-feature");
-else fail("create-feature", firstMeaningfulLine(createFeature.out));
-
-// ── 3. the slice the skill says "COMPILES" ──────────────────────────────────
-if (createFeature.code === 0 && hasNodeModules) {
-  const sliceTest = path.join(root, "tests", "unit", "dogfood-slice.test.ts");
-  if (!fs.existsSync(sliceTest)) {
+  // ── 4. every skill the app ships must run where it lands ───────────────────
+  const crashed = checkSkillsRun(root);
+  if (crashed.length) {
     fail(
-      "create-feature ships a test for the slice it generates",
-      "create-feature produced no tests/unit/dogfood-slice.test.ts, and its own " +
-        "output tells the agent to write one. A slice that compiles and cannot be " +
-        "tested is a slice nobody will test.",
-      { expected: "tests/unit/<slice>.test.ts" },
+      `[${template}] every shipped skill runs in the generated app`,
+      crashed.join("\n     "),
+      { expected: "no skill crashes with ENOENT or an unresolvable module" },
     );
   } else {
-    pass("create-feature ships a test");
+    pass(`[${template}] every shipped skill runs in the generated app`);
   }
 
-  const typecheck = npm(root, "typecheck");
-  if (typecheck.code === 0) pass("the generated slice typechecks");
-  else fail("the generated slice typechecks", firstMeaningfulLine(typecheck.out));
+  // ── 5. every relative link in the app resolves ─────────────────────────────
+  const brokenLinks = checkLinks(root);
+  if (brokenLinks.length) {
+    fail(
+      `[${template}] every relative link in the generated app resolves`,
+      brokenLinks.join("\n     "),
+      { expected: "0 dead links" },
+    );
+  } else {
+    pass(`[${template}] every relative link in the generated app resolves`);
+  }
+
+  // ── 6. no document states this repository's numbers ────────────────────────
+  const borrowed = checkNoBorrowedCounts(root);
+  if (borrowed.length) {
+    fail(
+      `[${template}] no document ships this repository's counts as if they were the app's`,
+      borrowed.join("\n     "),
+      { expected: "placeholders, or no count at all — the consumer's first run supplies them" },
+    );
+  } else {
+    pass(`[${template}] no document ships this repository's counts as if they were the app's`);
+  }
+
+  // ── 7. the theme reached the app, unchanged ────────────────────────────────
+  //
+  // A second template is only worth having if the design system is genuinely
+  // portable. Without this check, "the theme is an asset" stays a claim about a file
+  // in this repository while every generated app quietly carries its own copy.
+  const canonical = path.join(PKG_ROOT, "themes", "executive", "tokens.css");
+  const copy = path.join(root, "src", "app", "theme.css");
+  if (fs.existsSync(canonical) && fs.existsSync(copy)) {
+    const same =
+      fs.readFileSync(canonical, "utf8").trim() === fs.readFileSync(copy, "utf8").trim();
+    if (same) {
+      pass(`[${template}] the generated app carries the canonical theme`);
+    } else {
+      fail(
+        `[${template}] the generated app carries the canonical theme`,
+        "src/app/theme.css differs from themes/executive/tokens.css. Two templates " +
+          "sharing one design is the claim; two token files is the counterexample.",
+        { expected: "byte-identical to themes/executive/tokens.css" },
+      );
+    }
+  }
+
+  return root;
 }
 
-// ── 4. every skill the app ships must run where it lands ────────────────────
-const crashed = checkSkillsRun(root);
-if (crashed.length) {
-  fail(
-    "every shipped skill runs in the generated app",
-    crashed.join("\n     "),
-    { expected: "no skill crashes with ENOENT or an unresolvable module" },
-  );
-} else {
-  pass("every shipped skill runs in the generated app");
+/**
+ * Which templates to walk.
+ *
+ * `TEMPLATES` is the single list, read from the same constant the CLI validates
+ * `--template` against. A second hardcoded list here would be a second thing to
+ * forget — and its failure is silent: a new template ships, this script keeps testing
+ * the old one, and the seam rots behind a green gate.
+ */
+const requested = process.argv.find((a) => a.startsWith("--templates="))?.split("=")[1];
+const startedAt = Date.now();
+
+const toWalk = requested
+  ? requested.split(",").map((s) => s.trim()).filter(Boolean)
+  : TEMPLATES;
+
+for (const unknown of toWalk.filter((t) => !TEMPLATES.includes(t))) {
+  fail(`unknown template: ${unknown}`, `known templates: ${TEMPLATES.join(", ")}`);
 }
 
-// ── 5. every relative link in the app resolves ──────────────────────────────
-const brokenLinks = checkLinks(root);
-if (brokenLinks.length) {
-  fail(
-    "every relative link in the generated app resolves",
-    brokenLinks.join("\n     "),
-    { expected: "0 dead links" },
-  );
-} else {
-  pass("every relative link in the generated app resolves");
+const roots = [];
+for (const template of toWalk) {
+  roots.push(walkTemplate(template));
 }
 
-// ── 6. no document states this repository's numbers ─────────────────────────
-const borrowed = checkNoBorrowedCounts(root);
-if (borrowed.length) {
-  fail(
-    "no document ships this repository's counts as if they were the app's",
-    borrowed.join("\n     "),
-    { expected: "placeholders, or no count at all — the consumer's first run supplies them" },
-  );
-} else {
-  pass("no document ships this repository's counts as if they were the app's");
-}
-
-// ── report ──────────────────────────────────────────────────────────────────
-const seconds = ((Date.now() - started) / 1000).toFixed(1);
+// ── report ────────────────────────────────────────────────────────────────
+const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
 
 console.log("─".repeat(64));
 for (const { name, detail } of passes) {
@@ -372,13 +450,21 @@ for (const { name, detail } of passes) {
 console.log("─".repeat(64));
 
 if (findings.length === 0) {
-  console.log(`\n✓ dogfood: ${passes.length} checks passed in ${seconds}s.`);
-  console.log(`  ${root}\n`);
-  if (!keep) fs.rmSync(root, { recursive: true, force: true });
+  console.log(
+    `\n✓ dogfood: ${passes.length} checks passed across ${toWalk.length} template(s) ` +
+      `(${toWalk.join(", ")}) in ${seconds}s.`,
+  );
+  for (const r of roots) {
+    if (!keep) fs.rmSync(r, { recursive: true, force: true });
+    if (fs.existsSync(r)) console.log(`  ${r}`);
+  }
+  console.log();
   process.exit(0);
 }
 
-console.error(`\n✖ dogfood: ${findings.length} finding(s) in ${seconds}s.\n`);
+console.error(
+  `\n✖ dogfood: ${findings.length} finding(s) across ${toWalk.length} template(s) in ${seconds}s.\n`,
+);
 for (const f of findings) {
   console.error(`  ${f.name}`);
   if (f.expected) console.error(`    expected: ${f.expected}`);
@@ -388,7 +474,7 @@ console.error(
   "Every one of these was green on main in this repository. They exist only\n" +
     "in a generated app, which is the only place they can exist.\n",
 );
-console.error(`  app left at: ${root}\n`);
+console.error(`  apps left at: ${roots.join(", ")}\n`);
 
 process.exit(1);
 

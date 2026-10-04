@@ -21,7 +21,7 @@ build now, how to structure it, how to write code, how to commit, and when to st
 | Deliverable | What you get |
 | --- | --- |
 | **Rules** | `SDD/` with agent laws, stack rules, design, architecture, SDD, and per-tool stacks |
-| **Template** | A complete Next.js 16 app, with the design system already applied and building |
+| **Template** | Two complete apps — `next` (Next.js 16 App Router) and `spa` (Vite + React 19) — both with the design system already applied and both building |
 | **CLI** | `npx create-sdd-ai-stack <name>` — everything in one command |
 | **Submodule** | Installs only the rules into any project, with root shortcuts |
 
@@ -101,14 +101,34 @@ git submodule update --remote --merge SDD
 ### 3. CLI options
 
 ```bash
-npx create-sdd-ai-stack my-app --template next      # template (default)
-npx create-sdd-ai-stack my-app --rules-only         # rules only
-npx create-sdd-ai-stack my-app --install            # runs npm install
-npx create-sdd-ai-stack my-app --git                # git init + first commit
-npx create-sdd-ai-stack my-app --submodule          # SDD/ as a git submodule
-npx create-sdd-ai-stack my-app --submodule <url>    # from your fork
-npx create-sdd-ai-stack my-app --shortcuts stub     # no symlink (Windows without dev mode)
+npx create-sdd-ai-stack my-app                       # template (default: next)
+npx create-sdd-ai-stack my-app --template next       # Next.js 16 App Router
+npx create-sdd-ai-stack my-app --template spa        # Vite + React 19 SPA
+npx create-sdd-ai-stack my-app --rules-only          # rules only
+npx create-sdd-ai-stack my-app --install             # runs npm install
+npx create-sdd-ai-stack my-app --git                 # git init + first commit
+npx create-sdd-ai-stack my-app --submodule           # SDD/ as a git submodule
+npx create-sdd-ai-stack my-app --submodule <url>     # from your fork
+npx create-sdd-ai-stack my-app --shortcuts stub      # no symlink (Windows without dev mode)
 ```
+
+#### The two templates
+
+| `--template` | Stack | What it proves |
+| --- | --- | --- |
+| `next` | **Next.js 16** App Router, RSC, Server Actions, `proxy.ts`, Tailwind v4, shadcn | The default, and the fullest stack |
+| `spa` | **Vite 7 + React 19** SPA, plain TypeScript | That the rules, the design tokens and the gates are not Next-shaped |
+
+`spa` is not a smaller Next. It has no App Router, no server components, no
+`proxy.ts`, no `shadcn` — what is left is the part that was always supposed to be
+framework-independent: the SDD rules, the design tokens and the gates. Both templates
+ship the **same** `themes/executive/tokens.css`, byte for byte, and both are gated on
+every push by a matrix that reads the template list from `lib/constants.mjs` — so a
+third template gets its own CI leg without anyone editing a workflow.
+
+The backend stacks (Go, Python, Java, .NET) still ship rules only. A Python user gets
+the rules and no project: that gap is real, recorded in the ROADMAP, and not solved
+here. Two templates prove the seam; seven would prove nothing extra.
 
 ---
 
@@ -340,7 +360,7 @@ re-run (`typecheck`, `lint`, `test`, `build`) · `npm test` · coverage floor ·
 links · doc facts · the tag must match `package.json` · the tarball must carry
 every essential file · `npm ≥ 11.5.1` · `concurrency` · provenance (npm only).
 
-The release lists 17 essential files the tarball must contain, and every one of
+The release lists 19 essential files the tarball must contain, and every one of
 them has to exist or the CLI breaks for whoever installs it. The release workflow
 lists them; `npm run check:facts` recomputes that number from that list.
 
@@ -394,9 +414,18 @@ claimed 27 tests and 33 documents while the repository had more than double that
 teaches an agent to trust no document, which is the failure this template exists
 to prevent.
 
-The template in `template/next/` is validated for real: `typecheck` + `lint` + `test` +
-`test:e2e` + `build`. The CI (`.github/workflows/ci.yml`) re-runs that validation on
-every push, **generating the app from the template itself**.
+Every template is validated for real: `typecheck` + `lint` + `test` + `test:e2e` +
+`build`, plus a check that the generated app carries the canonical design tokens
+unchanged. The CI (`.github/workflows/ci.yml`) re-runs that validation on every push,
+**generating the app from each template itself**, and the matrix reads the template
+list out of `lib/constants.mjs` — so the workflow cannot fall behind the code the way a
+hardcoded list would.
+
+Both templates are also lintable **in this repository**, which they were not for
+months: Biome could not start at all inside a template folder, because the packer
+drops a literal `.gitignore` and the template stores it under another name. CI never
+saw it, because CI lints the generated app. `tests/template-lint-config.test.mjs` now
+keeps that command runnable.
 
 ---
 

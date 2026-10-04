@@ -125,15 +125,49 @@ jobs:
           # said `template/next/src/proxy.ts` and could never have passed. A guard that
           # has never gone green is not a guard.
           npm pack --dry-run 2>&1 | tee pack.txt
+
+          # Read TEMPLATES rather than repeating it. The previous version of this
+          # guard named `template/next/...` and nothing else, so a second template
+          # could be published without its `gitignore` — and an app generated with
+          # no `.gitignore` ships `.env.local` to git. The failure is invisible at
+          # pack time and permanent in the user's repository.
+          TEMPLATES=$(node -e '
+            const src = require("fs").readFileSync("lib/constants.mjs", "utf8");
+            const m = src.match(/export const TEMPLATES = \[([^\]]*)\]/);
+            if (!m) { console.error("TEMPLATES is no longer a literal array; update this guard"); process.exit(1); }
+            process.stdout.write(m[1].split(",").map(s => s.trim().replace(/^["\x27]|["\x27]$/g, "")).filter(Boolean).join(" "));
+          ')
+          echo "templates in the package: $TEMPLATES"
+
           for f in "bin/create-sdd-ai-stack.mjs" "lib/scaffold.mjs" "AGENTS.md" \
                    "PREFLIGHT.md" "DESIGN.md" "APP-STACK.md" "stacks/README.md" \
                    "stacks/clean-code.md" "stacks/language.md" \
-                   "template/next/gitignore" "template/next/package.json" \
-                   "template/next/src/proxy.ts" "template/next/components.json" \
+                   "themes/executive/tokens.css" \
                    "SKILLS/create-feature/SKILL.md" "SKILLS/create-task/SKILL.md" \
                    "SKILLS/check-rules/check-rules.mjs" "SKILLS/check-docs/SKILL.md"; do
             grep -q "$f" pack.txt || { echo "::error::missing from the package: $f"; exit 1; }
           done
+
+          # Per template: the files without which a generated app is broken. These
+          # paths are asserted against `npm pack` output, so they must be the real
+          # ones — the template uses `src/`, which puts `proxy.ts` at
+          # `src/proxy.ts`. The earlier version of this guard said
+          # `template/next/src/proxy.ts` and could never have passed, and a guard
+          # that has never gone green is not a guard.
+          for t in $TEMPLATES; do
+            for f in "template/$t/gitignore" "template/$t/package.json" \
+                     "template/$t/src/app/theme.css"; do
+              grep -q "$f" pack.txt || { echo "::error::missing from the package: $f"; exit 1; }
+            done
+          done
+
+          # Next-only, because these files only mean something in a Next app.
+          if echo "$TEMPLATES" | grep -qw next; then
+            for f in "template/next/src/proxy.ts" "template/next/components.json"; do
+              grep -q "$f" pack.txt || { echo "::error::missing from the package: $f"; exit 1; }
+            done
+          fi
+
           echo "all essential files are in the tarball"
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -144,13 +178,30 @@ jobs:
       - name: Re-run the template gates
         run: |
           set -euo pipefail
-          node bin/create-sdd-ai-stack.mjs .sandbox --no-install --shortcuts stub --yes
-          cd .sandbox
-          npm install --no-audit --no-fund
-          npm run typecheck
-          npm run lint
-          npm run test
-          npm run build
+          # Every template, not just the default one. A release must never ship a
+          # package containing a template that does not build — and "the default one"
+          # is the version of that sentence that let a broken second template through.
+          TEMPLATES=$(node -e '
+            const src = require("fs").readFileSync("lib/constants.mjs", "utf8");
+            const m = src.match(/export const TEMPLATES = \[([^\]]*)\]/);
+            if (!m) { console.error("TEMPLATES is no longer a literal array; update this step"); process.exit(1); }
+            process.stdout.write(m[1].split(",").map(s => s.trim().replace(/^["\x27]|["\x27]$/g, "")).filter(Boolean).join(" "));
+          ')
+
+          for t in $TEMPLATES; do
+            echo "::group::template $t"
+            rm -rf ".sandbox-$t"
+            node bin/create-sdd-ai-stack.mjs ".sandbox-$t" --template "$t" --no-install --shortcuts stub --yes
+            cd ".sandbox-$t"
+            npm install --no-audit --no-fund
+            npm run typecheck
+            npm run lint
+            npm run test
+            npm run build
+            cd - >/dev/null
+            echo "::endgroup::"
+          done
+          rm -rf .sandbox-*
 
   publish:
     name: Publish npm
