@@ -21,13 +21,18 @@
 | [3](./history/phases/phase-3-rules-that-work.md) | Rules that work | 13 findings from letting an agent follow the rules, and the check that catches them |
 | [4](./history/phases/phase-4-site-and-responsive.md) | Site and responsive | The site, copy buttons, analytics, and a responsive rule with teeth |
 | [5](./history/phases/phase-5-first-real-publish.md) | First real publish | `0.3.1` live on npmjs and GitHub Packages, OIDC, and eight release bugs found by running the release |
+| [6](./history/phases/phase-6-no-age-badly.md) | No age badly | Dependabot's ignore was inverted, and three files that had to agree on the Node version did not |
+| [7](./history/phases/phase-7-your-project.md) | A project that belongs to you | Five leaks that shipped this repository's own documents into someone else's app |
+| [8](./history/phases/phase-8-proving-the-rules.md) | Proving the rules | Six bugs that only exist in a generated app, and the CI job that finds them in 5 seconds |
+| [9](./history/phases/phase-9-other-tools.md) | The rules in other tools | `.cursorrules` is Chat-only in Cursor; the other six shortcuts named a file that was not themselves |
+| [10](./history/phases/phase-10-a-template-that-does-not-lie.md) | A template that does not lie | `check-facts` made the numbers in prose falsifiable |
 
 ---
 
-## 🧭 Planned
+## 📚 Closed phases in detail
 
-Each phase below exists because something is **broken or false today**, not because
-it sounds useful. The problem is named, not the solution.
+Each phase below exists because something **was broken or false**, not because it
+sounded useful. The problem is named, not the solution.
 
 ### Phase 6 — A template that does not age badly ✅
 
@@ -146,8 +151,64 @@ Wired into CI and `prepublishOnly`.
 
 ## 🧭 Planned
 
-_Nothing yet. A phase appears here when something is broken or missing, and the
-entry names the problem rather than the solution._
+### Phase 11 — The audit
+
+**Problem.** Phases 3 to 10 found bugs by *running* something: the release, the
+scaffold, the generated app. Nobody re-read the repository asking a different
+question — not "does it work" but "does it obey its own rules". This phase is that
+re-read. Four defects, all green on `main`:
+
+| # | Defect | Why every gate was green |
+| --- | --- | --- |
+| 1 | `SKILLS/create-feature.sh` generates no test | the CI check exercises the `.mjs`; `SKILL.md` told the agent to run the `.sh` |
+| 2 | The design system is documented in Portuguese | RULE 1's pattern list was built from one string and misses everything else |
+| 3 | `ROADMAP.md` had two "Planned" sections, and phases 9 and 10 were never archived | `check:facts` verifies numbers, not structure |
+| 4 | The README lists 3 of 8 skills | same blind spot: enumeration drift is invisible to a fact check |
+
+The first two are the same bug wearing different clothes, and it is the one worth
+naming: **a guard that only catches what it was written against is worse than no
+guard**, because it is cited as proof. RULE 1 exists, is named in CI, and had never
+fired.
+
+**Delivered.** The `.sh` deleted and its absence asserted. RULE 1 rebuilt around
+high-signal words instead of one remembered string, and extended to the template
+source — which nothing had ever checked, because `check-rules` only walked
+`src/` when its argument was a *generated* app, and CI passes no argument. Every
+distributed file is English. `check-facts` gained a structural claim so the
+ROADMAP and the README cannot drift into two "Planned" sections or a partial table
+again.
+
+**Then the two structural gaps.** `--template` offers a choice of one while seven
+backend rule sets ship with no template, and the design system — the part that is
+actually yours — is locked inside `template/next/` where no other stack can reach
+it. Both are one phase each, tracked as 12 and 13.
+
+**Scope out.** Fixing the rules the audit surfaced *as rules*. Phase 8 measured and
+declined to tune; this one tunes only what it can prove.
+
+### Phase 12 — More than one template
+
+**Problem.** `--template <next|none>` accepts a list of one. `TEMPLATES` is
+`["next"]`, and `none` is what `--rules-only` already does. Meanwhile seven backend
+rule sets ship with no `npx` path at all: a Go or Python user gets rules and no
+project.
+
+**Delivered.** A second template that proves the pipeline is not hardcoded to
+Next.js, and `SKILLS/dogfood` generalized to walk *N* templates — today it assumes
+`next` in its gate list and its assertions.
+
+**Scope out.** Seven templates. Two is the number that proves the seam is real.
+
+### Phase 13 — A theme that is an asset
+
+**Problem.** The design system exists only as `DESIGN.md` plus a `globals.css`
+nested inside `template/next/`. Nothing else can consume it, so "the design is
+mine" is a property of the Next template rather than of this package.
+
+**Delivered.** The tokens extracted to a portable artifact that every template
+imports, so a second stack inherits the theme instead of reinventing it.
+
+**Scope out.** A second theme. One portable theme proves the mechanism.
 
 ---
 
