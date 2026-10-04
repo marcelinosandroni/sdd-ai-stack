@@ -34,7 +34,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     /* Tier 0: structural micro-dot grid */
-    background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-image: radial-gradient(#ffffff08 1px, #0000 1px);
     background-size: 24px 24px;
   }
 
@@ -104,7 +104,7 @@
     gap: 0.5rem;
     border-radius: var(--radius-DEFAULT);
     border: 1px solid var(--color-border-subtle);
-    background-color: transparent;
+    background-color: #0000;
     color: var(--color-text-primary);
     font-weight: 500;
     padding: 0.625rem 1.25rem;
@@ -165,11 +165,7 @@
     right: 0;
     width: 3rem;
     height: 3rem;
-    background: radial-gradient(
-      circle at top right,
-      var(--kpi-accent-glow),
-      transparent 70%
-    );
+    background: radial-gradient(circle at top right, var(--kpi-accent-glow), #0000 70%);
     opacity: 0;
     transition: opacity 250ms ease;
   }

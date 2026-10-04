@@ -73,9 +73,16 @@ test("a wrong number in a document turns the check red", () => {
   try {
     // A real assertion: plain prose, no backticks, no escape hatch — which is
     // exactly the shape a genuine claim takes.
+    //
+    // The anchor is the SKILLS heading, and the assertion is deliberately specific:
+    // it plants a *test count* next to a sentence about automations, because that
+    // is the mistake this check exists to catch — a number attached to a claim it
+    // cannot support. An earlier version of this test anchored on a sentence about
+    // templates, and when the README was rewritten it failed with "could not plant".
+    // A test that silently stops testing is worse than no test.
     const tampered = original.replace(
-      "The template in `template/next/`",
-      "The template in `template/next/` has 12 tests",
+      "## 📚 SKILLS",
+      "## 📚 SKILLS\n\nThere are 12 tests.",
     );
     assert.notEqual(tampered, original, "could not plant a stale number in README.md");
     fs.writeFileSync(readme, tampered);

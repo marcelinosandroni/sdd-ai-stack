@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════
+   THE THEME IS AN ASSET, NOT A LINE IN THIS FILE.
+
+   Every token — surface, text, border, accent, font, size, radius,
+   space — lives in `./theme.css`, which is a verbatim copy of
+   `themes/executive/tokens.css` at the root of the package that
+   generated this app. The copy has to live here because a bundler
+   refuses an `@import` that leaves the project root, so the
+   canonical file is copied in at scaffold time and
+   `tests/theme.test.mjs` asserts the two are byte-identical.
+
+   This is the second template to do it. The tokens are unchanged,
+   which is the entire point: a Vite app and a Next.js app now
+   present the same design because they read the same file.
+   ═══════════════════════════════════════════════════════════════ */
+
+@import "./theme.css";
+
+/* ═══════════════════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════════════════ */
+
+@layer base {
+  * {
+    border-color: var(--color-border-subtle);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-surface-base);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    /* Tier 0: structural micro-dot grid. */
+    background-image: radial-gradient(#ffffff07 1px, #0000 1px);
+    background-size: 28px 28px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PRIMITIVES
+   ═══════════════════════════════════════════════════════════════ */
+
+@layer components {
+  .label-mono {
+    font-family: var(--font-mono);
+    font-size: var(--text-label-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  .card {
+    background-color: var(--color-surface-raised);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACCESSIBILITY
+
+   Every animation in this template is opt-in via this media query.
+   `prefers-reduced-motion` is a user setting, not a suggestion,
+   and a template that ignores it ships that decision to every app
+   built from it.
+
+   Kept OUTSIDE @layer: the `!important` below must win over every
+   utility, and layered styles lose to utilities by design.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* biome-ignore-start lint/complexity/noImportantStyles: !important is the only way to honour prefers-reduced-motion over an inline transition */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+/* biome-ignore-end lint/complexity/noImportantStyles: end of the prefers-reduced-motion block */
+
+/* A single duration token, so a transition is not a magic number in twelve places.
+   Exported rather than scoped, because the value is also what the reduced-motion
+   block above collapses toward. */
+:root {
+  --motion-duration: 200ms;
+}

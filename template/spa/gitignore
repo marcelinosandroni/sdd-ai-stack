@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Test artefacts
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# Environment — never commit a real one. `.env.local` is ignored on purpose:
+# that is the whole reason the packer renames `gitignore` on the way out.
+.env
+.env.local
+.env.*.local
+
+# Editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Vite
+.vite/

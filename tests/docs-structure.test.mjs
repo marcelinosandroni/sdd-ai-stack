@@ -127,14 +127,33 @@ test("the PLAN works the lowest phase the ROADMAP has not closed", () => {
   assert.ok(phases.length > 0, "no phase headings found in the ROADMAP");
 
   const open = phases.filter((p) => !p.done).map((p) => p.n).sort((a, b) => a - b);
+  const unfinished = [...plan.matchAll(/^\s*\[( |-)\]\s/gm)];
 
-  if (open.length > 0 && !open.includes(phase)) {
+  // Nothing open at all. That is a real state — the ROADMAP can be fully delivered —
+  // and the first version of this rule compared the PLAN against `undefined` here,
+  // which reads like a bug in the ROADMAP rather than like completion. In this state
+  // the PLAN may name the last closed phase, provided that phase is actually
+  // finished.
+  if (open.length === 0) {
+    assert.deepEqual(
+      unfinished,
+      [],
+      `every phase in the ROADMAP is closed, but the PLAN still has ${unfinished.length} ` +
+        `task(s) not marked [x]. Either the ROADMAP is out of date or the work is not done.`,
+    );
+    assert.ok(
+      phases.some((p) => p.n === phase),
+      `the PLAN works phase ${phase}, which the ROADMAP does not describe at all`,
+    );
+    return;
+  }
+
+  if (!open.includes(phase)) {
     // A closed phase is allowed in the PLAN only while it is being archived: every
     // one of its tasks `[x]`. The rule is not "never a closed phase" — it is "never
     // pointing at finished work while there is still work to do". Without this
     // exception, closing a phase and writing its archive would make the test fail
     // for the duration of a task that is required to happen.
-    const unfinished = [...plan.matchAll(/^\s*\[( |-)\]\s/gm)];
     assert.deepEqual(
       unfinished,
       [],

@@ -6,7 +6,111 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
-## [Não publicado]
+## [0.4.0] — 2026-10-04
+
+> **Um `--template` com uma opção só, e três suposições que só o segundo template
+> tornou visíveis.** Nenhuma delas podia ser encontrada com um template só.
+> Registro completo:
+> [`phase-12-more-than-one-template.md`](../specs/history/phases/phase-12-more-than-one-template.md).
+
+### ✨ `template/spa` — Vite 7 + React 19
+
+Não é um Next menor: sem App Router, sem server components, sem `proxy.ts`, sem
+`shadcn`, sem pass de prerender. O que sobra é a parte que sempre deveria ter sido
+independente de framework — as regras SDD, os tokens de design e os gates.
+
+Uma fatia vertical em `domain / application / infrastructure / ui`, cinco testes
+unitários, cinco E2E contra o **build de produção**, e o **mesmo**
+`themes/executive/tokens.css` byte a byte.
+
+```
+template/spa   typecheck → exit 0 · lint → 1 info (aviso pré-existente de schema)
+               test → 5 passed · build → ✓ 137 modules transformed · test:e2e → 5 passed
+dogfood        → ✓ 12 checks passed across 2 templates (next, spa)
+```
+
+**Por que frontend e não backend.** A fase 12 tinha um segundo problema: sete rule sets
+de backend (Go, Python, Java, .NET) não têm caminho `npx` — um usuário Python recebe
+regras e nenhum projeto. Isso **não** foi resolvido aqui, e o motivo está escrito. Um
+SPA Vite responde à pergunta com nitidez, porque não compartilha quase nada com o Next
+abaixo da superfície — e é o único segundo template que ainda fecha o laço da fase 13,
+consumindo os mesmos tokens. Um template FastAPI responderia à pergunta de framework e
+deixaria o design system ainda soldado a um stack. A lacuna do backend está listada no
+ROADMAP como **conhecida e não agendada**, em vez de ser abandonada em silêncio.
+
+### 🐛 `create-feature` era uma skill só do Next
+
+Emitia incondicionalmente, em qualquer app onde rodasse:
+
+```ts
+import "server-only";
+import { revalidatePath, updateTag } from "next/cache";
+import { ForbiddenError, requireUser, UnauthorizedError } from "@/shared/server/auth";
+```
+
+`server-only` e `next/cache` são pacotes do Next; `@/shared/server/auth` só existe no
+template Next. Então **toda fatia gerada fora de um app Next não passava no
+typecheck** — e nenhum gate podia dizer, porque não havia um segundo app para
+typecheck. É a mesma forma do `create-feature.sh` apagado na fase 11: um arquivo com um
+caminho testado e um caminho documentado, e só um deles exercitado.
+
+**Entregue:** `detectStack()` lê o app (`next.config.ts`, com fallback para a
+dependência `next`) e as partes específicas do Next viraram constantes pré-computadas.
+Os cinco passos de uma escrita são iguais nos dois stacks; só a maquinaria muda — então
+as diferenças são substituídas, não duplicadas. O teste prova **os dois lados**: a
+fatia do SPA não tem `next/`, `@/shared/server/` nem `server-only`, **e** a do Next
+continua recebendo `"use server"` e `next/cache`.
+
+### 🐛 `npm run lint` nunca funcionou dentro de um template
+
+```
+Biome couldn't find an ignore file in the following folder: …\template\next
+```
+
+O npm packer nunca inclui um arquivo chamado literalmente `.gitignore` — é um dos
+ignores padrão dele. Por isso cada template o guarda como `gitignore`, e
+`restoreGitignore()` o renomeia no app gerado. Ou seja: **a cópia de trabalho do
+template não tem `.gitignore`**, e o Biome com `useIgnoreFile: true` simplesmente não
+sobe.
+
+Ficou invisível porque o CI linta o app **gerado**, onde o `.gitignore` existe. A falha
+estava no primeiro lugar onde um developer chega, e ninguém a reportou, porque ninguém
+rodava ali.
+
+**Entregue:** `useIgnoreFile: false` nos dois templates, com `files.includes` como lista
+autoritativa. Ligar isso destapou **erros de lint reais que ninguém tinha visto**, e
+todos corrigidos — inclusive um **bug de CSS meu**: ao mover o tema para fora do
+`globals.css` na fase 13, deixei as duas declarações do micro-dot grid na raiz do
+`@layer`, fora de qualquer regra. CSS inválido, descartado em silêncio pelo browser, e
+invisível para o `next build`.
+
+### 🐛 `check-facts` lia um loop de três
+
+`essentialCount()` casava o **primeiro** `for f in …` do `release.yml`. Ao tornar
+aquele guard por-template, dois loops novos apareceram e o checker os ignorou em
+silêncio — o número reportado **caiu** enquanto o requisito real **subia**.
+
+Um checker que lê parte do que verifica é tão errado quanto um que não lê nada, e não é
+mais honesto a respeito. Agora conta todos os loops, e o motivo está na função.
+
+### 🔗 Uma fonte de verdade, cinco leitores
+
+O CLI, o `dogfood`, o job de template do CI (agora uma **matrix**) e os dois guards do
+release leem a mesma constante `TEMPLATES`. O `next` hardcoded no `dogfood` é agora
+assertado **ausente** — assertar a presença da correção passaria igual com
+`template: "next"` escrito na linha de baixo.
+
+### 📖 Fases 11, 12 e 13 fechadas
+
+A fase 11 tinha registrado um terceiro gap ("cinco stacks documentados e ausentes") que
+**era falso**: nenhum arquivo prometia aquilo, e as únicas duas ocorrências dos nomes
+eram escritas pela própria auditoria. Corrigido, e o roteiro agora tem um guard que
+exige que todo arquivo nele nomeado exista — e o inverso, porque um arquivo de regra
+não linkado é uma regra que nenhum agente abre.
+
+---
+
+## [0.4.0-rc.1 — arquivado como 0.4.0]
 
 > **A primeira fase deste repositório que começou reendere o código em vez de
 > rodá-lo.** As fases 3 a 10 acharam bugs *executando* alguma coisa. Esta fase viu

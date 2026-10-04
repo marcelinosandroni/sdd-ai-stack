@@ -11,6 +11,31 @@ permissions:
   contents: read
 
 jobs:
+  # The one list of templates, emitted for the matrix below.
+  #
+  # A hardcoded matrix list would be a second enumeration — and the failure mode is
+  # the quiet one this repository keeps meeting: a template ships, the matrix does
+  # not mention it, and CI is green while testing nothing new. Reading the constant
+  # that the CLI itself validates against means the two cannot disagree.
+  templates:
+    name: Read TEMPLATES
+    runs-on: ubuntu-24.04
+    outputs:
+      list: ${{ steps.read.outputs.list }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: read
+        run: |
+          set -euo pipefail
+          list=$(node -e '
+            const src = require("fs").readFileSync("lib/constants.mjs", "utf8");
+            const m = src.match(/export const TEMPLATES = \[([^\]]*)\]/);
+            if (!m) { console.error("TEMPLATES is no longer a literal array; update this step"); process.exit(1); }
+            console.log(JSON.stringify(m[1].split(",").map(s => s.trim().replace(/^["\x27]|["\x27]$/g, "")).filter(Boolean)));
+          ')
+          echo "templates=$list" >> "$GITHUB_OUTPUT"
+          echo "TEMPLATES=$list"
+
   quality:
     name: Quality
     runs-on: ubuntu-24.04
@@ -76,9 +101,24 @@ jobs:
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: node SKILLS/dogfood/dogfood.mjs --full
 
+  # One job per template, from one list.
+  #
+  # This used to be a single hardcoded job that generated `next` and ran its gates.
+  # Adding a second template therefore meant remembering to come back here — and
+  # nothing would have said so. The matrix reads `TEMPLATES` from the same constant
+  # the CLI validates against, so adding a template is one edit in `lib/constants.mjs`
+  # and CI grows a leg on its own.
+  #
+  # A job that tests one template is evidence about that template. This one is
+  # evidence about every template, which is the claim `--template` now makes.
   template:
-    name: Template
+    name: Template (${{ matrix.template }})
     runs-on: ubuntu-24.04
+    needs: templates
+    strategy:
+      fail-fast: false
+      matrix:
+        template: ${{ fromJson(needs.templates.outputs.list) }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -90,7 +130,7 @@ jobs:
 
       - name: Generate the app from the template
         run: |
-          node bin/create-sdd-ai-stack.mjs .sandbox --no-install --shortcuts stub --yes
+          node bin/create-sdd-ai-stack.mjs .sandbox --template "${{ matrix.template }}" --no-install --shortcuts stub --yes
           cd .sandbox
 
       - name: Install dependencies
@@ -112,6 +152,21 @@ jobs:
       - name: Build
         working-directory: .sandbox
         run: npm run build
+
+      # The token file must arrive unchanged. A generated app carrying its own copy
+      # of the design is how two apps drift into two design systems with one name.
+      - name: The generated app carries the canonical theme
+        run: |
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            const a = readFileSync("themes/executive/tokens.css", "utf8").trim();
+            const b = readFileSync(".sandbox/src/app/theme.css", "utf8").trim();
+            if (a !== b) {
+              console.error("src/app/theme.css differs from themes/executive/tokens.css");
+              process.exit(1);
+            }
+            console.log("theme is byte-identical");
+          '
 
       - name: Install Playwright browsers
         working-directory: .sandbox
