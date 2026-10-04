@@ -146,9 +146,13 @@ jobs:
             # server compiles on demand, so a route that only breaks after bundling
             # passes E2E and fails the user.
             npm run test:e2e
+
+            # Back to the repository root, and only there. `cd -` already returns
+            # to where the loop started, so a further `cd ..` steps outside the
+            # checkout — and the theme check below then fails on a file that
+            # demonstrably exists, which is the most confusing possible error.
             cd - >/dev/null
 
-            cd ..
             # The token file must arrive unchanged. A generated app carrying its own
             # copy of the design is how two apps drift into two design systems with
             # one name.
