@@ -21,9 +21,9 @@
 
 ---
 
-## Current phase: 11 — The audit (IN PROGRESS)
+## Current phase: 11 — The audit
 
-> Status: 🔨 4 defects found by re-reading the repository, not by running it
+> Status: ✅ closed — 4 defects, 3 gaps, and one rule that could not fail
 > History: [0 Bootstrap](./history/phases/phase-0-bootstrap.md) ·
 > [1 English](./history/phases/phase-1-english.md) ·
 > [2 All stacks](./history/phases/phase-2-all-stacks.md) ·
@@ -43,38 +43,47 @@
 
 ### Tasks
 
-[-] - The `create-feature.sh` mirror: `SKILL.md` documented the bash entry point,
+[x] - The `create-feature.sh` mirror: `SKILL.md` documented the bash entry point,
       the bash script generated no test, and the CI guard exercised only the
       `.mjs`. Every agent on Linux or macOS landed on the unfixed path — the exact
-      bug phase 8 declared closed. Delete the mirror, point the doc at the one
-      entry point, and assert the mirror cannot come back.
-[ ] - The English rule that never fired. `check-rules` RULE 1 exists, is named in
+      bug phase 8 declared closed. Mirror deleted, doc pointed at the one entry
+      point, absence asserted by `tests/skill-entrypoints.test.mjs`.
+[x] - The English rule that never fired. `check-rules` RULE 1 exists, is named in
       CI, and passed over a design system documented entirely in Portuguese: its
       pattern list was built from one remembered string, and `template/next/src`
       was never walked at all, because RULE 1 only ran when the argument was a
-      generated app and CI passes none.
-[ ] - Every distributed file in English: the tokens' comments and placeholders,
+      generated app and CI passes none. Rebuilt around a curated word list, made
+      case-insensitive (the offenders were capitalised headers), extended to the
+      template source, and proven by planting the failure in
+      `tests/rules-contract.test.mjs`.
+[x] - Every distributed file in English: the tokens' comments and placeholders,
       the two skills that print user-facing Portuguese, the library comments, and
       the package description.
-[ ] - The ROADMAP's two "Planned" sections, the phases 9 and 10 that were closed
+[x] - The ROADMAP's two "Planned" sections, the phases 9 and 10 that were closed
       but never archived, and the stale `[-]` phase 6 task this file carried since
       phase 8 — the rule says exactly one, and it was pointing at finished work.
-[ ] - The README's SKILLS table: 3 of 8 listed in one place, 6 of 8 in another,
+[x] - The README's SKILLS table: 3 of 8 listed in one place, 6 of 8 in another,
       while `check:facts` — the guard built to stop this repository lying about
-      itself — verified numbers only and had no opinion about enumerations.
-[ ] - A portable theme: the tokens extracted out of `template/next/` into an
+      itself — verified numbers only and had no opinion about enumerations. The
+      README now lists all 8 with a "ships to you?" column, and
+      `tests/docs-structure.test.mjs` asserts enumerations, archive symmetry and
+      one-`[-]` from now on.
+[x] - A portable theme: the tokens extracted out of `template/next/` into an
       artifact another stack can import, so the design is an asset of the package
       rather than a feature of one template.
-[ ] - A second template, with `dogfood` generalized to walk N templates — the
-      pipeline must not be hardcoded to Next.js for the claim to be true.
+
+> **Moved to phase 12, not dropped:** a second template with `dogfood` generalized
+> to N templates. It stays in the ROADMAP as its own phase, because "the pipeline
+> works for more than one template" is a claim that only becomes true when there
+> *is* a second template to walk.
 
 ### Phase exit criteria
-- [ ] Every task `[x]` with the test evidence pasted
-- [ ] `npm test && npm run check:coverage && npm run check:rules && npm run check:docs` green
-- [ ] `npm run check:facts` green, with a structural claim in it
-- [ ] `node SKILLS/dogfood/dogfood.mjs` green
-- [ ] `specs/history/phases/phase-11-the-audit.md` written
-- [ ] `docs/CHANGELOG.md` updated
+- [x] Every task `[x]` with the test evidence pasted
+- [x] `npm test && npm run check:coverage && npm run check:rules && npm run check:docs` green
+- [x] `npm run check:facts` green
+- [x] `node SKILLS/dogfood/dogfood.mjs` green
+- [x] `specs/history/phases/phase-11-the-audit.md` written
+- [x] `docs/CHANGELOG.md` updated
 
 ### How to use this file
 

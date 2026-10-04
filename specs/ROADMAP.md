@@ -26,6 +26,8 @@
 | [8](./history/phases/phase-8-proving-the-rules.md) | Proving the rules | Six bugs that only exist in a generated app, and the CI job that finds them in 5 seconds |
 | [9](./history/phases/phase-9-other-tools.md) | The rules in other tools | `.cursorrules` is Chat-only in Cursor; the other six shortcuts named a file that was not themselves |
 | [10](./history/phases/phase-10-a-template-that-does-not-lie.md) | A template that does not lie | `check-facts` made the numbers in prose falsifiable |
+| [11](./history/phases/phase-11-the-audit.md) | The audit | Four defects that were green on `main`, and one rule that structurally could not fail |
+| [13](./history/phases/phase-13-a-theme-that-is-an-asset.md) | A theme that is an asset | The design system extracted out of one template into a portable artifact |
 
 ---
 
@@ -33,6 +35,52 @@
 
 Each phase below exists because something **was broken or false**, not because it
 sounded useful. The problem is named, not the solution.
+
+### Phase 13 — A theme that is an asset ✅
+
+> Delivered inside phase 11. The full reasoning is in
+> [the phase 11 archive](./history/phases/phase-11-the-audit.md#2-2-the-theme-was-a-feature-of-one-template-not-an-asset-of-the-package).
+
+**Problem.** Every token lived inside `@theme` in `template/next/src/app/globals.css`.
+The design system was therefore inseparable from one framework, and "the design is
+mine" was a property of the Next template rather than of this package.
+
+**Delivered.** `themes/executive/tokens.css` is the canonical source, shipped in the
+package and exported at `./themes/*`. Each template keeps a byte-identical copy at
+`src/app/theme.css` and imports it — because Turbopack refuses an `@import` that leaves
+the project root, which is a bundler constraint and not a design decision. The copies
+are asserted byte-identical, and `check-rules` RULE 7 now **fails when it reads zero
+tokens** so it cannot pass by comparing nothing.
+
+**Scope out.** A second theme. One portable theme proves the mechanism.
+
+### Phase 11 — The audit ✅
+
+**Problem.** Phases 3 to 10 found bugs by *running* something: the release, the
+scaffold, the generated app. Nobody re-read the repository asking a different
+question — not "does it work" but "does it obey its own rules". This phase was that
+re-read, and it found four defects, three gaps, and one guard that could not fail.
+
+| # | Defect | Why every gate was green |
+| --- | --- | --- |
+| 1 | `SKILLS/create-feature.sh` generates no test | the CI check exercises the `.mjs`; `SKILL.md` told the agent to run the `.sh` |
+| 2 | The design system is documented in Portuguese | RULE 1's pattern list was built from one string, was case-sensitive, and never walked `template/next/src` |
+| 3 | `ROADMAP.md` had two "Planned" sections, and phases 9 and 10 were never archived | `check:facts` verifies numbers, not structure |
+| 4 | The README lists 3 of 8 skills | same blind spot: enumeration drift is invisible to a fact check |
+
+**Delivered.** The `.sh` deleted and its absence asserted. RULE 1 rebuilt around a
+curated word list, made case-insensitive, extended to the template source, and proven
+by planting the failure. Every distributed file is English. The ROADMAP has one
+`Planned` section and the missing archives. The README lists all eight skills, and
+structural claims — enumerations, archive symmetry, one `[-]` — now live in
+`tests/docs-structure.test.mjs`, because a fact checker recomputes numbers and has no
+opinion about a table that lists 3 of 8. Plus phase 13, the portable theme.
+
+Full account: [phase-11-the-audit.md](./history/phases/phase-11-the-audit.md).
+
+**Scope out.** Fixing the rules the audit surfaced *as rules*, and writing the five
+stack documents the router promises. Phase 8 measured and declined to tune; this one
+tunes only what it can prove.
 
 ### Phase 6 — A template that does not age badly ✅
 
@@ -151,47 +199,6 @@ Wired into CI and `prepublishOnly`.
 
 ## 🧭 Planned
 
-### Phase 11 — The audit
-
-**Problem.** Phases 3 to 10 found bugs by *running* something: the release, the
-scaffold, the generated app. Nobody re-read the repository asking a different
-question — not "does it work" but "does it obey its own rules". This phase is that
-re-read. Four defects, all green on `main`:
-
-| # | Defect | Why every gate was green |
-| --- | --- | --- |
-| 1 | `SKILLS/create-feature.sh` generates no test | the CI check exercises the `.mjs`; `SKILL.md` told the agent to run the `.sh` |
-| 2 | The design system is documented in Portuguese | RULE 1's pattern list was built from one string and misses everything else |
-| 3 | `ROADMAP.md` had two "Planned" sections, and phases 9 and 10 were never archived | `check:facts` verifies numbers, not structure |
-| 4 | The README lists 3 of 8 skills | same blind spot: enumeration drift is invisible to a fact check |
-
-The first two are the same bug wearing different clothes, and it is the one worth
-naming: **a guard that only catches what it was written against is worse than no
-guard**, because it is cited as proof. RULE 1 exists, is named in CI, and had never
-fired.
-
-**Delivered.** The `.sh` deleted and its absence asserted. RULE 1 rebuilt around
-high-signal words instead of one remembered string, made case-insensitive, and
-extended to the template source — which nothing had ever checked, because it only
-walked `src/` when its argument was a *generated* app and CI passes none. Every
-distributed file is English, and the one deliberate exception is named in the
-checker and asserted to exist.
-
-On the structure: the guards live in `tests/docs-structure.test.mjs` rather than
-inside `check-facts`, on purpose. `check-facts` recomputes a **number** a document
-claims; a fact checker has no opinion about a table that lists 3 of 8, a duplicated
-heading, or a closed phase with no archive. Those are **structural** claims —
-properties a document must have — and folding both kinds into one script would mean
-one exit code for two different failures, with messages that blur together.
-
-**Then the two structural gaps.** `--template` offers a choice of one while seven
-backend rule sets ship with no template, and the design system — the part that is
-actually yours — is locked inside `template/next/` where no other stack can reach
-it. Both are one phase each, tracked as 12 and 13.
-
-**Scope out.** Fixing the rules the audit surfaced *as rules*. Phase 8 measured and
-declined to tune; this one tunes only what it can prove.
-
 ### Phase 12 — More than one template
 
 **Problem.** `--template <next|none>` accepts a list of one. `TEMPLATES` is
@@ -204,17 +211,6 @@ Next.js, and `SKILLS/dogfood` generalized to walk *N* templates — today it ass
 `next` in its gate list and its assertions.
 
 **Scope out.** Seven templates. Two is the number that proves the seam is real.
-
-### Phase 13 — A theme that is an asset
-
-**Problem.** The design system exists only as `DESIGN.md` plus a `globals.css`
-nested inside `template/next/`. Nothing else can consume it, so "the design is
-mine" is a property of the Next template rather than of this package.
-
-**Delivered.** The tokens extracted to a portable artifact that every template
-imports, so a second stack inherits the theme instead of reinventing it.
-
-**Scope out.** A second theme. One portable theme proves the mechanism.
 
 ---
 
