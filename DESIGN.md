@@ -468,8 +468,10 @@ This section is the reason the rest of the document is worded the way it is.
 - ❌ **A domain noun in a rule's name.** "KPI card", "case study drawer", "recruiter
   metadata bar" cannot be reused in a project that has no KPIs, case studies or
   recruiters. Name components by their shape: *stat card*, *detail drawer*.
-- ❌ **A value from one project as an example.** `"R$ 24M saved"` teaches an agent that
-  impressive numbers belong in cards. Use the shape: *a count, a duration, a delta*.
+- ❌ **A value from one project as an example.** `"4.2M records/day"` teaches an agent
+  that impressive numbers belong in cards. Use the shape: *a count, a duration, a
+  delta*. And do not reach for a real figure from whatever project you are in — that
+  is how one project's numbers end up as another project's defaults.
 - ❌ **Editing this document to describe a project.** If a change is only true of your
   app, it does not belong here. `APP.md` is where that goes.
 - ❌ **A second source of truth for a token.** If a value is not in
