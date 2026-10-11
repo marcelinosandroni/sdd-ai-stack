@@ -465,9 +465,9 @@ defect a user feels and cannot name.
 
 This section is the reason the rest of the document is worded the way it is.
 
-- ❌ **A domain noun in a rule's name.** "KPI card", "case study drawer", "recruiter
-  metadata bar" cannot be reused in a project that has no KPIs, case studies or
-  recruiters. Name components by their shape: *stat card*, *detail drawer*.
+- ❌ **A domain noun in a rule's name.** "Metrics card", "case-study drawer",
+  "billing badge" cannot be reused in a project that has no metrics, case studies or
+  billing. Name components by their shape: *stat card*, *detail drawer*, *badge*.
 - ❌ **A value from one project as an example.** `"4.2M records/day"` teaches an agent
   that impressive numbers belong in cards. Use the shape: *a count, a duration, a
   delta*. And do not reach for a real figure from whatever project you are in — that

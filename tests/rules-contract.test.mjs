@@ -181,14 +181,8 @@ test("RULE 1 does not fire on English that merely looks similar", () => {
 test("the Portuguese exemption names a file that exists, and only that one", () => {
   // An exemption pointing at nothing is not an exemption; it is a comment. And an
   // exemption that quietly grows is how a rule stops meaning anything.
-  const checker = fs.readFileSync(CHECK_RULES, "utf8");
-  const match = /const DELIBERATELY_NOT_ENGLISH = \[([^\]]*)\]/.exec(checker);
-  assert.ok(match, "DELIBERATELY_NOT_ENGLISH is no longer a literal list; keep it greppable");
+  const entries = exemptions();
 
-  const entries = match[1]
-    .split(",")
-    .map((s) => s.trim().replace(/^["']|["']$/g, ""))
-    .filter(Boolean);
 
   assert.ok(entries.length > 0, "the exemption list is empty; the marketing page needs one");
 
@@ -202,23 +196,49 @@ test("the Portuguese exemption names a file that exists, and only that one", () 
   }
 });
 
-test("the only non-English file in the template is the one that is exempt", () => {
-  // Belt and braces on the exemption: if a second file drifts, this names it.
-  const srcRoot = path.join(REPO_ROOT, "template", "next", "src");
+/**
+ * Reads the exemption list out of the checker itself.
+ *
+ * This test used to hardcode `src/app/(marketing)/page.tsx` — the exact mistake the
+ * rule it guards is written to prevent. Two exemptions later it failed, and the fix
+ * was to read the list, not to add a second hardcoded path.
+ */
+function exemptions() {
+  const checker = fs.readFileSync(CHECK_RULES, "utf8");
+  const match = /const DELIBERATELY_NOT_ENGLISH = \[([^\]]*)\]/.exec(checker);
+  assert.ok(match, "DELIBERATELY_NOT_ENGLISH is no longer a literal list; keep it greppable");
+
+  return match[1]
+    .split(",")
+    .map((s) => s.trim().replace(/^["']|["']$/g, ""))
+    .filter(Boolean);
+}
+
+test("the only non-English file in the template is one that is exempt", () => {
+  // Belt and braces on the exemption: if a file that is NOT exempt drifts, this
+  // names it. The list is read, not restated, so adding an entry here is impossible.
+  const srcRoot = path.join(REPO_ROOT, "template", "next");
+  const allowed = exemptions();
   const pt = /\b(?:n[ãa]o|voc[êe]|c[óo]digo|superf[íi]cie|par[áa]metro|reposit[óo]rio)\b/i;
 
   const offenders = [];
   (function walk(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === "node_modules" || entry.name === ".next") continue;
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
       else if (/\.(ts|tsx|css)$/.test(entry.name)) {
-        if (path.relative(REPO_ROOT, full).endsWith("src/app/(marketing)/page.tsx")) continue;
+        const relative = path.relative(srcRoot, full).split(path.sep).join("/");
+        if (allowed.some((tail) => relative.endsWith(tail))) continue;
         const hit = pt.exec(fs.readFileSync(full, "utf8"));
-        if (hit) offenders.push(`${path.relative(REPO_ROOT, full)}: "${hit[0]}"`);
+        if (hit) offenders.push(`${relative}: "${hit[0]}"`);
       }
     }
   })(srcRoot);
 
-  assert.deepEqual(offenders, [], `non-English text in the template:\n${offenders.join("\n")}`);
+  assert.deepEqual(
+    offenders,
+    [],
+    `non-English text in the template outside the exemptions:\n${offenders.join("\n")}`,
+  );
 });

@@ -2,7 +2,17 @@
   "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": false },
   "files": {
-    "includes": ["**", "!**/node_modules", "!**/dist", "!**/SDD", "!**/coverage"]
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/SDD",
+      "!**/test-results",
+      "!**/playwright-report",
+      "!**/blob-report",
+      "!**/.vite",
+      "!**/coverage"
+    ]
   },
   "formatter": {
     "enabled": true,

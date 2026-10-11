@@ -28,3 +28,4 @@ audit-test/
 *.tgz
 
 site/package-lock.json
+.openchamber/
