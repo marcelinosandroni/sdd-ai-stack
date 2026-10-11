@@ -5,7 +5,14 @@ import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { DEFAULT_THEME, TEMPLATES, TEMPLATE_THEME_DESTINATIONS, THEME_DIR } from "../lib/constants.mjs";
+import {
+  DEFAULT_THEME,
+  TEMPLATES,
+  TEMPLATE_THEME_ASSET_DESTINATION,
+  TEMPLATE_THEME_DESTINATIONS,
+  THEME_ASSETS,
+  THEME_DIR,
+} from "../lib/constants.mjs";
 import { scaffold } from "../lib/scaffold.mjs";
 
 const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -120,4 +127,69 @@ test("the theme ships in the package, or it cannot be reused", () => {
       `repository and not in the published package, which is the same claim as before, ` +
       `just with better formatting.`,
   );
+});
+
+/**
+ * The theme's component copies, guarded the same way its tokens are.
+ *
+ * `tokens.css` needed a byte-identical guard because the bundler refuses an `@import`
+ * that leaves the project root. The Matrix opener needs the same thing for the same
+ * reason — templates are standalone apps and cannot import from the package — and it
+ * needs it more urgently, because a drifted *component* does not fail a build. A copy
+ * two versions behind still compiles, still lints, still passes every test, and every
+ * app quietly gets a different opener than the design system documents.
+ */
+const ASSET_SOURCE = path.join(REPO_ROOT, THEME_DIR, "matrix", "terminal");
+
+test("every template carries a byte-identical copy of the Matrix opener", () => {
+  for (const template of TEMPLATES) {
+    for (const file of THEME_ASSETS) {
+      const canonical = path.join(ASSET_SOURCE, file);
+      const copy = path.join(REPO_ROOT, "template", template, TEMPLATE_THEME_ASSET_DESTINATION, file);
+
+      assert.ok(fs.existsSync(canonical), `${THEME_DIR}/matrix/terminal/${file} does not exist`);
+      assert.ok(
+        fs.existsSync(copy),
+        `template/${template} has no ${TEMPLATE_THEME_ASSET_DESTINATION}/${file}. ` +
+          `Copy the canonical file over it — do not edit the copy.`,
+      );
+
+      assert.equal(
+        fs.readFileSync(copy, "utf8"),
+        fs.readFileSync(canonical, "utf8"),
+        `template/${template}/${TEMPLATE_THEME_ASSET_DESTINATION}/${file} has drifted from ` +
+          `the canonical file. A component copy that drifts does not fail the build — it ` +
+          `just means every app gets a different design system.`,
+      );
+    }
+  }
+});
+
+test("the Matrix opener ships in the package", () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8"));
+  assert.ok(
+    (pkg.files ?? []).some((glob) => glob === THEME_DIR),
+    `package.json "files" must include ${THEME_DIR}/ for the opener to reach a consumer.`,
+  );
+
+  // Every declared asset must exist, or the constant is a promise about nothing.
+  const missing = THEME_ASSETS.filter((file) => !fs.existsSync(path.join(ASSET_SOURCE, file)));
+  assert.deepEqual(missing, [], `THEME_ASSETS names files that do not exist: ${missing.join(", ")}`);
+});
+
+test("a generated app receives the canonical opener, not the template's copy", () => {
+  const target = fs.mkdtempSync(path.join(os.tmpdir(), "sdd-opener-"));
+  try {
+    scaffold({ target, template: "spa", install: false, git: false, log: () => {} });
+
+    for (const file of THEME_ASSETS) {
+      assert.equal(
+        fs.readFileSync(path.join(target, TEMPLATE_THEME_ASSET_DESTINATION, file), "utf8"),
+        fs.readFileSync(path.join(ASSET_SOURCE, file), "utf8"),
+        `the generated app's ${file} is not the canonical opener`,
+      );
+    }
+  } finally {
+    fs.rmSync(target, { recursive: true, force: true });
+  }
 });

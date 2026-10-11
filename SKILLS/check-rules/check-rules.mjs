@@ -140,7 +140,32 @@ const CODE_EXTENSIONS = [".ts", ".tsx", ".mjs", ".js", ".css"];
  * It is listed rather than assumed, because a general that silently exempts "the
  * pages that happen to be Portuguese" is not a rule.
  */
-const DELIBERATELY_NOT_ENGLISH = ["src/app/(marketing)/page.tsx"];
+/**
+ * The design system's own translations, plus the pt-BR sample page.
+ *
+ * RULE 1 governs the code, the comments and the error strings around the UI — not the
+ * UI copy a Brazilian visitor reads. Those files are listed, never assumed: a general
+ * that silently exempts "the pages that happen to be Portuguese" is not a rule.
+ *
+ * Two different reasons live in this list, which is why both are spelled out:
+ *
+ *   `src/app/(marketing)/page.tsx` — sample copy on a page whose `<html lang>` is
+ *   `pt-BR`. Translating it would desync the lang attribute from the words on screen.
+ *
+ *   `matrix-terminal.strings.ts` and its E2E spec — the design system ships English
+ *   *and* Portuguese strings, so the Portuguese has to live somewhere. A file the rule
+ *   cannot see would mean two sources of truth for one sentence.
+ *
+ * Kept as a bare literal array with the reasoning above it: `tests/rules-contract`
+ * parses this text to prove every entry exists, and a comment inside the brackets
+ * fails that parse. The guard caught that the moment it was written, which is the
+ * argument for having it.
+ */
+const DELIBERATELY_NOT_ENGLISH = [
+  "src/app/(marketing)/page.tsx",
+  "src/shared/ui/terminal/matrix-terminal.strings.ts",
+  "tests/e2e/matrix-terminal.spec.ts",
+];
 
 /**
  * Matched on the tail of the path, not the whole of it, so one entry covers this

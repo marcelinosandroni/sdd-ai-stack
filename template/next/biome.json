@@ -8,6 +8,10 @@
       "!**/.next",
       "!**/dist",
       "!**/SDD",
+      "!**/test-results",
+      "!**/playwright-report",
+      "!**/blob-report",
+      "!**/.vite",
       "!**/coverage",
       "!**/next-env.d.ts"
     ]

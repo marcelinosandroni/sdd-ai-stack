@@ -2,6 +2,8 @@ import { useCallback, useState } from "react";
 import type { Example } from "@/features/example/domain/example.schema";
 import { CreateExampleForm } from "@/features/example/ui/create-example-form";
 import { ExampleList } from "@/features/example/ui/example-list";
+import { MatrixTerminal } from "@/shared/ui/terminal/matrix-terminal";
+import "@/shared/ui/terminal/matrix-terminal.css";
 
 /**
  * A remount key, not a prop drill.
@@ -15,6 +17,12 @@ import { ExampleList } from "@/features/example/ui/example-list";
 export default function App() {
   const [generation, setGeneration] = useState(0);
   const onCreated = useCallback((_example: Example) => setGeneration((n) => n + 1), []);
+
+  // Replace with a real submit — a POST, a form action, an email client. The point
+  // of showing it here is that the integration is one function, not a rewrite.
+  const handleTerminalMessage = useCallback((message: string) => {
+    console.info("[matrix-terminal] would send:", message);
+  }, []);
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-16">
@@ -32,6 +40,16 @@ export default function App() {
         </h2>
         <ExampleList key={generation} />
       </section>
+
+      {/*
+        The design system's own opener. `onSend` is the only integration point and it
+        is optional: remove it and the terminal still runs, it simply goes nowhere.
+        Replace it with a real submit and the component does not change.
+      */}
+      <MatrixTerminal
+        lang={document.documentElement.lang}
+        onSend={handleTerminalMessage}
+      />
     </main>
   );
 }
