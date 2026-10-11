@@ -6,6 +6,103 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
+## [0.6.0] — 2026-10-11
+
+> **Todo projeto construído com este sistema abre do mesmo jeito.** Uma notificação
+> pequena no canto inferior direito, a frase da Trinity digitando linha a linha, e um
+> clique que abre um terminal. Em dois idiomas.
+>
+> E o botão "skip" foi removido porque era código morto — e isso diz mais sobre o
+> componente do que o botão dizia.
+
+### ✨ `themes/matrix/terminal/` — o Matrix opener
+
+Vive no **design system**, não num template. "Para todos" quer dizer todo projeto, e
+um componente que só existe num template não é design system.
+
+Mesmo mecanismo do `tokens.css`: os arquivos canônicos vão no pacote, cada template
+carrega uma cópia byte-a-byte, o scaffold escreve a canônica no app novo, e
+`tests/theme.test.mjs` garante que as cópias nunca divergem. Uma **cópia de
+componente** divergida não falha o build — ela só significa que cada app recebe um
+design system diferente, silenciosamente.
+
+```
+notificação → "Nova mensagem" / "New message" + a primeira linha digitando
+clique       → a mensagem inteira, revelada
+terminal     → neo@matrix:~$ , uma resposta, Escape fecha
+```
+
+Os dois idiomas vão no arquivo. O componente lê o `<html lang>` **por conta própria** —
+não pede ao chamador. `next` (`pt-BR`) fala português, `spa` (`en`) fala inglês, e o
+mesmo componente faz os dois sem prop.
+
+### 🐛 Cinco bugs que o E2E achou, e que screenshot nenhum pegaria
+
+**1. A notificação bloqueava o terminal.** Notificação e launcher ocupavam o mesmo
+canto, e o botão de dispensar — 44px, porque §4b.2 regra 2 — caía exatamente por
+cima do launcher. Com a notificação na tela, o terminal não abria de jeito nenhum.
+Agora a notificação **é** a affordance, e o launcher é o plano B que aparece depois.
+
+**2. Dispensar a notificação matava o terminal.** `if (dismissed) return null`
+removia o componente inteiro. Quem fechasse o toast uma vez ficava sem caminho, para
+sempre. Achei pelo teste que afirma que o launcher reaparece.
+
+**3. O componente dependia de o chamador lembrar de `lang`.** Dois templates
+passavam, um não — e o que não passava saiu em inglês numa página com
+`<html lang="pt-BR">`. Componente que exige que o chamador lembre de uma coisa é
+componente que será usado errado: §REUSABILITY aplicado a uma API em vez de um nome.
+
+**4. `reuseExistingServer: !CI` fez a suíte do spa testar o app de outra pessoa.** O
+Playwright se conectava ao que ocupasse a porta 3000 — que era **outro projeto
+inteiro** — e reportava doze falhas contra um app que ele nunca dirigiu. O CI passava,
+porque o CI passa `false`. Gate que está certo no CI e errado no notebook é gate que
+passa a ser ignorado no notebook.
+
+**5. Uma regressão que eu causei na fase 12.** Desligar `useIgnoreFile` destapou
+`test-results/` e `playwright-report/`, e o Biome passou a lintar o JSON de saída do
+próprio Playwright. Achado rodando os gates num app gerado.
+
+### 💀 E uma peça de código morto
+
+O botão "mostrar tudo agora" era inalcançável: abrir o terminal já revela a mensagem
+inteira, porque a lei é feedback imediato e ninguém quer um clique para começar uma
+animação de quatro segundos. O drama pertence à notificação, onde é teaser. Removido
+— um controle que nunca pode aparecer é um controle que ninguém testou.
+
+### 🎲 Um flake, e o que ele estava dizendo
+
+`not.toContainText` falhou uma vez sob carga e passou 3/3 depois. Uma asserção
+negativa de texto passa no instante em que o elemento está momentaneamente limpo —
+ou seja, é uma corrida que reporta verde, que é como uma suíte "quase sempre verde"
+conquista confiança. Trocada por uma contagem positiva de trocas.
+
+### 🛡 Os guards pegaram dois erros meus
+
+`tests/rules-contract.test.mjs`:
+
+- Comentar dentro de `DELIBERATELY_NOT_ENGLISH` quebrou a lista que o teste faz
+  parse. A justificativa subiu para acima do array, e o array segue literal puro —
+  que é o que faz o guard valer alguma coisa.
+- O teste companheiro tinha `"src/app/(marketing)/page.tsx"` hardcoded — exatamente o
+  erro que a regra existe para evitar. Agora lê a lista do checker.
+
+As duas exceções novas são a tabela de idiomas do design system e seu E2E em pt-BR:
+um componente que entrega dois idiomas precisa guardar o segundo em algum lugar, e um
+arquivo que a regra não enxerga seriam duas fontes de verdade para a mesma frase.
+
+### 📦 Não neste PR
+
+O **envio** não está ligado a nada. `onSend` é o único ponto de integração e é
+opcional — o terminal roda sem ele e simplesmente não vai a lugar nenhum, que é o
+teste de um ponto de integração. No `next` ficou sem prop de propósito: aquilo é um
+Server Component, e prop de função não atravessa a fronteira. O comentário mostra a
+versão de duas linhas com Server Action.
+
+Ligar a um canal real — rota de API, cliente de e-mail, Telegram — é uma decisão
+sobre destino, não sobre o componente.
+
+---
+
 ## [0.5.0] — 2026-10-04
 
 > **O design system não é mais um portfolio. É um sistema de design.**
