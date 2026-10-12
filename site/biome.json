@@ -31,5 +31,17 @@
   },
   "css": {
     "parser": { "tailwindDirectives": true }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/app/layout.tsx"],
+      "linter": {
+        "rules": {
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          }
+        }
+      }
+    }
+  ]
 }

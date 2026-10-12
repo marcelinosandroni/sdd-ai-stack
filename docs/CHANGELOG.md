@@ -6,6 +6,64 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
+## [Não publicado]
+
+> **O site dizia `v0.2.0` enquanto o npm já estava na `0.6.0`.** E não tinha imagem de
+> compartilhamento, sitemap, robots, ícones nem dados estruturados — ou seja, o link que
+> ia para o LinkedIn e para o WhatsApp renderizava como um título sobre um retângulo
+> vazio. O link é o canal inteiro.
+
+### 🐛 A versão
+
+Não pode ser importada de `package.json`: a Vercel constrói o site com `site/` como
+root, e o `package.json` do repositório não está naquele contexto de build — a importação
+quebraria o deploy, não o teste. Então a versão é versionada no `content.ts`, escrita por
+`npm run version:sync` e **afirmada por três testes**, um deles correndo o `--check` do
+script e um proibindo que um componente guards a própria cópia.
+
+`version:check` entrou no `prepublishOnly`: publicar não pode passar com o site mentindo.
+
+### 🔍 SEO
+
+OG image 1200×630, `twitter:image`, `sitemap.xml`, `robots.txt` com `Sitemap:`,
+`manifest.webmanifest`, `icon` e `apple-icon` — `public/` estava **vazia**, então o site
+não tinha ícone nenhum. JSON-LD como um `@graph` (`Person` + `WebSite` +
+`SoftwareSourceCode`), `max-image-preview:large` para o googlebot e verificação do Search
+Console por variável de ambiente, que some quando não está definida.
+
+**A OG image deixou de ser rota.** Era `ImageResponse` no build, e isso estava errado
+aqui: com `output: "export"` o Next emite arquivo **sem extensão**, e o host estático
+servindo devolve **Content-Type vazio** — medido, não suposto. Um crawler pode recusar
+uma imagem sem tipo declarado, e o sintoma é exatamente o card em branco que aquilo
+existia para evitar. Virou PNG com extensão.
+
+O preço de um arquivo versionado é poder envelhecer na timeline de alguém, onde não dá
+para editar. Por isso o card é **função pura** de `content.ts`: `npm run assets:card`
+desenha os três PNGs em Node puro, sem build e sem dev server, e um teste redesenha e
+compara **byte a byte**. E o card não tem versão — a versão mora na página, onde o
+script e os guardas cuidam dela.
+
+A paleta do card vem de `OG_TOKENS` no `content.ts` porque ele não consegue ler
+`themes/matrix/tokens.css`: isso não está no contexto de build da Vercel. Leria no local
+e cairia no fallback em produção — um design system em duas cores, visível só na timeline
+dos outros. `tests/site-seo.test.mjs` amarra cada valor ao tema.
+
+### 🔧 Correções que os próprios testes denombraram
+
+- **`reuseExistingServer: false`** no `site/playwright.config.ts`. Um dev server na
+  porta fazia a suíte se attachar nele, e toda assertion de SEO lia `localhost` — uma
+  falha que aponta para o metadata em vez da causa. O mesmo bug que o spa template tinha.
+- **A origem canônica estava declarada duas vezes** — `SITE.url` no `content.ts` e uma
+  `const SITE = "https://…"` local no `layout.tsx`. Canonical, sitemap e robots acabariam
+  nomeando três hosts diferentes. Agora há um guard que impede a cópia de voltar.
+- **O sitemap listava fragmentos** (`/#what`). Um fragmento não é um documento: é o mesmo
+  documento, e search engines são explícitos sobre isso. Isso faria o arquivo parecer
+  completo dizendo ao crawler que o site tem cinco páginas quando tem uma.
+- `Structured data` descrevia o pacote como `SoftwareApplication`, que implica uma UI que
+  ele não tem. É `SoftwareSourceCode`.
+
+---
+
 ## [0.6.0] — 2026-10-11
 
 > **Todo projeto construído com este sistema abre do mesmo jeito.** Uma notificação
