@@ -27,7 +27,7 @@
 
 ## 📚 1. CONTEXT MAP (read in this order)
 
-> **Read the minimum necessary.** The full set below costs ~16.5k tokens before
+> **Read the minimum necessary.** The full set below costs ~13.8k tokens before
 > the first line of code. You do not need all of it for most tasks.
 >
 > **Tier 1 — every task (≈4.4k tokens):** you cannot skip these.
@@ -35,11 +35,11 @@
 > 2. **`SDD/specs/PLAN.md`** — the **single** task in flight right now.
 > 3. **`SDD/PREFLIGHT.md`** — the five commands, and what each one proves.
 >
-> **Tier 2 — once per session, when the answer matters (≈2.4k tokens):**
+> **Tier 2 — once per session, when the answer matters (≈0.8k tokens):**
 > 4. **`SDD/APP.md`** + **`SDD/APP-STACK.md`** — what this app is, and which
 >    stack it uses. Read once; the answer does not change between tasks.
 >
-> **Tier 3 — on demand (≈9.7k tokens, read only the file you touch):**
+> **Tier 3 — on demand (≈8.6k tokens, read only the file you touch):**
 > 5. `SDD/ARCHITECTURE.md` — global architecture, vertical slices.
 > 6. `SDD/stacks/README.md` — the index. Then open the **one** doc you need,
 >    usually [`stacks/next.md`](./stacks/next.md).
@@ -147,6 +147,33 @@ SDD/
 8. **One file = one reason to change.** SOLID, separation of concerns, hexagonal arrows
    inward, no `Utils` class. Applies to every language.
    Rule: [`stacks/clean-code.md`](./stacks/clean-code.md).
+9. **📜 A rule lives in markdown; the check lives in a script.** Decide by what the rule
+   *is*, never by what is easier. A **judgement** ("is this architecture good?") cannot
+   be scripted and must be prose. A **verification** ("do these files match?") must be a
+   script: the agent does not need to know the rule in order to obey it, only to run the
+   check and read the verdict. A **repetitive transformation** (sync, render, scaffold,
+   release) must be a script, because re-explaining it in prose costs tokens every time.
+   The economics: a rule in markdown costs `N × M` — its length times how often it is
+   read. The same rule as a script costs `W + (O × M)` — once to write, then only its
+   output, every run. So `O` is what you design for: a script that prints one verdict
+   line costs about seven tokens forever; one that dumps options, warnings and a summary
+   costs two hundred every time — and its bug reports cost more than the markdown ever did.
+   Three rules that decide it:
+   - **A script must fail with the answer, not with a stack trace.** "missing from the
+     tarball" is worth ten tokens and saves reading fifteen hundred. `spawnSync npm ENOENT`
+     costs fifteen hundred and answers nothing.
+   - **A verifier must not derive its own constant from the data it verifies.** Solving
+     for the constant sounds more rigorous and is unfalsifiable: growing the file raised
+     the constant, the next check agreed with it, and the drift passed.
+   - **A script's logic never lives in `SKILL.md`, and its contract never lives in the
+     `.mjs`.** The `.mjs` is the mechanism; the `SKILL.md` is what it proves and when to
+     run it. Mixing them means editing code to change a policy.
+   Before writing prose a script could check, measure it: this repo once moved §8 into
+   `check-rules` to save Tier 1 tokens, and §8 turned out to be 174 of them.
+   The repository's own gates — `check-context` holds §1's budget, `release` is the
+   release chain — are named in backticks and **not linked**: both are in
+   `RULE_SKILL_COPY_SKIP`, so a path to them is a dead link in every generated app.
+   `dogfood` found exactly that on the first run of this rule.
 
 ---
 

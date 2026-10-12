@@ -35,6 +35,14 @@ jobs:
       - name: Documentation links
         run: node SKILLS/check-docs/check-docs.mjs
 
+      # The same reasoning as check:facts, one level up. AGENTS.md opens by quoting what
+      # a task costs in tokens, and that number is the argument for the whole
+      # router-and-tier design. It was accurate when written and nothing kept it so,
+      # which is how the Tier 2 claim sat at three times its real cost with every gate
+      # green.
+      - name: "The published context budget is true"
+        run: npm run check:context
+
       # The numbers this repository states about itself. It claimed 27 tests
       # while running 79, and nothing was red, because a number in prose is not
       # a check. A document that misstates what it could have verified teaches
