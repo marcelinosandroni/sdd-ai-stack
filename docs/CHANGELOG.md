@@ -6,30 +6,55 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
+## [0.7.2] — 2026-10-11
+
+> **O conserto do `0.7.1` estava errado, e a verificação de novo achou isso.** Ele
+> publicava `scripts/` — e `sync-version.mjs` lê `site/src/content.ts`, que de propósito
+> não é publicado. Então o comando passava a existir na instalação e morria com `ENOENT`
+> ao ser executado. Um comando que falha é pior do que um comando que não é oferecido.
+
+### 🐛 `scripts/` volta para fora do pacote
+
+O `0.7.1` resolveu o sintoma errado. A pergunta certa não era "o arquivo é publicado?",
+era "esse comando funciona para quem instalou?" — e a resposta é não: ele é ferramenta de
+manutenção do repositório, não API do pacote. Some do `files`, e pronto.
+
+### 🔍 O que o teste afirma agora
+
+`tests/package-scripts.test.mjs` lê a lista de arquivos do que o `npm pack` realmente
+produz, e afirma sobre ela:
+
+- todo arquivo local que um script executa **existe no repositório**;
+- `scripts/` **não** é publicado — porque depende de `site/`;
+- `site/` **não** é publicado — porque é a vitrine do repositório, não parte do kit;
+- `lib/`, `bin/`, `themes/` e os dois templates **são** publicados, e a lista não está
+  vazia.
+
+As duas exclusões são afirmações, não omissões: sem elas alguém lê o array `files`,
+acha a ausência estranha e "conserta".
+
+### 🔍 Como o bug foi encontrado
+
+Instalando o pacote do registry e executando o comando. Não por leitura de diff, e não
+por gate local — **um gate que só roda sobre o repositório verde não diz nada sobre o
+artefato que sai dele**. Isso foi discovered duas vezes seguidas: o `0.7.0` não tinha o
+arquivo, e o `0.7.1` tinha o arquivo e mesmo assim não funcionava.
+
+---
+
 ## [0.7.1] — 2026-10-11
 
-> **Este era um bug de verdade, encontrado por instalar o pacote.** O `0.7.0` anunciava
-> `npm run version:sync` e não publicava o arquivo que esse comando executa. Quem clonou
-> o repositório tinha o comando; quem instalou do registry recebia
-> `Cannot find module`. O repositório estava verde — 169 testes, todos os gates passando —
-> e o pacote publicado estava quebrado.
+> **O `0.7.0` anunciava `npm run version:sync` e não publicava o arquivo que esse comando
+> executa.** Quem clonou o repositório tinha o comando; quem instalou do registry recebia
+> `Cannot find module`. Este release adicionou `scripts/` ao array `files`.
+>
+> **Ele estava certo pela razão errada** — ver [`0.7.2`](#072--2026-10-11).
 
 ### 🐛 `scripts/` não estava no `files`
 
 O conserto é uma linha. O que importa é por que **nenhum teste pegou**: "o script existe
 no repositório" e "o script é publicado" são afirmações diferentes, e só a primeira era
 testada.
-
-`tests/package-scripts.test.mjs` afirma a segunda contra o que o `npm pack` realmente
-produz — não contra o array `files`, que é justamente a coisa que estava errada. Ele
-também afirma que `site/` **não** é publicado, porque essa decisão já foi tomada e
-daqui a alguém "conserta" por acidente.
-
-### 🔍 Como o bug foi encontrado
-
-Instalando `create-sdd-ai-stack@0.7.0` do registry e abrindo o tarball — não por leitura
-de diff. Um gate que só roda sobre o repositório verde não prova nada sobre o artefato
-que sai dele.
 
 ---
 

@@ -11,7 +11,7 @@
  * verifies what it states". `npm run version:sync` rewrites it and the guard fails
  * the build if anyone forgets.
  */
-export const VERSION = "0.7.1";
+export const VERSION = "0.7.2";
 
 /**
  * The Matrix palette, for the share card.

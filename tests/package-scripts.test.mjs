@@ -9,19 +9,24 @@ const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8"));
 
 /**
- * Every script has to be able to run.
+ * What `npm pack` would actually put in the tarball.
  *
- * `version:sync` was added to `package.json` and the file it points at was not in the
- * `files` array. The repository was green — 165 tests, every gate passing — and the
- * published tarball did not contain `scripts/sync-version.mjs`. So `npm i -g
- * create-sdd-ai-stack` gave you a package whose `version:sync` died with
- * `Cannot find module`.
+ * 0.7.0 published `npm run version:sync` and not the file it runs, because `scripts/`
+ * was missing from `files`. The repository was green — 169 tests, every gate passing —
+ * and the published artifact was broken, so "the script exists in the repository" and
+ * "the script ships" turned out to be different claims with only the first one tested.
  *
- * Nothing checked it, because "the script exists in the repository" and "the script
- * ships" are different claims, and only the first one was ever tested. This is the
- * second one, asserted against what npm actually packs rather than against the `files`
- * array — the array is the thing that was wrong, and re-deriving it would inherit the
- * mistake.
+ * The fix that shipped in 0.7.1 added `scripts/` to `files`, which was also wrong: the
+ * script reads `site/`, which is deliberately not published, so it could not run from an
+ * install either. It was taken back out in 0.7.2.
+ *
+ * What remains is the part that was always true and never tested — the file list is
+ * read from what `npm pack` actually produces, so that the two exclusions below are
+ * asserted against the real tarball instead of against somebody's reading of `files`.
+ *
+ * This was found by installing the package and opening it, not by reading a diff. A gate
+ * that only ever runs over a green working tree says nothing about the artifact that
+ * leaves it.
  */
 
 /** What `npm pack` would actually put in the tarball. Cached: the test file runs it once. */
@@ -69,29 +74,10 @@ test("every local file a script invokes exists in the repository", () => {
     }
   }
 
-  assert.deepEqual(missing, [], `a script points at a file that does not exist:\n${missing.join("\n")}`);
-});
-
-test("every local file a script invokes is in the published tarball", () => {
-  const shipped = new Set(packList());
-  const missing = [];
-
-  for (const [name, command] of Object.entries(pkg.scripts)) {
-    for (const relative of referencedPaths(command)) {
-      const normalized = relative.replace(/^\.\//, "").replace(/\\/g, "/");
-      if (!shipped.has(normalized)) {
-        missing.push(`${name} → ${normalized}`);
-      }
-    }
-  }
-
   assert.deepEqual(
     missing,
     [],
-    `a script points at a file npm does not publish:\n${missing.join("\n")}\n\n` +
-      `The repository is green and the published package is broken: "npm run ${Object.keys(pkg.scripts)[0]}" ` +
-      `works for whoever cloned it and fails for whoever installed it. Add the directory to "files" in ` +
-      `package.json.`,
+    `a script points at a file that does not exist:\n${missing.join("\n")}`,
   );
 });
 
@@ -107,15 +93,41 @@ test("the pack list is not empty, and the core directories are in it", () => {
   }
 });
 
-test("the site is not published, and that is deliberate", () => {
+test("the repository's own tooling does not ship", () => {
+  // `scripts/` is a maintainer's tool: `sync-version.mjs` reads `site/src/content.ts`,
+  // and `site/` is deliberately not published. Shipping the script would put a file in
+  // every install that cannot run — the published 0.7.1 did exactly that, and the fix
+  // was to take it back out rather than to make it work, because a command that fails
+  // with ENOENT is worse than a command that is not offered.
+  //
+  // This was published once and found by installing it, so the decision is asserted
+  // rather than left to the next person who reads `files` and wonders.
+  const shipped = packList();
+  const local = Object.entries(pkg.scripts).filter(([, command]) =>
+    referencedPaths(command).some((p) => p.startsWith("scripts/")),
+  );
+
+  assert.ok(
+    !shipped.some((file) => file.startsWith("scripts/")),
+    "scripts/ is in the tarball. Its files read site/, which is not published, so they " +
+      "cannot run from an install.",
+  );
+  assert.ok(
+    local.length > 0,
+    "no script points at scripts/ any more. If that was deliberate, update this test " +
+      "rather than leaving it asserting nothing.",
+  );
+  for (const [name] of local) {
+    assert.ok(name.length > 0);
+  }
+});
+
+test("the published package is the kit, not the presentation", () => {
   // The site is how this repository is presented, not something a generated project
   // needs. Shipping it would add a second Next.js app and its own dependencies to every
   // install. Asserted because it is a decision someone will otherwise "fix" by accident.
   const shipped = packList();
 
-  assert.ok(
-    !shipped.some((file) => file.startsWith("site/")),
-    "site/ is in the tarball. It is the marketing site, not part of the kit.",
-  );
+  assert.ok(!shipped.some((file) => file.startsWith("site/")), "site/ is in the tarball");
   assert.ok(!pkg.files.includes("site"), "site is listed in package.json files");
 });
