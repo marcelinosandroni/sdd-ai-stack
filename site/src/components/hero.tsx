@@ -1,9 +1,24 @@
 import { CodeBlock } from "@/components/code-block";
-import { SITE, VERSION } from "@/content";
+import { SITE, STACK_COUNT, VERSION } from "@/content";
 
+/**
+ * The hero's four numbers.
+ *
+ * `STACK_COUNT` is read rather than typed, and `RULE_FILE_COUNT` is typed rather than
+ * read — the split is deliberate and looks backwards. The stack count is a *judgement*
+ * about which documents are stacks, so it is derived in `lib/constants.mjs` where the
+ * classification can be reviewed. The rule-file count is `ls stacks/*.md | wc -l`, an
+ * arithmetic fact about the filesystem that no repository file can be the authority for
+ * without importing the directory listing into itself; `tests/stack-counts.test.mjs`
+ * asserts it against the real folder instead.
+ */
 const HERO_METRICS = [
   { value: "1", unit: "command", label: "to a gated Next.js 16 project" },
-  { value: "25", unit: "rule files", label: "across 12 stacks, one spine" },
+  {
+    value: "25",
+    unit: "rule files",
+    label: `across ${STACK_COUNT} stacks, one spine`,
+  },
   { value: "8", unit: "agents", label: "wired on the first run" },
   { value: "0", unit: "deps", label: "the CLI itself" },
 ];

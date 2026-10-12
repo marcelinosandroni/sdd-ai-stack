@@ -47,11 +47,38 @@ test("the site's version is the published version", () => {
 test("the sync script reports the tree as clean", () => {
   // `--check` must exit 0 on a synced tree. Asserted by running it, because a script
   // that is never executed is a script that does not work.
-  const output = execFileSync(process.execPath, [path.join(REPO_ROOT, "scripts", "sync-version.mjs"), "--check"], {
-    encoding: "utf8",
-  });
+  //
+  // `sync-site-facts.mjs` is what `version:sync` and `version:check` both point at, and
+  // it also carries the stack count — so this asserts the script the package actually
+  // ships, by running it. Renaming a script and leaving a test pointing at the old path
+  // would pass on a machine where the old file still lingered, and fail everywhere else.
+  const output = execFileSync(
+    process.execPath,
+    [path.join(REPO_ROOT, "scripts", "sync-site-facts.mjs"), "--check"],
+    { encoding: "utf8" },
+  );
 
-  assert.match(output, /site version is/, output);
+  assert.match(output, /VERSION\s+0\./, output);
+});
+
+test("the sync script is the one package.json advertises", () => {
+  // The script was renamed from `sync-version.mjs` to `sync-site-facts.mjs` because it
+  // now carries two facts. The two published commands were kept as aliases so nothing
+  // that read the 0.7.x changelog breaks — which means the alias and the file have to
+  // be asserted to agree, or `npm run site:sync` fails on a name nobody tested.
+  const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8"));
+  const referenced = new Set(
+    [...Object.values(pkg.scripts), ...pkg.scripts["prepublishOnly"].split("&&")].flatMap(
+      (command) => [...String(command).matchAll(/scripts\/[\w.-]+\.mjs/g)].map((m) => m[0]),
+    ),
+  );
+
+  for (const script of referenced) {
+    assert.ok(
+      fs.existsSync(path.join(REPO_ROOT, script)),
+      `package.json references ${script}, which does not exist`,
+    );
+  }
 });
 
 test("no version is hardcoded in a component", () => {

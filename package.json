@@ -110,11 +110,13 @@
     "version:patch": "npm version patch --git-tag-version",
     "version:minor": "npm version minor --git-tag-version",
     "version:major": "npm version major --git-tag-version",
-    "prepublishOnly": "npm run version:check && npm run test && npm run check:coverage && npm run check:rules && npm run check:docs && npm run check:facts && npm run check:pack",
+    "prepublishOnly": "npm run site:check && npm run test && npm run check:coverage && npm run check:rules && npm run check:docs && npm run check:facts && npm run check:pack",
     "check:rules": "node SKILLS/check-rules/check-rules.mjs",
     "check:facts": "node SKILLS/check-facts/check-facts.mjs",
-    "version:sync": "node scripts/sync-version.mjs",
-    "version:check": "node scripts/sync-version.mjs --check"
+    "version:sync": "node scripts/sync-site-facts.mjs",
+    "version:check": "node scripts/sync-site-facts.mjs --check",
+    "site:sync": "node scripts/sync-site-facts.mjs",
+    "site:check": "node scripts/sync-site-facts.mjs --check"
   },
   "publishConfig": {
     "access": "public"
