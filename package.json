@@ -1,6 +1,6 @@
 {
   "name": "create-sdd-ai-stack",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "A project ready for AI agents, built on Spec-Driven Development: SDD rules + Next.js 16 template + design system.",
   "keywords": [
     "sdd",
@@ -45,7 +45,6 @@
     "bin",
     "src",
     "lib",
-    "scripts",
     "template/next",
     "template/next/package.json",
     "template/next/next.config.ts",
