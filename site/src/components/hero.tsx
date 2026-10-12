@@ -1,5 +1,5 @@
 import { CodeBlock } from "@/components/code-block";
-import { SITE } from "@/content";
+import { SITE, VERSION } from "@/content";
 
 const HERO_METRICS = [
   { value: "1", unit: "command", label: "to a gated Next.js 16 project" },
@@ -14,7 +14,7 @@ export function Hero() {
       <div className="container-page flex flex-col items-start gap-10 py-20 lg:py-28">
         <p className="label-mono inline-flex items-center gap-2">
           <span className="status-dot" />
-          Open source · v0.2.0 · MIT
+          Open source · v{VERSION} · MIT
         </p>
 
         <h1 className="max-w-4xl text-display-hero-mobile font-extrabold tracking-tight text-balance lg:text-display-hero">

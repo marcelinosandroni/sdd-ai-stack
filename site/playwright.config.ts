@@ -54,7 +54,13 @@ export default defineConfig({
   webServer: {
     command: target === "build" ? `npm run build && ${server}` : server,
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    // Never reuse. A dev server already on this port makes the suite attach to it,
+    // and then every SEO assertion reads `localhost` instead of the canonical origin —
+    // a failure that points at the metadata rather than at the real cause.
+    //
+    // The same bug the spa template had: right in CI, wrong on a laptop, which is how
+    // a gate people are told to run before a push stops being run.
+    reuseExistingServer: false,
     timeout: 180_000,
   },
 });

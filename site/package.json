@@ -17,7 +17,8 @@
     "test:unit": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "audit:layout": "node scripts/audit-layout.mjs"
+    "audit:layout": "node scripts/audit-layout.mjs",
+    "assets:card": "node scripts/render-card.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
