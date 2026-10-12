@@ -450,10 +450,13 @@ keeps that command runnable.
 | `check-rules` | Makes the written rules executable — English, identity, token agreement | ❌ |
 | `check-coverage` | Fails when line, branch or function coverage drops below the floor | ❌ |
 | `check-facts` | Recomputes every number these docs claim, and fails when one is stale | ❌ |
+| `check-context` | Holds the token budget `AGENTS.md` publishes, so it cannot drift from the files | ❌ |
+| `release` | The release chain — bump, sync, changelog, commit, tag. Stops before the tag push | ❌ |
 | `dogfood` | Generates an app and walks the cycle the rules describe | ❌ |
 
-The four marked ❌ verify **this repository** — its own tokens, its own coverage
-floor, its own documented numbers — and they crash with `ENOENT` in a project that
+The five marked ❌ verify **this repository** — its own tokens, its own coverage
+floor, its own documented numbers, its own context budget, its own tarball — and
+they crash with `ENOENT` in a project that
 has none of those. They run in CI, against the thing they were written for, and
 `RULE_SKILL_COPY_SKIP` in `lib/constants.mjs` keeps them out of your `SDD/`. A
 check that breaks where it lands is worse than no check, because it looks like
