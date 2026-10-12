@@ -6,12 +6,15 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
-## [Não publicado]
+## [0.7.0] — 2026-10-11
 
 > **O site dizia `v0.2.0` enquanto o npm já estava na `0.6.0`.** E não tinha imagem de
 > compartilhamento, sitemap, robots, ícones nem dados estruturados — ou seja, o link que
 > ia para o LinkedIn e para o WhatsApp renderizava como um título sobre um retângulo
 > vazio. O link é o canal inteiro.
+>
+> **Minor, e não patch:** o pacote ganha `scripts/sync-version.mjs` e os comandos
+> `version:sync` / `version:check`, que não existiam.
 
 ### 🐛 A versão
 
