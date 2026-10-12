@@ -6,6 +6,33 @@ Todas as mudanças relevantes deste template. Formato baseado em
 
 ---
 
+## [0.7.1] — 2026-10-11
+
+> **Este era um bug de verdade, encontrado por instalar o pacote.** O `0.7.0` anunciava
+> `npm run version:sync` e não publicava o arquivo que esse comando executa. Quem clonou
+> o repositório tinha o comando; quem instalou do registry recebia
+> `Cannot find module`. O repositório estava verde — 169 testes, todos os gates passando —
+> e o pacote publicado estava quebrado.
+
+### 🐛 `scripts/` não estava no `files`
+
+O conserto é uma linha. O que importa é por que **nenhum teste pegou**: "o script existe
+no repositório" e "o script é publicado" são afirmações diferentes, e só a primeira era
+testada.
+
+`tests/package-scripts.test.mjs` afirma a segunda contra o que o `npm pack` realmente
+produz — não contra o array `files`, que é justamente a coisa que estava errada. Ele
+também afirma que `site/` **não** é publicado, porque essa decisão já foi tomada e
+daqui a alguém "conserta" por acidente.
+
+### 🔍 Como o bug foi encontrado
+
+Instalando `create-sdd-ai-stack@0.7.0` do registry e abrindo o tarball — não por leitura
+de diff. Um gate que só roda sobre o repositório verde não prova nada sobre o artefato
+que sai dele.
+
+---
+
 ## [0.7.0] — 2026-10-11
 
 > **O site dizia `v0.2.0` enquanto o npm já estava na `0.6.0`.** E não tinha imagem de
