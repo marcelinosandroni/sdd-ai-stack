@@ -119,6 +119,44 @@ test("the hero reads the count instead of typing it", () => {
   );
 });
 
+test("STACK_DOCS is exactly what the router says is a stack", () => {
+  // The authority is `stacks/README.md`, not this repository. The router is the file an
+  // agent reads first and a visitor reads first, and it already draws the line: the
+  // Backend and Frontend tables are headed "Stack", while Cross-cutting and Tooling are
+  // headed "What".
+  //
+  // That is why the answer is 12 and not 13. `typescript.md` is a language, and it sits
+  // under Tooling on purpose — the repo decided it is a tool you may use rather than a
+  // platform you build on, so counting it would claim a stack the rules do not offer.
+  // `tailwind` and `shadcn` are the same shape of decision, and `react` is counted even
+  // though it is a library, because the repo groups it with the frontends.
+  //
+  // Asserted against the router so the published number and the document a reader opens
+  // cannot disagree — the same failure as the version, one level down.
+  const router = fs.readFileSync(path.join(STACKS_DIR, "README.md"), "utf8");
+
+  const stacksInRouter = [...router.matchAll(/^\| \[([\w-]+)\.md\]\(\.\/[\w-]+\.md\)/gm)]
+    .map((match) => match[1])
+    .filter((name) => name !== "clean-code")
+    .filter((name) => {
+      // Tooling is headed "What", not "Stack". The two sections are separated by the
+      // heading that introduces them, so each link is attributed to the section it sits
+      // under rather than to the whole document.
+      const heading = router.lastIndexOf("### ", router.indexOf(`[${name}.md]`));
+      return router.slice(heading, router.indexOf(`[${name}.md]`)).includes("Backend") ||
+        router.slice(heading, router.indexOf(`[${name}.md]`)).includes("Frontend");
+    });
+
+  assert.deepEqual(
+    [...STACK_DOCS].sort(),
+    stacksInRouter.sort(),
+    "STACK_DOCS does not match the Backend and Frontend tables in stacks/README.md.\n\n" +
+      "The router is what a reader opens first and what an agent reads first. If the " +
+      "published count and the router disagree, one of them is wrong and nobody can tell " +
+      "which. Change the router and STACK_DOCS together, or run `npm run site:sync`.",
+  );
+});
+
 test("every stack in the list is a file that exists", () => {
   // The partition test covers the other direction. This one is here so that renaming a
   // stack doc says so plainly, instead of reporting a set difference three tests later.
