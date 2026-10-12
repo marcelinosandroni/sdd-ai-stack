@@ -178,3 +178,34 @@ test("the hero states the version that is actually published", async ({ page }) 
   expect(shown, `no version in the hero: "${hero}"`).toBeTruthy();
   expect(shown).toBe(PUBLISHED_VERSION);
 });
+
+test("the hero states the stack count that is actually maintained", async ({ page }) => {
+  // "Across 12 stacks" was a typed string in a component. It was correct, and it stayed
+  // correct for years, because nothing about it could go stale visibly — it would just
+  // quietly stop being true after somebody added a rule file.
+  //
+  // Read from `lib/constants.mjs`, not from `content.ts`: a test that read the committed
+  // value would agree with the committed value, which is the whole failure. This is the
+  // assertion that the rendered page and the classification agree.
+  const { STACK_DOCS } = (await import(
+    path.join(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "..",
+      "..",
+      "..",
+      "lib",
+      "constants.mjs",
+    )
+  )) as { STACK_DOCS: string[] };
+
+  await page.goto(ORIGIN);
+
+  const shown = /across\s*(\d+)\s*stacks/i.exec(await page.locator("#top").innerText())?.[1];
+
+  expect(shown, "the hero does not state a stack count").toBeTruthy();
+  expect(
+    Number(shown),
+    `the hero says ${shown} stacks and STACK_DOCS lists ${STACK_DOCS.length} (${STACK_DOCS.join(", ")}). ` +
+      "Run `npm run site:sync`.",
+  ).toBe(STACK_DOCS.length);
+});

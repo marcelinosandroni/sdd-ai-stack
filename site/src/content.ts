@@ -14,6 +14,23 @@
 export const VERSION = "0.7.2";
 
 /**
+ * The language and framework stacks, counted rather than typed.
+ *
+ * It was `12` written into a component, which meant the only way to check it was to
+ * open the repository and do the classification yourself. It is derived from
+ * `STACK_DOCS` in `lib/constants.mjs` and written by `npm run site:sync`.
+ *
+ * Not the number of files in `stacks/`. All 25 are rule files, but `typescript` is a
+ * language the others assume, `tailwind` and `shadcn` are libraries a project may never
+ * use, and `testing` and `database` apply whatever the language. Counting the folder
+ * would say 25 stacks and mean it.
+ *
+ * Like `VERSION`, it is committed rather than imported because Vercel builds this site
+ * with `site/` as its root, so `stacks/` is not in the build context.
+ */
+export const STACK_COUNT = 12;
+
+/**
  * The Matrix palette, for the share card.
  *
  * It lives here and not as a read of `themes/matrix/tokens.css` for a reason that
